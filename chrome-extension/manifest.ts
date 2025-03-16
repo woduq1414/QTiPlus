@@ -29,8 +29,8 @@ const manifest = {
   },
   version: packageJson.version,
   description: '__MSG_extensionDescription__',
-  host_permissions: ["*://gall.dcinside.com/*"],
-  permissions: ['storage', 'scripting', 'tabs', 'notifications', 'sidePanel'],
+  host_permissions: ['*://*.dcinside.com/*'],
+  permissions: ['storage', 'scripting', 'tabs', 'notifications', 'sidePanel', 'activeTab', 'downloads'],
   options_page: 'options/index.html',
   background: {
     service_worker: 'background.js',
@@ -48,15 +48,15 @@ const manifest = {
   },
   content_scripts: [
     {
-      matches: ["*://gall.dcinside.com/*"],
+      matches: ['*://*.dcinside.com/*'],
       js: ['content/index.iife.js'],
     },
     {
-      matches: ["*://gall.dcinside.com/*"],
+      matches: ['*://*.dcinside.com/*'],
       js: ['content-ui/index.iife.js'],
     },
     {
-      matches: ["*://gall.dcinside.com/*"],
+      matches: ['*://*.dcinside.com/*'],
       css: ['content.css'],
     },
   ],
@@ -64,7 +64,7 @@ const manifest = {
   web_accessible_resources: [
     {
       resources: ['*.js', '*.css', '*.svg', 'icon-128.png', 'icon-34.png'],
-      matches: ["*://gall.dcinside.com/*"],
+      matches: ['*://*.dcinside.com/*'],
     },
   ],
   side_panel: {
