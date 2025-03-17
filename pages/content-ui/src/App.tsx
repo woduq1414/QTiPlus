@@ -3,113 +3,83 @@ import { ToggleButton } from '@extension/ui';
 import { exampleThemeStorage } from '@extension/storage';
 import { t } from '@extension/i18n';
 
-import conInfoData from '../public/data.json';
+import sampleConInfoData from '../public/data.json';
 import SearchPage from './components/SearchPage';
 import ConListPage from './components/ConListPage';
 import useGlobalStore from './store/globalStore';
 import parseCookies from './functions/cookies';
 import readLocalStorage from './functions/storage';
 import ConInfoEditPage from './components/ConInfoEditPage';
-
-class TrieNode {
-  children: Record<string, TrieNode>;
-  emojis: Set<string>;
-
-  constructor() {
-    this.children = {};
-    this.emojis = new Set();
-  }
-}
-
-class EmojiSearch {
-  private trieRoot: TrieNode;
-  private invertedIndex: Record<string, Set<string>>;
-
-  constructor() {
-    this.trieRoot = new TrieNode();
-    this.invertedIndex = {};
-  }
-
-  // Trie에 단어 삽입
-  private insertToTrie(word: string, emoji: any): void {
-    let node = this.trieRoot;
-    for (const char of word) {
-      if (!node.children[char]) {
-        node.children[char] = new TrieNode();
-      }
-      node = node.children[char];
-      node.emojis.add(emoji);
-    }
-  }
-
-  // 이모티콘 추가 (트라이 + 역색인)
-  addEmoji(emoji: any, name: string, tags: string[]): void {
-    // Trie에 이름과 태그 삽입
-    this.insertToTrie(name, emoji);
-    tags.forEach(tag => this.insertToTrie(tag, emoji));
-
-    // 역색인 저장
-    if (!this.invertedIndex[name]) this.invertedIndex[name] = new Set();
-    this.invertedIndex[name].add(emoji);
-
-    tags.forEach(tag => {
-      if (!this.invertedIndex[tag]) this.invertedIndex[tag] = new Set();
-      this.invertedIndex[tag].add(emoji);
-    });
-  }
-
-  // Trie에서 자동완성 검색
-  searchTrie(prefix: string): Set<string> {
-    let node = this.trieRoot;
-    for (const char of prefix) {
-      if (!node.children[char]) return new Set();
-      node = node.children[char];
-    }
-    return node.emojis;
-  }
-
-  // 역색인 검색
-  searchIndex(keyword: string): Set<string> {
-    return this.invertedIndex[keyword] || new Set();
-  }
-}
-
-// 사용 예시
-
-const emojiSearch = new EmojiSearch();
-
-let detailIdxDict = {} as any;
-
-console.log(conInfoData);
-
-for (let packageIdx in conInfoData) {
-  const conList = conInfoData[packageIdx as keyof typeof conInfoData].conList;
-  for (let sort in conList) {
-    const con = conList[sort as keyof typeof conList];
-    console.log(con.title);
-
-    const key = packageIdx + '-' + sort;
-    emojiSearch.addEmoji(key, con.title, [con.title]);
-
-    detailIdxDict[key] = {
-      // detailIdx: con.detailIdx,
-      title: con.title,
-      packageIdx: packageIdx,
-      sort: sort,
-      imgPath: con.imgPath,
-    };
-  }
-}
+import EmojiSearch from './class/Trie';
 
 export default function App() {
   useEffect(() => {
     console.log('content ui loaded');
+
+    async function conTreeInit() {
+      const emojiSearchTmp = new EmojiSearch();
+
+      let detailIdxDictTmp = {} as any;
+
+      let conInfoData;
+      const prevCustomConList: any = await readLocalStorage('CustomConList');
+      if (prevCustomConList === null || prevCustomConList === undefined) {
+        conInfoData = sampleConInfoData;
+      } else {
+        conInfoData = prevCustomConList;
+      }
+      conInfoData = sampleConInfoData;
+      console.log(conInfoData);
+
+      for (let packageIdx in conInfoData) {
+        const conList = conInfoData[packageIdx as keyof typeof conInfoData].conList;
+        for (let sort in conList) {
+          const con = conList[sort as keyof typeof conList];
+          console.log(con.title);
+
+          const key = packageIdx + '-' + sort;
+          emojiSearchTmp.addEmoji(key, con.title, [con.title]);
+
+          detailIdxDictTmp[key] = {
+            // detailIdx: con.detailIdx,
+            title: con.title,
+            packageIdx: packageIdx,
+            sort: sort,
+            imgPath: con.imgPath,
+          };
+        }
+      }
+
+      setEmojiSearch(emojiSearchTmp);
+      setDetailIdxDict(detailIdxDictTmp);
+    }
+
+    // conTreeInit();
+    // alert('content ui loaded');
+    chrome.runtime.sendMessage({ type: 'GET_INIT_DATA' }, response => {
+      console.log(response);
+      const emojiSearchTmp = new EmojiSearch();
+      emojiSearchTmp.deserialize(response.emojiSearch);
+
+      setEmojiSearch(emojiSearchTmp);
+      setDetailIdxDict(response.detailIdxDict);
+    });
   }, []);
 
   const [isModalOpen, setIsModalOpen] = useState(true);
 
-  const { currentPage, setUnicroId, setUserPackageData, currentPackageIdx, setCurrentPage, setCurrentPackageIdx } =
-    useGlobalStore();
+  const {
+    currentPage,
+    setUnicroId,
+    setUserPackageData,
+    currentPackageIdx,
+    setCurrentPage,
+    setCurrentPackageIdx,
+    emojiSearch,
+    setEmojiSearch,
+    detailIdxDict,
+    setDetailIdxDict,
+  } = useGlobalStore();
 
   useEffect(() => {
     const cookies = parseCookies();

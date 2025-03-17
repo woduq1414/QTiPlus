@@ -3,6 +3,7 @@ import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef } from 'react';
 import conInfoData from '../../public/data.json';
 import readLocalStorage from '@src/functions/storage';
+import EmojiSearch from '@src/class/Trie';
 
 interface ConInfoEditPageProps {
   packageIdx: number;
@@ -16,7 +17,8 @@ interface Item {
 }
 
 const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
-  const { userPackageData, unicroId, setUserPackageData } = useGlobalStore();
+  const { userPackageData, unicroId, setUserPackageData, emojiSearch, setEmojiSearch, setDetailIdxDict } =
+    useGlobalStore();
   const [items, setItems] = useState<Item[]>(
     Array.from({ length: 101 }, (_, index) => ({
       id: index,
@@ -193,9 +195,14 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
             chrome.storage.local.set({ ['CustomConList']: newCustomConList }, async function () {
               console.log('Value is set to ', newCustomConList);
 
-              // refresh page
+              chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
+                console.log(response);
+                const emojiSearchTmp = new EmojiSearch();
+                emojiSearchTmp.deserialize(response.emojiSearch);
 
-              // setUserPackageData(allResult);
+                setEmojiSearch(emojiSearchTmp);
+                setDetailIdxDict(response.detailIdxDict);
+              });
             });
 
             // const newUserPackageData = { ...userPackageData };

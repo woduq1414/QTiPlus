@@ -12,6 +12,12 @@ interface GlobalStore {
 
   currentPackageIdx: number;
   setCurrentPackageIdx: (currentPackageIdx: number) => void;
+
+  emojiSearch: any;
+  setEmojiSearch: (emojiSearch: any) => void;
+
+  detailIdxDict: any;
+  setDetailIdxDict: (detailIdxDict: any) => void;
 }
 
 const useGlobalStore = create<GlobalStore>(set => ({
@@ -26,6 +32,12 @@ const useGlobalStore = create<GlobalStore>(set => ({
 
   currentPackageIdx: 0,
   setCurrentPackageIdx: currentPackageIdx => set({ currentPackageIdx }),
+
+  emojiSearch: null,
+  setEmojiSearch: emojiSearch => set({ emojiSearch }),
+
+  detailIdxDict: null,
+  setDetailIdxDict: detailIdxDict => set({ detailIdxDict }),
 }));
 
 export default useGlobalStore;

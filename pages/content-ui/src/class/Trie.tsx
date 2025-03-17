@@ -1,18 +1,3 @@
-import 'webextension-polyfill';
-import { exampleThemeStorage } from '@extension/storage';
-
-// import JSZip from 'jszip';
-// import saveAs from 'file-saver';
-
-exampleThemeStorage.get().then(theme => {
-  console.log('theme', theme);
-});
-
-console.log('Background loaded11');
-console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
-
-let tabId = 0;
-
 class TrieNode {
   children: Record<string, TrieNode>;
   emojis: Set<string>;
@@ -115,87 +100,6 @@ class EmojiSearch {
   }
 }
 
-const readLocalStorage = async (key: any) => {
-  return new Promise((resolve, reject) => {
-    chrome.storage.local.get([key], function (result) {
-      if (result[key] === undefined) {
-        // reject();
-        resolve(null);
-      } else {
-        resolve(result[key]);
-      }
-    });
-  });
-};
+// 사용 예시
 
-async function conTreeInit() {
-  const emojiSearchTmp = new EmojiSearch();
-
-  let detailIdxDictTmp = {} as any;
-
-  let conInfoData;
-  const prevCustomConList: any = await readLocalStorage('CustomConList');
-  if (prevCustomConList === null || prevCustomConList === undefined) {
-    return;
-  } else {
-    conInfoData = prevCustomConList;
-  }
-
-  console.log(conInfoData);
-
-  for (let packageIdx in conInfoData) {
-    const conList = conInfoData[packageIdx as keyof typeof conInfoData].conList;
-    for (let sort in conList) {
-      const con = conList[sort as keyof typeof conList];
-      console.log(con.title);
-
-      const key = packageIdx + '-' + sort;
-      emojiSearchTmp.addEmoji(key, con.title, [con.title]);
-
-      detailIdxDictTmp[key] = {
-        // detailIdx: con.detailIdx,
-        title: con.title,
-        packageIdx: packageIdx,
-        sort: sort,
-        imgPath: con.imgPath,
-      };
-    }
-  }
-
-  return { emojiSearchTmp, detailIdxDictTmp };
-}
-
-conTreeInit().then(res => {
-  console.log(res);
-
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log(message);
-    if (message.type === 'GET_INIT_DATA') {
-      sendResponse({
-        detailIdxDict: res?.detailIdxDictTmp,
-        emojiSearch: res?.emojiSearchTmp.serialize(),
-      }); // JSON으로 변환하여 보냄
-      return true;
-    } else if (message.type === 'CHANGED_DATA') {
-      console.log('CHANGED_DATA!!');
-      conTreeInit().then(res2 => {
-        console.log(res2, '@@@@@');
-        sendResponse({
-          detailIdxDict: res2?.detailIdxDictTmp,
-          emojiSearch: res2?.emojiSearchTmp.serialize(),
-        });
-      });
-      return true;
-    }
-    return true;
-  });
-});
-
-// chrome.downloads.onChanged.addListener((downloadDelta) => {
-//   if (downloadDelta.state && downloadDelta.state.current === "complete") {
-//     console.log("다운로드 완료:", downloadDelta, tabId);
-//     // chrome.runtime.sendMessage({ action: "downloadComplete", id: downloadDelta.id });
-
-//     chrome.tabs.remove(tabId);
-//   }
-// });
+export default EmojiSearch;
