@@ -2,6 +2,7 @@ import parseCookies from '@src/functions/cookies';
 import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef } from 'react';
 import conInfoData from '../../public/data.json';
+import readLocalStorage from '@src/functions/storage';
 
 interface ConInfoEditPageProps {
   packageIdx: number;
@@ -37,40 +38,63 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
   useEffect(() => {
     if (userPackageData === null) return;
     if (userPackageData[packageIdx] === undefined) return;
-    const tmp = conInfoData as any;
-    setItems(
-      Array.from({ length: 101 }, (_, index) => {
-        if (tmp[packageIdx].conList[String(index)] === undefined)
+
+    async function fetchConInfo() {
+      let tmp = conInfoData as any;
+      const prevCustomConList = await readLocalStorage('CustomConList');
+      if (prevCustomConList === null || prevCustomConList === undefined) {
+        tmp = conInfoData;
+      } else {
+        tmp = prevCustomConList;
+      }
+      let isCreateNew = false;
+      if (tmp[packageIdx] === undefined) {
+        isCreateNew = true;
+        tmp[packageIdx] = {
+          title: userPackageData[packageIdx].title,
+          conList: {},
+          packageIdx: packageIdx,
+        };
+      }
+
+      console.log(tmp, '!!');
+
+      setItems(
+        Array.from({ length: 101 }, (_, index) => {
+          if (tmp[packageIdx].conList[String(index)] === undefined)
+            return {
+              id: index,
+              title: '',
+              tag: '',
+              who: [false, false, false, false],
+            };
+          const title = tmp[packageIdx].conList[String(index)].title;
+          const tag = tmp[packageIdx].conList[String(index)].tag;
+
+          const whoStrList = tmp[packageIdx].conList[String(index)].who;
+          let newWho = [false, false, false, false];
+          whoStrList.forEach((whoStr: string) => {
+            const key = {
+              Q: 0,
+              W: 1,
+              E: 2,
+              R: 3,
+            }[whoStr];
+            if (key === undefined) return;
+            newWho[key] = true;
+          });
+
           return {
             id: index,
-            title: '',
-            tag: '',
-            who: [false, false, false, false],
+            title: title,
+            tag: tag,
+            who: newWho,
           };
-        const title = tmp[packageIdx].conList[String(index)].title;
-        const tag = tmp[packageIdx].conList[String(index)].tag;
+        }),
+      );
+    }
 
-        const whoStrList = tmp[packageIdx].conList[String(index)].who;
-        let newWho = [false, false, false, false];
-        whoStrList.forEach((whoStr: string) => {
-          const key = {
-            Q: 0,
-            W: 1,
-            E: 2,
-            R: 3,
-          }[whoStr];
-          if (key === undefined) return;
-          newWho[key] = true;
-        });
-
-        return {
-          id: index,
-          title: title,
-          tag: tag,
-          who: newWho,
-        };
-      }),
-    );
+    fetchConInfo();
   }, [userPackageData]);
 
   if (userPackageData === null) {
@@ -136,18 +160,43 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
           className="cursor-pointer bg-red-400"
           onClick={async () => {
             const tmp = conInfoData as any;
-            const newConList = items.reduce((acc, cur) => {
-              if (cur.title === '' && cur.tag === '') return acc;
+            let newConList = items.reduce((acc, cur) => {
+              // if (cur.title === '' && cur.tag === '') return acc;
+              if (userPackageData[packageIdx].conList[cur.id] === undefined) {
+                return acc;
+              }
               acc[String(cur.id)] = {
                 title: cur.title,
                 tag: cur.tag,
-                imgPath: tmp[packageIdx].conList[String(cur.id)].imgPath,
+                imgPath: userPackageData[packageIdx].conList[cur.id].imgPath,
                 who: cur.who.map((who, idx) => (who ? ['Q', 'W', 'E', 'R'][idx] : '')).filter(who => who !== ''),
               };
               return acc;
             }, {} as any);
 
-            console.log(newConList);
+            newConList = {
+              conList: newConList,
+              title: userPackageData[packageIdx].title,
+              packageIdx: String(packageIdx),
+            };
+
+            let oldCustomConList = await readLocalStorage('CustomConList');
+
+            if (oldCustomConList === null || oldCustomConList === undefined) {
+              oldCustomConList = {};
+            }
+
+            let newCustomConList = { ...(oldCustomConList || {}), [packageIdx]: newConList };
+
+            console.log(newCustomConList);
+
+            chrome.storage.local.set({ ['CustomConList']: newCustomConList }, async function () {
+              console.log('Value is set to ', newCustomConList);
+
+              // refresh page
+
+              // setUserPackageData(allResult);
+            });
 
             // const newUserPackageData = { ...userPackageData };
             // newUserPackageData[packageIdx].conList = newConList;
