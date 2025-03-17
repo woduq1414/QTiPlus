@@ -108,7 +108,8 @@ export default function App() {
 
   const [isModalOpen, setIsModalOpen] = useState(true);
 
-  const { currentPage, setUnicroId, setUserPackageData, currentPackageIdx, setCurrentPage } = useGlobalStore();
+  const { currentPage, setUnicroId, setUserPackageData, currentPackageIdx, setCurrentPage, setCurrentPackageIdx } =
+    useGlobalStore();
 
   useEffect(() => {
     const cookies = parseCookies();
@@ -122,6 +123,11 @@ export default function App() {
       console.log(data);
       setUserPackageData(data);
     });
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(2);
+    setCurrentPackageIdx(151346);
   }, []);
 
   useEffect(() => {
