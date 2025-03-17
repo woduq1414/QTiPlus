@@ -127,6 +127,18 @@ const readLocalStorage = async (key: any) => {
     });
   });
 };
+async function loadJSON() {
+  try {
+    const response = await fetch(chrome.runtime.getURL('data.json'));
+    if (!response.ok) throw new Error('Failed to load JSON');
+    const data = await response.json();
+    console.log('Loaded JSON:', data);
+
+    return data;
+  } catch (error) {
+    console.error('Error loading JSON:', error);
+  }
+}
 
 async function conTreeInit() {
   const emojiSearchTmp = new EmojiSearch();
@@ -136,7 +148,7 @@ async function conTreeInit() {
   let conInfoData;
   const prevCustomConList: any = await readLocalStorage('CustomConList');
   if (prevCustomConList === null || prevCustomConList === undefined) {
-    return;
+    conInfoData = await loadJSON();
   } else {
     conInfoData = prevCustomConList;
   }
