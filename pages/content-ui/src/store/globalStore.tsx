@@ -9,6 +9,9 @@ interface GlobalStore {
 
   userPackageData: any;
   setUserPackageData: (userPackageData: any) => void;
+
+  currentPackageIdx: number;
+  setCurrentPackageIdx: (currentPackageIdx: number) => void;
 }
 
 const useGlobalStore = create<GlobalStore>(set => ({
@@ -20,6 +23,9 @@ const useGlobalStore = create<GlobalStore>(set => ({
 
   userPackageData: null,
   setUserPackageData: userPackageData => set({ userPackageData }),
+
+  currentPackageIdx: 0,
+  setCurrentPackageIdx: currentPackageIdx => set({ currentPackageIdx }),
 }));
 
 export default useGlobalStore;

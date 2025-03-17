@@ -9,6 +9,7 @@ import ConListPage from './components/ConListPage';
 import useGlobalStore from './store/globalStore';
 import parseCookies from './functions/cookies';
 import readLocalStorage from './functions/storage';
+import ConInfoEditPage from './components/ConInfoEditPage';
 
 class TrieNode {
   children: Record<string, TrieNode>;
@@ -83,17 +84,18 @@ console.log(conInfoData);
 
 for (let packageIdx in conInfoData) {
   const conList = conInfoData[packageIdx as keyof typeof conInfoData].conList;
-  for (let conData in conList) {
-    const con = conList[conData as keyof typeof conList];
+  for (let sort in conList) {
+    const con = conList[sort as keyof typeof conList];
     console.log(con.title);
 
-    emojiSearch.addEmoji(con.detailIdx, con.title, [con.title]);
+    const key = packageIdx + '-' + sort;
+    emojiSearch.addEmoji(key, con.title, [con.title]);
 
-    detailIdxDict[con.detailIdx] = {
-      detailIdx: con.detailIdx,
+    detailIdxDict[key] = {
+      // detailIdx: con.detailIdx,
       title: con.title,
       packageIdx: packageIdx,
-      sort: conData,
+      sort: sort,
       imgPath: con.imgPath,
     };
   }
@@ -106,7 +108,7 @@ export default function App() {
 
   const [isModalOpen, setIsModalOpen] = useState(true);
 
-  const { currentPage, setUnicroId, setUserPackageData } = useGlobalStore();
+  const { currentPage, setUnicroId, setUserPackageData, currentPackageIdx, setCurrentPage } = useGlobalStore();
 
   useEffect(() => {
     const cookies = parseCookies();
@@ -127,6 +129,7 @@ export default function App() {
       if (event.altKey && event.key === 'q') {
         event.preventDefault(); // 기본 동작 방지
         setIsModalOpen(isModalOpen => !isModalOpen);
+        setCurrentPage(0);
         console.log('alt + q');
       }
     };
@@ -145,6 +148,8 @@ export default function App() {
         <SearchPage emojiSearch={emojiSearch} detailIdxDict={detailIdxDict} />
       ) : currentPage === 1 ? (
         <ConListPage emojiSearch={emojiSearch} detailIdxDict={detailIdxDict} />
+      ) : currentPage === 2 ? (
+        <ConInfoEditPage packageIdx={currentPackageIdx} />
       ) : null}
     </div>
   );

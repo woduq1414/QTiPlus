@@ -13,7 +13,7 @@ interface SearchPageProps {
 }
 
 const ConListPage: React.FC<SearchPageProps> = props => {
-  const { userPackageData, unicroId, setUserPackageData } = useGlobalStore();
+  const { userPackageData, unicroId, setUserPackageData, setCurrentPage, setCurrentPackageIdx } = useGlobalStore();
 
   console.log(userPackageData);
 
@@ -30,14 +30,8 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                 <div
                   key={key}
                   onClick={async () => {
-                    console.log(packageData);
-                    console.log(chrome, chrome.tabs);
-
-                    chrome.runtime.sendMessage({
-                      action: 'openTab',
-                      url: 'https://dcimg5.dcinside.com/',
-                      data: packageData,
-                    });
+                    setCurrentPackageIdx(packageData.packageIdx);
+                    setCurrentPage(2);
                   }}>
                   <h1>{packageData.title}</h1>
                 </div>

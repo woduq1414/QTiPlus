@@ -65,14 +65,13 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                       // return;
 
                       const packageIdx = detailData.packageIdx;
-                      const conIdx = 3;
 
                       const detailIdx = userPackageData[packageIdx].conList[detailData.sort].detailIdx;
                       console.log(packageIdx, detailIdx);
 
                       setQueryResult(undefined);
 
-                      // return;
+                      //   return;
 
                       // 사용 예시
                       const postNumber = getQueryValue('no');
