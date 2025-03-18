@@ -39,6 +39,7 @@
     "module-manager": "pnpm -F module-manager start"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "file-saver": "^2.0.5",
     "jszip": "^3.10.1",
     "react": "19.0.0",

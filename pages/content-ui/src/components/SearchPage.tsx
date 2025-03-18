@@ -7,6 +7,9 @@ import getQueryValue from '@src/functions/query';
 import useDebounce from '@src/hook/useDebounce';
 import ImageWithSkeleton from './ImageWithSkeleton';
 import toast from 'react-hot-toast';
+import { CheckCircleIcon, TrashIcon } from '@heroicons/react/16/solid';
+import { CheckCircleIcon as CheckCircleIconOutline } from '@heroicons/react/24/outline';
+import { title } from 'process';
 
 interface SearchPageProps {
   detailIdxDict: Record<string, any>;
@@ -26,6 +29,10 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
   const imageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
+  const [isDoubleCon, setIsDoubleCon] = useState<boolean>(false);
+
+  const [firstDoubleCon, setFirstDoubleCon] = useState<any>(null);
 
   useEffect(() => {
     if (focusedIndex !== null && imageRefs.current[focusedIndex]) {
@@ -85,11 +92,36 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       return () => {
         setSearchInput('');
         setQueryResult(undefined);
+        setIsDoubleCon(false);
+        setFirstDoubleCon(null);
       };
     }
 
     return () => {};
   }, [isModalOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: { altKey: any; key: string; preventDefault: () => void }) => {
+      if (event.altKey && event.key === '2') {
+        event.preventDefault(); // 기본 동작 방지
+        toggleDoubleCon();
+        console.log('alt + 2');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  function toggleDoubleCon() {
+    if (isModalOpen) {
+      setIsDoubleCon(prev => !prev);
+      setFirstDoubleCon(null);
+    } else {
+    }
+  }
 
   return (
     <div
@@ -102,6 +134,39 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         style={{
           backdropFilter: 'blur(15px)',
         }}>
+        <div className="flex flex-row w-full justify-between items-end">
+          <div className="flex flex-row gap-[0.2em] items-center cursor-pointer" onClick={toggleDoubleCon}>
+            {isDoubleCon ? (
+              <CheckCircleIcon className="h-4 w-4 text-gray-600" />
+            ) : (
+              <CheckCircleIconOutline className="h-4 w-4 text-gray-300" />
+            )}
+            <span
+              className={`text-sm font-semibold
+                    ${isDoubleCon ? 'text-gray-700' : 'text-gray-400'}
+                        `}>
+              더블콘
+            </span>
+          </div>
+          {isDoubleCon &&
+            (firstDoubleCon ? (
+              <div
+                className="relative group w-[60px] h-[60px] cursor-pointer "
+                onClick={() => {
+                  setFirstDoubleCon(null);
+                }}>
+                {/* 이미지 */}
+                <img src={firstDoubleCon.imgPath} className="w-full h-full rounded-md object-cover" alt="thumbnail" />
+
+                {/* 호버 시 오버레이 & 아이콘 표시 */}
+                <div className="absolute inset-0 bg-gray-600/50 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <TrashIcon className="h-4 w-4 text-white" />
+                </div>
+              </div>
+            ) : (
+              <div className="w-[60px] h-[60px] border-2 border-dashed border-gray-300 rounded-md"></div>
+            ))}
+        </div>
         <input
           onChange={e => {
             setSearchInput(e.target.value);
@@ -170,10 +235,30 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                       console.log(userPackageData);
                       // return;
 
-                      const packageIdx = detailData.packageIdx;
+                      let packageIdx = detailData.packageIdx;
 
-                      const detailIdx = userPackageData[packageIdx].conList[detailData.sort].detailIdx;
+                      let detailIdx = userPackageData[packageIdx].conList[detailData.sort].detailIdx;
                       console.log(packageIdx, detailIdx);
+
+                      if (isDoubleCon) {
+                        if (firstDoubleCon === null) {
+                          setFirstDoubleCon({
+                            packageIdx: packageIdx,
+                            detailIdx: detailIdx,
+                            imgPath: detailData.imgPath,
+                          });
+
+                          setQueryResult(undefined);
+                          setSearchInput('');
+
+                          searchInputRef.current?.focus();
+
+                          return;
+                        } else {
+                          packageIdx = `${firstDoubleCon.packageIdx}, ${packageIdx}`;
+                          detailIdx = `${firstDoubleCon.detailIdx}, ${detailIdx}`;
+                        }
+                      }
 
                       setQueryResult(undefined);
 
@@ -235,7 +320,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                         },
                         referrer: `https://gall.dcinside.com/mgallery/board/view/?id=qwer_fan&no=${postNumber}&page=1`,
                         referrerPolicy: 'unsafe-url',
-                        body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=qwer_fan&c_gall_no=${postNumber}&g-recaptcha-response=&check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M&${replyTarget ? 'c_no=' + replyTarget : ''}`,
+                        body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=${isDoubleCon ? '1' : ''}&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=qwer_fan&c_gall_no=${postNumber}&g-recaptcha-response=&check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M&${replyTarget ? 'c_no=' + replyTarget : ''}`,
                         method: 'POST',
                         mode: 'cors',
                         credentials: 'include',
@@ -285,7 +370,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
          hover:text-blue-700
          text-gray-600
          underline
-          w-full
+ 
           mt-2
           "
           onClick={async () => {
