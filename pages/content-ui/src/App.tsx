@@ -10,15 +10,14 @@ import useGlobalStore from './store/globalStore';
 import parseCookies from './functions/cookies';
 import readLocalStorage from './functions/storage';
 import ConInfoEditPage from './components/ConInfoEditPage';
-import EmojiSearch from './class/Trie';
 
-export default function App() {
+import { Toaster } from 'react-hot-toast';
+
+function Router() {
   useEffect(() => {
     console.log('content ui loaded');
 
     async function conTreeInit() {
-      const emojiSearchTmp = new EmojiSearch();
-
       let detailIdxDictTmp = {} as any;
 
       let conInfoData;
@@ -38,7 +37,7 @@ export default function App() {
           console.log(con.title);
 
           const key = packageIdx + '-' + sort;
-          emojiSearchTmp.addEmoji(key, con.title, [con.title]);
+          // emojiSearchTmp.addEmoji(key, con.title, [con.title]);
 
           detailIdxDictTmp[key] = {
             // detailIdx: con.detailIdx,
@@ -50,7 +49,7 @@ export default function App() {
         }
       }
 
-      setEmojiSearch(emojiSearchTmp);
+      // setEmojiSearch(emojiSearchTmp);
       setDetailIdxDict(detailIdxDictTmp);
     }
 
@@ -119,17 +118,29 @@ export default function App() {
     };
   }, []);
   return (
-    <div
-      className={`z-[999999999]
+    <div>
+      <div
+        className={`z-[999999999]
       ${isModalOpen ? 'unset' : 'hidden'}
     `}>
-      {currentPage === 0 ? (
-        <SearchPage detailIdxDict={detailIdxDict} />
-      ) : currentPage === 1 ? (
-        <ConListPage detailIdxDict={detailIdxDict} />
-      ) : currentPage === 2 ? (
-        <ConInfoEditPage packageIdx={currentPackageIdx} />
-      ) : null}
+        {currentPage === 0 ? (
+          <SearchPage detailIdxDict={detailIdxDict} />
+        ) : currentPage === 1 ? (
+          <ConListPage detailIdxDict={detailIdxDict} />
+        ) : currentPage === 2 ? (
+          <ConInfoEditPage packageIdx={currentPackageIdx} />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  console.log('App');
+  return (
+    <div className="App">
+      <Toaster />
+      <Router />
     </div>
   );
 }

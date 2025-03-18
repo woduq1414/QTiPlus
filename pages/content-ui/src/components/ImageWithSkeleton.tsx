@@ -12,7 +12,7 @@ const ImageWithSkeleton = ({ src, alt }: { src: string; alt: string }) => {
       <img
         src={src}
         alt={alt}
-        className={`w-full h-full object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        className={`w-full h-full object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'} rounded-md`}
         onLoad={() => setIsLoading(false)}
       />
     </div>

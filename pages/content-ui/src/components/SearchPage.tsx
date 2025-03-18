@@ -6,6 +6,7 @@ import readLocalStorage from '@src/functions/storage';
 import getQueryValue from '@src/functions/query';
 import useDebounce from '@src/hook/useDebounce';
 import ImageWithSkeleton from './ImageWithSkeleton';
+import toast from 'react-hot-toast';
 
 interface SearchPageProps {
   detailIdxDict: Record<string, any>;
@@ -137,7 +138,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                     className={`flex cursor-pointer w-[calc(25%-0.2rem)] rounded-md
                                             ${
                                               focusedIndex === index
-                                                ? ' border-4 scale-125 transition-all duration-200 z-[9999999999]'
+                                                ? ' border-4 scale-125 transition-all duration-200 z-[9999999999] '
                                                 : 'scale-100 z-[9999999]'
                                             }
                                             `}
@@ -181,7 +182,6 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
                       // const packageIdx = 151346;
                       // const detailIdx = 1241690924;
-                      const name = document.getElementsByClassName('user_info_input')[0].children[0].textContent;
 
                       const cookies = parseCookies();
                       const ci_t = cookies['ci_c'];
@@ -189,7 +189,6 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                       if (
                         packageIdx === undefined ||
                         detailIdx === undefined ||
-                        name === undefined ||
                         ci_t === undefined ||
                         check6Value === undefined ||
                         check7Value === undefined ||
@@ -197,6 +196,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                       ) {
                         return;
                       }
+                      const name = document.getElementsByClassName('user_info_input')[0].children[0].textContent;
 
                       setIsModalOpen(false);
 
@@ -267,6 +267,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           "
           onClick={async () => {
             setCurrentPage(1);
+
             return;
 
             const cookies = parseCookies();

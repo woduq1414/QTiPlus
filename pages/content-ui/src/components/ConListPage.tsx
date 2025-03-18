@@ -1,6 +1,8 @@
 import parseCookies from '@src/functions/cookies';
+import makeToast from '@src/functions/toast';
 import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef } from 'react';
+import toast from 'react-hot-toast';
 
 interface SearchPageProps {
   detailIdxDict: Record<string, any>;
@@ -130,11 +132,13 @@ const ConListPage: React.FC<SearchPageProps> = props => {
               // refresh page
 
               setUserPackageData(allResult);
+
+              makeToast('동기화 성공!');
             });
           }}>
           동기화 하기
         </div>
-        <div>unicro_id : {unicroId}</div>
+        {/* <div>unicro_id : {unicroId}</div> */}
       </div>
     </div>
   );

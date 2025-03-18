@@ -7,6 +7,7 @@ import EmojiSearch from '@src/class/Trie';
 import { WithContext as ReactTags, SEPARATORS } from 'react-tag-input';
 
 import { Tag } from 'react-tag-input';
+import makeToast from '@src/functions/toast';
 
 interface ConInfoEditPageProps {
   packageIdx: number;
@@ -270,11 +271,13 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
 
               chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
                 console.log(response);
-                const emojiSearchTmp = new EmojiSearch();
-                emojiSearchTmp.deserialize(response.emojiSearch);
+                // const emojiSearchTmp = new EmojiSearch();
+                // emojiSearchTmp.deserialize(response.emojiSearch);
 
-                setEmojiSearch(emojiSearchTmp);
+                // setEmojiSearch(emojiSearchTmp);
                 setDetailIdxDict(response.detailIdxDict);
+
+                makeToast('저장 완료!');
               });
             });
 
