@@ -4,6 +4,9 @@ import { useEffect, useState, useRef } from 'react';
 import conInfoData from '../../public/data.json';
 import readLocalStorage from '@src/functions/storage';
 import EmojiSearch from '@src/class/Trie';
+import { WithContext as ReactTags, SEPARATORS } from 'react-tag-input';
+
+import { Tag } from 'react-tag-input';
 
 interface ConInfoEditPageProps {
   packageIdx: number;
@@ -17,8 +20,15 @@ interface Item {
 }
 
 const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
-  const { userPackageData, unicroId, setUserPackageData, emojiSearch, setEmojiSearch, setDetailIdxDict } =
-    useGlobalStore();
+  const {
+    userPackageData,
+    unicroId,
+    setUserPackageData,
+    setCurrentPage,
+    emojiSearch,
+    setEmojiSearch,
+    setDetailIdxDict,
+  } = useGlobalStore();
   const [items, setItems] = useState<Item[]>(
     Array.from({ length: 101 }, (_, index) => ({
       id: index,
@@ -36,6 +46,46 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
     }
   };
   const packageIdx = props.packageIdx;
+
+  const [tags, setTags] = useState<Array<Tag>>([
+    { id: 'India', text: 'India', className: '' },
+    { id: 'Vietnam', text: 'Vietnam', className: '' },
+    { id: 'Turkey', text: 'Turkey', className: '' },
+  ]);
+
+  const handleDelete = (index: number) => {
+    setTags(tags.filter((_, i) => i !== index));
+  };
+
+  const onTagUpdate = (index: number, newTag: Tag) => {
+    const updatedTags = [...tags];
+    updatedTags.splice(index, 1, newTag);
+    setTags(updatedTags);
+  };
+
+  const handleAddition = (tag: Tag) => {
+    setTags(prevTags => {
+      return [...prevTags, tag];
+    });
+  };
+
+  const handleDrag = (tag: Tag, currPos: number, newPos: number) => {
+    const newTags = tags.slice();
+
+    newTags.splice(currPos, 1);
+    newTags.splice(newPos, 0, tag);
+
+    // re-render
+    setTags(newTags);
+  };
+
+  const handleTagClick = (index: number) => {
+    console.log('The tag at index ' + index + ' was clicked');
+  };
+
+  const onClearAll = () => {
+    setTags([]);
+  };
 
   useEffect(() => {
     if (userPackageData === null) return;
@@ -108,6 +158,20 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
       className={`fixed inset-0 flex items-center justify-center pointer-events-none max-w-[800px]  mx-auto flex-col
         `}>
       <div className="bg-white p-6 rounded-lg shadow-lg pointer-events-auto flex flex-col gap-4 ">
+        <div className="flex flex-row ">
+          <div
+            className="w-[90px] cursor-pointer"
+            onClick={() => {
+              // setUserPackageData(null);
+              setCurrentPage(1);
+            }}>
+            이전
+          </div>
+          <div className="flex-grow text-center font-semibold">
+            <h1>{userPackageData[packageIdx].title}</h1>
+          </div>
+          <div className="w-[90px]"></div>
+        </div>
         <div className="flex flex-col gap-2 max-h-[65vh] overflow-y-auto">
           {userPackageData[packageIdx] &&
             Object.keys(userPackageData[packageIdx].conList).map(key => {
@@ -125,11 +189,13 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                   />
                   <input
                     type="text"
+                    // list="tagList"
                     placeholder="Tag"
                     value={item.tag}
                     onChange={e => handleChange(item.id, 'tag', e.target.value)}
                     className="border p-1"
                   />
+
                   <div className="flex flex-row gap-0.5">
                     {['Q', 'W', 'E', 'R'].map((who: string, idx) => {
                       const colorMap: { [key: string]: string } = {
@@ -158,8 +224,15 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
               );
             })}
         </div>
+        <datalist id="tagList">
+          <option value="안녕" />
+          <option value="슬픔" />
+        </datalist>
         <div
-          className="cursor-pointer bg-red-400"
+          className="cursor-pointer
+          text-center
+          text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
+          "
           onClick={async () => {
             const tmp = conInfoData as any;
             let newConList = items.reduce((acc, cur) => {
