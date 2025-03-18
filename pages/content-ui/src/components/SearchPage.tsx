@@ -209,6 +209,15 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                       }
                       const name = document.getElementsByClassName('user_info_input')[0].children[0].textContent;
 
+                      const replyBox = document.querySelectorAll('.reply_box #cmt_write_box')[0];
+                      let replyTarget: string | null = '';
+                      if (replyBox) {
+                        replyTarget = replyBox.getAttribute('data-no');
+                      }
+                      if (replyTarget === null) {
+                        replyTarget = '';
+                      }
+
                       setIsModalOpen(false);
 
                       fetch('https://gall.dcinside.com/dccon/insert_icon', {
@@ -226,7 +235,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                         },
                         referrer: `https://gall.dcinside.com/mgallery/board/view/?id=qwer_fan&no=${postNumber}&page=1`,
                         referrerPolicy: 'unsafe-url',
-                        body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=qwer_fan&c_gall_no=${postNumber}&g-recaptcha-response=&check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M`,
+                        body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=qwer_fan&c_gall_no=${postNumber}&g-recaptcha-response=&check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M&${replyTarget ? 'c_no=' + replyTarget : ''}`,
                         method: 'POST',
                         mode: 'cors',
                         credentials: 'include',
