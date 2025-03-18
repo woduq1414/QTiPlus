@@ -15,7 +15,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
 
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center pointer-events-none 
+      className={`fixed inset-0 flex items-center justify-center pointer-events-none  z-[999999999]
         `}>
       <div className="bg-white p-6 rounded-lg shadow-lg pointer-events-auto flex flex-col gap-4">
         <div className="flex flex-col gap-2 overflow-auto max-h-[65vh]">
@@ -29,7 +29,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                     <img
                       src={packageData.mainImg}
                       alt={packageData.title}
-                      className="w-[3rem] h-[3rem] rounded-lg border-2 border-gray-600"
+                      className="w-[3em] h-[3em] rounded-lg border-2 border-gray-600"
                     />
                     <div
                       className="cursor-pointer"

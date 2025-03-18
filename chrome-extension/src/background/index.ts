@@ -179,6 +179,7 @@ async function conTreeInit() {
         packageIdx: packageIdx,
         sort: sort,
         imgPath: con.imgPath,
+        who: con.who,
       };
     }
   }
@@ -208,17 +209,75 @@ conTreeInit().then(res => {
       });
       return true;
     } else if (message.type === 'SEARCH_CON') {
-      const query = message.query;
+      let query = message.query as string;
+
+      query = query.replaceAll(' ', '');
       console.log(query, '@@');
+      let who = '';
+
+      if (query.includes('#')) {
+        who = query.split('#')[1].toUpperCase();
+        query = query.split('#')[0];
+      }
+
+      let additionalCategory = '';
+      if (query.includes('ㅠ')) {
+        additionalCategory = '슬픔';
+      } else if (query.includes('ㅋ')) {
+        additionalCategory = '웃음';
+      } else if (['ㅎㅇ', '하이'].includes(query)) {
+        additionalCategory = '안녕';
+      } else if (['ㅂㅇ', '잘가'].includes(query)) {
+        additionalCategory = '바이';
+      } else if (['ㅈㅅ', '죄송'].includes(query)) {
+        additionalCategory = '미안';
+      } else if (['ㄴㅇㄱ', '헉'].includes(query)) {
+        additionalCategory = '놀람';
+      } else if (['ㄳ', 'ㄱㅅ'].includes(query)) {
+        additionalCategory = '감사';
+      } else if (['ㄷㄷ', 'ㅎㄷㄷ', '후덜덜', '두렵', '무섭', '무서', '두려'].includes(query)) {
+        additionalCategory = '덜덜';
+      } else if (['웃겨'].includes(query)) {
+        additionalCategory = '웃음';
+      } else if (['울었', '울고', '슬퍼', '슬프'].includes(query)) {
+        additionalCategory = '슬픔';
+      } else if (['행복', '신나', '기뻐', '신났'].includes(query)) {
+        additionalCategory = '신남';
+      } else if (['화남', '화났', '화나', '분노'].includes(query)) {
+        additionalCategory = '화남';
+      } else if (['커여', '커엽', '귀여', '귀엽'].includes(query)) {
+        additionalCategory = '커';
+      } else if (['섹시', '떽띠'].includes(query)) {
+        additionalCategory = '떽';
+      } else if (['따봉', '좋'].includes(query)) {
+        additionalCategory = '굿';
+      }
+
+      const detailIdxDict = tmpRes?.detailIdxDictTmp;
+
       const result = tmpRes?.emojiSearchTmp.searchTrie(query);
-      console.log(
-        {
-          res: result,
-        },
-        '@@',
-      );
+
+      const result2 = tmpRes?.emojiSearchTmp.searchTrie(additionalCategory);
+
+      const finalResult = new Set([...Array.from(result), ...Array.from(result2)]);
+
+      if (who !== '') {
+        for (let key of Array.from(finalResult)) {
+          let f = false;
+          for (let i = 0; i < who.length; i++) {
+            if (detailIdxDict[key as string].who.includes(who[i])) {
+              f = true;
+              break;
+            }
+          }
+          if (!f) {
+            finalResult.delete(key);
+          }
+        }
+      }
+
       sendResponse({
-        res: JSON.stringify(Array.from(result)),
+        res: JSON.stringify(Array.from(finalResult)),
       });
       return true;
     }

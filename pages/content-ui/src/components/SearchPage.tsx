@@ -55,6 +55,11 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       setFocusedIndex(prev => (prev !== null ? Math.max(prev - 4, 0) : 0));
     } else if (e.key === 'Enter') {
       imageRefs.current[index]?.click();
+    } else if (e.key === 'Tab') {
+      if (index === queryResult.size - 1) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
     }
   };
 
@@ -88,9 +93,15 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center pointer-events-none 
+      className={`fixed inset-0 flex items-center justify-center pointer-events-none  z-[999999999]
             `}>
-      <div className="bg-white p-6 rounded-lg shadow-lg pointer-events-auto flex flex-col gap-1 ">
+      <div
+        className="bg-[rgba(246,246,246,0.75)] p-6 rounded-lg shadow-2xl pointer-events-auto flex flex-col gap-1 
+      
+      "
+        style={{
+          backdropFilter: 'blur(15px)',
+        }}>
         <input
           onChange={e => {
             setSearchInput(e.target.value);
@@ -98,7 +109,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           ref={searchInputRef}
           type="text"
           placeholder="검색어를 입력하세요"
-          className="border border-gray-300 rounded-md p-2"
+          className="border border-gray-300 rounded-md p-2 bg-white/20"
           value={searchInput}
           onKeyDown={e => {
             if (e.key === 'Enter') {
@@ -135,7 +146,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                 return (
                   <div
                     key={detailIdx}
-                    className={`flex cursor-pointer w-[calc(25%-0.2rem)] rounded-md
+                    className={`flex cursor-pointer w-[calc(25%-0.2em)] rounded-md
                                             ${
                                               focusedIndex === index
                                                 ? ' border-4 scale-125 transition-all duration-200 z-[9999999999] '
@@ -262,8 +273,11 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         <div
           className="cursor-pointer
           text-center
-          text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
+         hover:text-blue-700
+         text-gray-600
+         underline
           w-full
+          mt-2
           "
           onClick={async () => {
             setCurrentPage(1);

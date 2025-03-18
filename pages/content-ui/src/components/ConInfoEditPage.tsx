@@ -156,7 +156,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
 
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center pointer-events-none max-w-[800px]  mx-auto flex-col
+      className={`fixed inset-0 flex items-center justify-center pointer-events-none max-w-[800px]  mx-auto flex-col z-[999999999]
         `}>
       <div className="bg-white p-6 rounded-lg shadow-lg pointer-events-auto flex flex-col gap-4 ">
         <div className="flex flex-row ">

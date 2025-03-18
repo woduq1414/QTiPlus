@@ -13,6 +13,8 @@ import ConInfoEditPage from './components/ConInfoEditPage';
 
 import { Toaster } from 'react-hot-toast';
 
+// import "../public/style.css";
+
 function Router() {
   useEffect(() => {
     console.log('content ui loaded');
@@ -104,7 +106,7 @@ function Router() {
 
   useEffect(() => {
     const handleKeyDown = (event: { altKey: any; key: string; preventDefault: () => void }) => {
-      if (event.altKey && event.key === 'q') {
+      if ((event.altKey && event.key === 'q') || event.key === 'Q') {
         event.preventDefault(); // 기본 동작 방지
         setIsModalOpen((prev: any) => !prev);
         setCurrentPage(0);
@@ -138,7 +140,11 @@ function Router() {
 export default function App() {
   console.log('App');
   return (
-    <div className="App">
+    <div
+      className="App"
+      style={{
+        fontSize: '15px',
+      }}>
       <Toaster />
       <Router />
     </div>
