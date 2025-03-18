@@ -12,7 +12,7 @@ interface SearchPageProps {
 }
 
 const SearchPage: React.FC<SearchPageProps> = props => {
-  const { currentPage, setCurrentPage, userPackageData } = useGlobalStore();
+  const { currentPage, setCurrentPage, userPackageData, setIsModalOpen, isModalOpen } = useGlobalStore();
 
   const detailIdxDict = props.detailIdxDict;
 
@@ -23,12 +23,47 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
   const debouncedSearchText = useDebounce(searchInput, 250);
 
+  const imageRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (focusedIndex !== null && imageRefs.current[focusedIndex]) {
+      imageRefs.current[focusedIndex]?.focus();
+    }
+  }, [focusedIndex]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Tab' && queryResult !== undefined && queryResult.size > 0) {
+      e.preventDefault(); // 기본 Tab 동작 방지
+      setFocusedIndex(0);
+    }
+  };
+
+  const handleImageKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, index: number) => {
+    if (queryResult === undefined) {
+      return;
+    }
+
+    if (e.key === 'ArrowRight' && index < queryResult.size - 1) {
+      setFocusedIndex(index + 1);
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      setFocusedIndex(index - 1);
+    } else if (e.key === 'ArrowDown') {
+      setFocusedIndex(prev => (prev !== null ? Math.min(prev + 4, queryResult.size - 1) : 0));
+    } else if (e.key === 'ArrowUp') {
+      setFocusedIndex(prev => (prev !== null ? Math.max(prev - 4, 0) : 0));
+    } else if (e.key === 'Enter') {
+      imageRefs.current[index]?.click();
+    }
+  };
+
   useEffect(() => {
     if (debouncedSearchText) {
       let t = new Date();
       chrome.runtime.sendMessage({ type: 'SEARCH_CON', query: debouncedSearchText }, response => {
         const res = JSON.parse(response.res);
         setQueryResult(new Set(res));
+        setFocusedIndex(-1);
 
         console.log('Time:', new Date().getTime() - t.getTime());
       });
@@ -37,11 +72,24 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     }
   }, [debouncedSearchText]);
 
+  useEffect(() => {
+    if (isModalOpen) {
+      searchInputRef.current?.focus();
+
+      return () => {
+        setSearchInput('');
+        setQueryResult(undefined);
+      };
+    }
+
+    return () => {};
+  }, [isModalOpen]);
+
   return (
     <div
       className={`fixed inset-0 flex items-center justify-center pointer-events-none 
             `}>
-      <div className="bg-white p-6 rounded-lg shadow-lg pointer-events-auto flex flex-col gap-4">
+      <div className="bg-white p-6 rounded-lg shadow-lg pointer-events-auto flex flex-col gap-1 ">
         <input
           onChange={e => {
             setSearchInput(e.target.value);
@@ -80,13 +128,32 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         {
           <div className="flex flex-wrap w-[350px] gap-1">
             {queryResult &&
-              Array.from(queryResult).map(detailIdx => {
+              Array.from(queryResult).map((detailIdx, index) => {
                 const detailData = detailIdxDict[detailIdx];
 
                 return (
                   <div
                     key={detailIdx}
-                    className="flex cursor-pointer w-[calc(25%-0.2rem)] "
+                    className={`flex cursor-pointer w-[calc(25%-0.2rem)] rounded-md
+                                            ${
+                                              focusedIndex === index
+                                                ? ' border-4 scale-125 transition-all duration-200 z-[9999999999]'
+                                                : 'scale-100 z-[9999999]'
+                                            }
+                                            `}
+                    ref={el => {
+                      imageRefs.current[index] = el;
+                    }}
+                    onKeyDown={e => handleImageKeyDown(e, index)}
+                    onFocus={() => {
+                      setFocusedIndex(index);
+                    }}
+                    onBlur={() => {
+                      if (focusedIndex === index) {
+                        setFocusedIndex(null);
+                      }
+                    }}
+                    tabIndex={0}
                     onClick={async () => {
                       console.log(userPackageData);
                       // return;
@@ -118,6 +185,20 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
                       const cookies = parseCookies();
                       const ci_t = cookies['ci_c'];
+
+                      if (
+                        packageIdx === undefined ||
+                        detailIdx === undefined ||
+                        name === undefined ||
+                        ci_t === undefined ||
+                        check6Value === undefined ||
+                        check7Value === undefined ||
+                        check8Value === undefined
+                      ) {
+                        return;
+                      }
+
+                      setIsModalOpen(false);
 
                       fetch('https://gall.dcinside.com/dccon/insert_icon', {
                         headers: {
@@ -182,6 +263,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           className="cursor-pointer
           text-center
           text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
+          w-full
           "
           onClick={async () => {
             setCurrentPage(1);

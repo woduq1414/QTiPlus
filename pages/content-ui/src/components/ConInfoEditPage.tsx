@@ -284,7 +284,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
           }}>
           저장
         </div>
-        <div>unicro_id : {unicroId}</div>
+        {/* <div>unicro_id : {unicroId}</div> */}
       </div>
     </div>
   );

@@ -18,6 +18,9 @@ interface GlobalStore {
 
   detailIdxDict: any;
   setDetailIdxDict: (detailIdxDict: any) => void;
+
+  isModalOpen: boolean;
+  setIsModalOpen: (toggle?: boolean | ((prev: boolean) => boolean)) => void;
 }
 
 const useGlobalStore = create<GlobalStore>(set => ({
@@ -38,6 +41,12 @@ const useGlobalStore = create<GlobalStore>(set => ({
 
   detailIdxDict: null,
   setDetailIdxDict: detailIdxDict => set({ detailIdxDict }),
+
+  isModalOpen: false,
+  setIsModalOpen: toggle =>
+    set(state => ({
+      isModalOpen: typeof toggle === 'function' ? toggle(state.isModalOpen) : !!toggle,
+    })),
 }));
 
 export default useGlobalStore;

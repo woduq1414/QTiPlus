@@ -18,20 +18,22 @@ const ConListPage: React.FC<SearchPageProps> = props => {
       <div className="bg-white p-6 rounded-lg shadow-lg pointer-events-auto flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           {userPackageData &&
-            Object.keys(userPackageData).map(key => {
-              const packageData = userPackageData[key];
-              return (
-                <div
-                  className="cursor-pointer"
-                  key={key}
-                  onClick={async () => {
-                    setCurrentPackageIdx(packageData.packageIdx);
-                    setCurrentPage(2);
-                  }}>
-                  <h1>{packageData.title}</h1>
-                </div>
-              );
-            })}
+            Object.keys(userPackageData)
+              .sort((a, b) => userPackageData[a].title.localeCompare(userPackageData[b].title, 'ko'))
+              .map(key => {
+                const packageData = userPackageData[key];
+                return (
+                  <div
+                    className="cursor-pointer"
+                    key={key}
+                    onClick={async () => {
+                      setCurrentPackageIdx(packageData.packageIdx);
+                      setCurrentPage(2);
+                    }}>
+                    <h1>{packageData.title}</h1>
+                  </div>
+                );
+              })}
         </div>
         <div
           className="cursor-pointer

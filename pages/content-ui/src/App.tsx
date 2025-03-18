@@ -66,8 +66,6 @@ export default function App() {
     });
   }, []);
 
-  const [isModalOpen, setIsModalOpen] = useState(true);
-
   const {
     currentPage,
     setUnicroId,
@@ -79,6 +77,8 @@ export default function App() {
     setEmojiSearch,
     detailIdxDict,
     setDetailIdxDict,
+    isModalOpen,
+    setIsModalOpen,
   } = useGlobalStore();
 
   useEffect(() => {
@@ -107,7 +107,7 @@ export default function App() {
     const handleKeyDown = (event: { altKey: any; key: string; preventDefault: () => void }) => {
       if (event.altKey && event.key === 'q') {
         event.preventDefault(); // 기본 동작 방지
-        setIsModalOpen(isModalOpen => !isModalOpen);
+        setIsModalOpen((prev: any) => !prev);
         setCurrentPage(0);
         console.log('alt + q');
       }
