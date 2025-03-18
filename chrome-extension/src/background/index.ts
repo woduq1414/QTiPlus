@@ -80,10 +80,8 @@ class EmojiSearch {
   // 📌 TrieNode를 JSON으로 변환하는 함수
   private serializeTrie(node: SuffixTrieNode): any {
     return {
-      children: Object.fromEntries(
-        Object.entries(node.children).map(([char, child]) => [char, this.serializeTrie(child)]),
-      ),
-      emojis: Array.from(node.emojis),
+      c: Object.fromEntries(Object.entries(node.children).map(([char, child]) => [char, this.serializeTrie(child)])),
+      e: Array.from(node.emojis),
     };
   }
 
@@ -91,9 +89,9 @@ class EmojiSearch {
   private deserializeTrie(data: any): SuffixTrieNode {
     const node = new SuffixTrieNode();
     node.children = Object.fromEntries(
-      Object.entries(data.children).map(([char, child]) => [char, this.deserializeTrie(child)]),
+      Object.entries(data.c).map(([char, child]) => [char, this.deserializeTrie(child)]),
     );
-    node.emojis = new Set(data.emojis);
+    node.emojis = new Set(data.e);
     return node;
   }
 
@@ -101,9 +99,9 @@ class EmojiSearch {
   serialize(): string {
     return JSON.stringify({
       trieRoot: this.serializeTrie(this.root),
-      invertedIndex: Object.fromEntries(
-        Object.entries(this.invertedIndex).map(([key, emojis]) => [key, Array.from(emojis)]),
-      ),
+      // invertedIndex: Object.fromEntries(
+      //   Object.entries(this.invertedIndex).map(([key, emojis]) => [key, Array.from(emojis)]),
+      // ),
     });
   }
 
@@ -111,9 +109,9 @@ class EmojiSearch {
   deserialize(json: string): void {
     const data = JSON.parse(json);
     this.root = this.deserializeTrie(data.trieRoot);
-    this.invertedIndex = Object.fromEntries(
-      Object.entries(data.invertedIndex).map(([key, emojis]) => [key, new Set(emojis as any)]),
-    );
+    // this.invertedIndex = Object.fromEntries(
+    //   Object.entries(data.invertedIndex).map(([key, emojis]) => [key, new Set(emojis as any)]),
+    // );
   }
 }
 const emojiTrie = new EmojiSearch();
@@ -124,6 +122,7 @@ emojiTrie.addEmoji('🥲', 'tears', ['sad', 'cry']);
 console.log(emojiTrie.searchTrie('py')); // "happy"에 포함됨 → { "😀" }
 console.log(emojiTrie.searchTrie('un')); // "funny"에 포함됨 → { "😂" }
 console.log(emojiTrie.searchTrie('ea')); // "tears"에 포함됨 → { "🥲" }
+let tmpRes: any = undefined;
 
 const readLocalStorage = async (key: any) => {
   return new Promise((resolve, reject) => {
@@ -183,7 +182,7 @@ async function conTreeInit() {
       };
     }
   }
-
+  tmpRes = { emojiSearchTmp, detailIdxDictTmp };
   return { emojiSearchTmp, detailIdxDictTmp };
 }
 
@@ -194,8 +193,8 @@ conTreeInit().then(res => {
     console.log(message);
     if (message.type === 'GET_INIT_DATA') {
       sendResponse({
-        detailIdxDict: res?.detailIdxDictTmp,
-        emojiSearch: res?.emojiSearchTmp.serialize(),
+        detailIdxDict: tmpRes?.detailIdxDictTmp,
+        // emojiSearch: tmpRes?.emojiSearchTmp.serialize(),
       }); // JSON으로 변환하여 보냄
       return true;
     } else if (message.type === 'CHANGED_DATA') {
@@ -204,8 +203,22 @@ conTreeInit().then(res => {
         console.log(res2, '@@@@@');
         sendResponse({
           detailIdxDict: res2?.detailIdxDictTmp,
-          emojiSearch: res2?.emojiSearchTmp.serialize(),
+          // emojiSearch: res2?.emojiSearchTmp.serialize(),
         });
+      });
+      return true;
+    } else if (message.type === 'SEARCH_CON') {
+      const query = message.query;
+      console.log(query, '@@');
+      const result = tmpRes?.emojiSearchTmp.searchTrie(query);
+      console.log(
+        {
+          res: result,
+        },
+        '@@',
+      );
+      sendResponse({
+        res: JSON.stringify(Array.from(result)),
       });
       return true;
     }

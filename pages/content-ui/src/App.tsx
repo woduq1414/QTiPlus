@@ -57,11 +57,11 @@ export default function App() {
     // conTreeInit();
     // alert('content ui loaded');
     chrome.runtime.sendMessage({ type: 'GET_INIT_DATA' }, response => {
-      console.log(response);
-      const emojiSearchTmp = new EmojiSearch();
-      emojiSearchTmp.deserialize(response.emojiSearch);
+      console.log(response, 'get_init_data');
+      // const emojiSearchTmp = new EmojiSearch();
+      // emojiSearchTmp.deserialize(response.emojiSearch);
 
-      setEmojiSearch(emojiSearchTmp);
+      // setEmojiSearch(emojiSearchTmp);
       setDetailIdxDict(response.detailIdxDict);
     });
   }, []);
@@ -96,8 +96,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    setCurrentPage(2);
-    setCurrentPackageIdx(151346);
+    // setCurrentPage(2);
+    // setCurrentPackageIdx(151346);
+    setCurrentPage(0);
+    setIsModalOpen(false);
+    // setCurrentPackageIdx(151346);
   }, []);
 
   useEffect(() => {
@@ -121,9 +124,9 @@ export default function App() {
       ${isModalOpen ? 'unset' : 'hidden'}
     `}>
       {currentPage === 0 ? (
-        <SearchPage emojiSearch={emojiSearch} detailIdxDict={detailIdxDict} />
+        <SearchPage detailIdxDict={detailIdxDict} />
       ) : currentPage === 1 ? (
-        <ConListPage emojiSearch={emojiSearch} detailIdxDict={detailIdxDict} />
+        <ConListPage detailIdxDict={detailIdxDict} />
       ) : currentPage === 2 ? (
         <ConInfoEditPage packageIdx={currentPackageIdx} />
       ) : null}

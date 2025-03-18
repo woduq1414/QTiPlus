@@ -3,12 +3,6 @@ import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef } from 'react';
 
 interface SearchPageProps {
-  emojiSearch: {
-    addEmoji: (emoji: string, name: string, keywords: string[]) => void;
-    searchTrie: (query: string) => Set<string>;
-    searchIndex: (keyword: string) => Set<string>;
-  };
-
   detailIdxDict: Record<string, any>;
 }
 

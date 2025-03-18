@@ -65,10 +65,8 @@ class EmojiSearch {
   // 📌 TrieNode를 JSON으로 변환하는 함수
   private serializeTrie(node: SuffixTrieNode): any {
     return {
-      children: Object.fromEntries(
-        Object.entries(node.children).map(([char, child]) => [char, this.serializeTrie(child)]),
-      ),
-      emojis: Array.from(node.emojis),
+      c: Object.fromEntries(Object.entries(node.children).map(([char, child]) => [char, this.serializeTrie(child)])),
+      e: Array.from(node.emojis),
     };
   }
 
@@ -76,9 +74,9 @@ class EmojiSearch {
   private deserializeTrie(data: any): SuffixTrieNode {
     const node = new SuffixTrieNode();
     node.children = Object.fromEntries(
-      Object.entries(data.children).map(([char, child]) => [char, this.deserializeTrie(child)]),
+      Object.entries(data.c).map(([char, child]) => [char, this.deserializeTrie(child)]),
     );
-    node.emojis = new Set(data.emojis);
+    node.emojis = new Set(data.e);
     return node;
   }
 
@@ -86,9 +84,9 @@ class EmojiSearch {
   serialize(): string {
     return JSON.stringify({
       trieRoot: this.serializeTrie(this.root),
-      invertedIndex: Object.fromEntries(
-        Object.entries(this.invertedIndex).map(([key, emojis]) => [key, Array.from(emojis)]),
-      ),
+      // invertedIndex: Object.fromEntries(
+      //     Object.entries(this.invertedIndex).map(([key, emojis]) => [key, Array.from(emojis)]),
+      // ),
     });
   }
 
@@ -96,12 +94,11 @@ class EmojiSearch {
   deserialize(json: string): void {
     const data = JSON.parse(json);
     this.root = this.deserializeTrie(data.trieRoot);
-    this.invertedIndex = Object.fromEntries(
-      Object.entries(data.invertedIndex).map(([key, emojis]) => [key, new Set(emojis as any)]),
-    );
+    // this.invertedIndex = Object.fromEntries(
+    //     Object.entries(data.invertedIndex).map(([key, emojis]) => [key, new Set(emojis as any)]),
+    // );
   }
 }
-
 // 사용 예시
 
 export default EmojiSearch;

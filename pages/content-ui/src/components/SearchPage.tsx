@@ -4,27 +4,38 @@ import { useEffect, useState, useRef } from 'react';
 import parseCookies from '@src/functions/cookies';
 import readLocalStorage from '@src/functions/storage';
 import getQueryValue from '@src/functions/query';
+import useDebounce from '@src/hook/useDebounce';
+import ImageWithSkeleton from './ImageWithSkeleton';
 
 interface SearchPageProps {
-  emojiSearch: {
-    addEmoji: (emoji: string, name: string, keywords: string[]) => void;
-    searchTrie: (query: string) => Set<string>;
-    searchIndex: (keyword: string) => Set<string>;
-  };
-
   detailIdxDict: Record<string, any>;
 }
 
 const SearchPage: React.FC<SearchPageProps> = props => {
   const { currentPage, setCurrentPage, userPackageData } = useGlobalStore();
 
-  const emojiSearch = props.emojiSearch;
   const detailIdxDict = props.detailIdxDict;
 
   const [searchInput, setSearchInput] = useState<string>('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [queryResult, setQueryResult] = useState<Set<string>>();
+
+  const debouncedSearchText = useDebounce(searchInput, 250);
+
+  useEffect(() => {
+    if (debouncedSearchText) {
+      let t = new Date();
+      chrome.runtime.sendMessage({ type: 'SEARCH_CON', query: debouncedSearchText }, response => {
+        const res = JSON.parse(response.res);
+        setQueryResult(new Set(res));
+
+        console.log('Time:', new Date().getTime() - t.getTime());
+      });
+    } else {
+      setQueryResult(undefined);
+    }
+  }, [debouncedSearchText]);
 
   return (
     <div
@@ -42,13 +53,29 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           value={searchInput}
           onKeyDown={e => {
             if (e.key === 'Enter') {
+              if (searchInput === debouncedSearchText) {
+                return;
+              }
               console.log(searchInput);
 
-              setQueryResult(emojiSearch.searchTrie(searchInput as string));
+              let t = new Date();
+
+              chrome.runtime.sendMessage({ type: 'SEARCH_CON', query: searchInput }, response => {
+                const res = JSON.parse(response.res);
+                setQueryResult(new Set(res));
+
+                console.log('Time:', new Date().getTime() - t.getTime());
+              });
 
               setSearchInput('');
             }
           }}></input>
+
+        {/* <div>
+                    검색어 : {
+                        debouncedSearchText
+                    }
+                </div> */}
 
         {
           <div className="flex flex-wrap w-[350px] gap-1">
@@ -59,7 +86,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                 return (
                   <div
                     key={detailIdx}
-                    className="flex cursor-pointer "
+                    className="flex cursor-pointer w-[calc(25%-0.2rem)] "
                     onClick={async () => {
                       console.log(userPackageData);
                       // return;
@@ -119,7 +146,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                         refreshButton?.click();
                       });
                     }}>
-                    <img src={detailData.imgPath} alt={detailData.title} className="w-[90px] h-[90px]" />
+                    <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} />
                     {/* <span>{detailData.title}</span> */}
                   </div>
                 );
