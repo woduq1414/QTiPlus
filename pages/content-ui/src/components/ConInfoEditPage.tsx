@@ -39,8 +39,8 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
     })),
   );
 
-  const handleChange = (id: number, field: keyof Item, value: any) => {
-    if (field === 'who') {
+  const handleChange = (id: number, field: keyof Item, value: any, type: string | undefined = undefined) => {
+    if (field === 'who' && type !== 'one') {
       setItems(prevItems => prevItems.map(item => (item.id >= id ? { ...item, [field]: value } : item)));
     } else {
       setItems(prevItems => prevItems.map(item => (item.id === id ? { ...item, [field]: value } : item)));
@@ -213,10 +213,15 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                                         ${item.who[idx] ? 'opacity-100 border-4 border-gray-600' : 'opacity-20'}
                                         
                                         `}
-                          onClick={() => {
+                          onClick={e => {
                             const newWho = [...item.who];
                             newWho[idx] = !newWho[idx];
-                            handleChange(item.id, 'who', newWho);
+
+                            if (e.ctrlKey) {
+                              handleChange(item.id, 'who', newWho, 'one');
+                            } else {
+                              handleChange(item.id, 'who', newWho);
+                            }
                           }}></div>
                       );
                     })}

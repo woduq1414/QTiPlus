@@ -18,21 +18,28 @@ const ConListPage: React.FC<SearchPageProps> = props => {
       className={`fixed inset-0 flex items-center justify-center pointer-events-none 
         `}>
       <div className="bg-white p-6 rounded-lg shadow-lg pointer-events-auto flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 overflow-auto max-h-[65vh]">
           {userPackageData &&
             Object.keys(userPackageData)
               .sort((a, b) => userPackageData[a].title.localeCompare(userPackageData[b].title, 'ko'))
               .map(key => {
                 const packageData = userPackageData[key];
                 return (
-                  <div
-                    className="cursor-pointer"
-                    key={key}
-                    onClick={async () => {
-                      setCurrentPackageIdx(packageData.packageIdx);
-                      setCurrentPage(2);
-                    }}>
-                    <h1>{packageData.title}</h1>
+                  <div className="flex flex-row gap-2 items-center" key={key}>
+                    <img
+                      src={packageData.mainImg}
+                      alt={packageData.title}
+                      className="w-[3rem] h-[3rem] rounded-lg border-2 border-gray-600"
+                    />
+                    <div
+                      className="cursor-pointer"
+                      key={key}
+                      onClick={async () => {
+                        setCurrentPackageIdx(packageData.packageIdx);
+                        setCurrentPage(2);
+                      }}>
+                      <h1>{packageData.title}</h1>
+                    </div>
                   </div>
                 );
               })}
@@ -41,7 +48,8 @@ const ConListPage: React.FC<SearchPageProps> = props => {
           className="cursor-pointer
           text-center
           text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
-         "
+                            w-[350px]
+          "
           onClick={async () => {
             const cookies = parseCookies();
             const ci_t = cookies['ci_c'];
@@ -82,8 +90,9 @@ const ConListPage: React.FC<SearchPageProps> = props => {
             function processData(data: any) {
               const list = data.list;
 
-              const result: { [key: number]: { packageIdx: number; conList: { [key: string]: any }; title: string } } =
-                {};
+              const result: {
+                [key: number]: { packageIdx: number; conList: { [key: string]: any }; title: string; mainImg: string };
+              } = {};
               list.forEach((item: any) => {
                 const detailList = item.detail;
 
@@ -92,10 +101,16 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                 }
 
                 const packageIdx = detailList[0].package_idx;
-                let packageResult: { packageIdx: number; conList: { [key: string]: any }; title: string } = {
+                let packageResult: {
+                  packageIdx: number;
+                  conList: { [key: string]: any };
+                  title: string;
+                  mainImg: string;
+                } = {
                   packageIdx: packageIdx,
                   conList: {},
                   title: item.title,
+                  mainImg: item.main_img_url,
                 };
                 detailList.forEach((detailItem: any) => {
                   const detailIdx = detailItem.detail_idx;
