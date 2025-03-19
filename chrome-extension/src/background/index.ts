@@ -1,6 +1,5 @@
 import 'webextension-polyfill';
 import { exampleThemeStorage } from '@extension/storage';
-import { sync } from 'fast-glob';
 
 // import JSZip from 'jszip';
 // import saveAs from 'file-saver';
