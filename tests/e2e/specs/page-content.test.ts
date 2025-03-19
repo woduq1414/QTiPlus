@@ -7,7 +7,7 @@ describe('Webextension Content Script', () => {
       logs.push(logEntry.text);
     });
 
-    await browser.url('https://www.example.com');
+    await browser.url('https://www.dcinside.com');
 
     const EXPECTED_LOG_MESSAGE = 'content script loaded';
     await browser.waitUntil(() => logs.includes(EXPECTED_LOG_MESSAGE));

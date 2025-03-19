@@ -41,6 +41,20 @@ const ConListPage: React.FC<SearchPageProps> = props => {
       className={`fixed inset-0 flex items-center justify-center pointer-events-none  z-[999999999]
         `}>
       <div className="bg-white p-6 rounded-lg shadow-lg pointer-events-auto flex flex-col gap-4">
+        <div className="flex flex-row ">
+          <div
+            className="w-[90px] cursor-pointer"
+            onClick={() => {
+              // setUserPackageData(null);
+              setCurrentPage(0);
+            }}>
+            이전
+          </div>
+          <div className="flex-grow text-center font-semibold">
+            <h1>콘 목록</h1>
+          </div>
+          <div className="w-[90px]"></div>
+        </div>
         <div className="flex flex-col gap-2 overflow-auto max-h-[65vh]">
           {userPackageData &&
             Object.keys(userPackageData)
@@ -65,11 +79,13 @@ const ConListPage: React.FC<SearchPageProps> = props => {
 
                 return (
                   <div className="flex flex-row gap-2 items-center justify-between" key={key}>
-                    <img
-                      src={packageData.mainImg}
-                      alt={packageData.title}
-                      className="w-[3em] h-[3em] rounded-lg border-2 border-gray-600"
-                    />
+                    <div className="w-[65px]">
+                      <img
+                        src={packageData.mainImg}
+                        alt={packageData.title}
+                        className="w-[3em] h-[3em] rounded-lg border-2 border-gray-600"
+                      />
+                    </div>
                     <div
                       className="cursor-pointer font-semibold"
                       key={key}
@@ -80,7 +96,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                       <h1>{packageData.title}</h1>
                     </div>
 
-                    <div className="text-sm text-gray-600">
+                    <div className="w-[65px] text-sm text-gray-600 text-right">
                       ({cnt}/{Object.keys(customConData.conList).length})
                     </div>
                   </div>

@@ -110,6 +110,7 @@ function Router() {
         event.preventDefault(); // 기본 동작 방지
         setIsModalOpen((prev: any) => !prev);
         setCurrentPage(0);
+
         console.log('alt + q');
       }
     };
