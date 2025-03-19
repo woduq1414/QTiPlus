@@ -29,6 +29,9 @@ importers:
       react-simple-toasts:
         specifier: ^6.1.0
         version: 6.1.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      react-switch:
+        specifier: ^7.1.0
+        version: 7.1.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       react-tag-input:
         specifier: ^6.10.6
         version: 6.10.6(react-dnd-html5-backend@16.0.1)(react-dnd@16.0.1(@types/node@22.7.4)(@types/react@19.0.8)(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -4585,6 +4588,12 @@ packages:
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
+
+  react-switch@7.1.0:
+    resolution: {integrity: sha512-4xVeyImZE8QOTDw2FmhWz0iqo2psoRiS7XzdjaZBCIP8Dzo3rT0esHUjLee5WsAPSFXWWl1eVA5arp9n2C6yQA==}
+    peerDependencies:
+      react: ^15.3.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^15.3.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   react-tag-input@6.10.6:
     resolution: {integrity: sha512-oXopRSs2ZSuMqsygcZhjal869MZpAUX0YVNQ/WGaYXPJmbuZIviqeTocs3g/BHs9ReIG9vu563JOZsHGikiMgw==}
@@ -10096,6 +10105,12 @@ snapshots:
 
   react-simple-toasts@6.1.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
     dependencies:
+      react: 19.0.0
+      react-dom: 19.0.0(react@19.0.0)
+
+  react-switch@7.1.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
+    dependencies:
+      prop-types: 15.8.1
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
 

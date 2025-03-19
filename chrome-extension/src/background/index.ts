@@ -150,14 +150,21 @@ async function loadJSON() {
 }
 
 async function conTreeInit() {
+  // const userPackageData = await readLocalStorage('UserPackageData');
+
   const emojiSearchTmp = new EmojiSearch();
 
   let detailIdxDictTmp = {} as any;
 
-  let conInfoData;
+  let conInfoData: { [x: string]: { conList: any } };
   const prevCustomConList: any = await readLocalStorage('CustomConList');
   if (prevCustomConList === null || prevCustomConList === undefined) {
     conInfoData = await loadJSON();
+
+    const storageKey = 'CustomConList';
+    chrome.storage.local.set({ [storageKey]: conInfoData }, async function () {
+      console.log('Value is set to ', conInfoData);
+    });
   } else {
     conInfoData = prevCustomConList;
   }
@@ -168,7 +175,7 @@ async function conTreeInit() {
     const conList = conInfoData[packageIdx as keyof typeof conInfoData].conList;
     for (let sort in conList) {
       const con = conList[sort as keyof typeof conList];
-      console.log(con.title);
+      // console.log(con.title);
 
       const key = packageIdx + '-' + sort;
       emojiSearchTmp.addEmoji(key, con.title, con.tag.split(' '));
@@ -209,83 +216,126 @@ conTreeInit().then(res => {
       });
       return true;
     } else if (message.type === 'SEARCH_CON') {
-      let query = message.query as string;
+      async function func() {
+        let query = message.query as string;
+        const unicroId = message.unicroId as string;
 
-      query = query.replaceAll(' ', '');
-      console.log(query, '@@');
-      let who = '';
+        query = query.replaceAll(' ', '');
+        // console.log(query, '@@');
+        let who = '';
 
-      if (query.includes('#')) {
-        who = query.split('#')[1].toUpperCase();
-        query = query.split('#')[0];
-      }
+        if (query.includes('#')) {
+          who = query.split('#')[1].toUpperCase();
+          query = query.split('#')[0];
+        }
 
-      let additionalCategory = '';
-      if (query.includes('ㅠ')) {
-        additionalCategory = '슬픔';
-      } else if (query.includes('ㅋ')) {
-        additionalCategory = '웃음';
-      } else if (['ㅎㅇ', '하이'].includes(query)) {
-        additionalCategory = '안녕';
-      } else if (['ㅂㅇ', '잘가'].includes(query)) {
-        additionalCategory = '바이';
-      } else if (['ㅈㅅ', '죄송'].includes(query)) {
-        additionalCategory = '미안';
-      } else if (['ㄴㅇㄱ', '헉'].includes(query)) {
-        additionalCategory = '놀람';
-      } else if (['ㄳ', 'ㄱㅅ'].includes(query)) {
-        additionalCategory = '감사';
-      } else if (['ㄷㄷ', 'ㅎㄷㄷ', '후덜덜', '두렵', '무섭', '무서', '두려'].includes(query)) {
-        additionalCategory = '덜덜';
-      } else if (['웃겨'].includes(query)) {
-        additionalCategory = '웃음';
-      } else if (['울었', '울고', '슬퍼', '슬프'].includes(query)) {
-        additionalCategory = '슬픔';
-      } else if (['행복', '신나', '기뻐', '신났'].includes(query)) {
-        additionalCategory = '신남';
-      } else if (['화남', '화났', '화나', '분노'].includes(query)) {
-        additionalCategory = '화남';
-      } else if (['커여', '커엽', '귀여', '귀엽'].includes(query)) {
-        additionalCategory = '커';
-      } else if (['섹시', '떽띠'].includes(query)) {
-        additionalCategory = '떽';
-      } else if (['따봉', '좋'].includes(query)) {
-        additionalCategory = '굿';
-      } else if (['크아'].includes(query) && ['악'].includes(query)) {
-        additionalCategory = '크아악';
-      } else if (['완장'].includes(query)) {
-        additionalCategory = '크아악';
-      } else if (['춤'].includes(query)) {
-        additionalCategory = '댄스';
-      }
+        function includesAny(query: string, list: string[]): boolean {
+          return list.some(q => query.includes(q));
+        }
 
-      const detailIdxDict = tmpRes?.detailIdxDictTmp;
+        let additionalCategory = '';
 
-      const result = tmpRes?.emojiSearchTmp.searchTrie(query);
+        if (query.includes('ㅠ')) {
+          additionalCategory = '슬픔';
+        } else if (query.includes('ㅋ')) {
+          additionalCategory = '웃음';
+        } else if (includesAny(query, ['ㅎㅇ', '하이'])) {
+          additionalCategory = '안녕';
+        } else if (includesAny(query, ['ㅂㅇ', '바이'])) {
+          additionalCategory = '바이';
+        } else if (includesAny(query, ['ㅈㅅ', '죄송'])) {
+          additionalCategory = '미안';
+        } else if (includesAny(query, ['ㄴㅇㄱ', '헉'])) {
+          additionalCategory = '놀람';
+        } else if (includesAny(query, ['ㄳ', 'ㄱㅅ'])) {
+          additionalCategory = '감사';
+        } else if (includesAny(query, ['ㄷㄷ', 'ㅎㄷㄷ', '후덜덜', '두렵', '무섭', '무서', '두려'])) {
+          additionalCategory = '덜덜';
+        } else if (includesAny(query, ['웃겨'])) {
+          additionalCategory = '웃음';
+        } else if (includesAny(query, ['울었', '울고', '슬퍼', '슬프'])) {
+          additionalCategory = '슬픔';
+        } else if (includesAny(query, ['행복', '신나', '기뻐', '신났'])) {
+          additionalCategory = '신남';
+        } else if (includesAny(query, ['화남', '화났', '화나', '분노'])) {
+          additionalCategory = '화남';
+        } else if (includesAny(query, ['커여', '커엽', '귀여', '귀엽'])) {
+          additionalCategory = '커';
+        } else if (includesAny(query, ['섹시', '떽띠'])) {
+          additionalCategory = '떽';
+        } else if (includesAny(query, ['따봉', '좋'])) {
+          additionalCategory = '굿';
+        } else if (includesAny(query, ['크아'])) {
+          additionalCategory = '크아악';
+        } else if (includesAny(query, ['완장'])) {
+          additionalCategory = '크아악';
+        } else if (includesAny(query, ['춤'])) {
+          additionalCategory = '댄스';
+        }
 
-      const result2 = tmpRes?.emojiSearchTmp.searchTrie(additionalCategory);
+        const detailIdxDict = tmpRes?.detailIdxDictTmp;
 
-      const finalResult = new Set([...Array.from(result), ...Array.from(result2)]);
+        const result = tmpRes?.emojiSearchTmp.searchTrie(query);
 
-      if (who !== '') {
-        for (let key of Array.from(finalResult)) {
-          let f = false;
-          for (let i = 0; i < who.length; i++) {
-            if (detailIdxDict[key as string].who.includes(who[i])) {
-              f = true;
-              break;
+        const result2 = tmpRes?.emojiSearchTmp.searchTrie(additionalCategory);
+
+        const finalResult = new Set([...Array.from(result), ...Array.from(result2)]);
+
+        if (who !== '') {
+          for (let key of Array.from(finalResult)) {
+            let f = false;
+            for (let i = 0; i < who.length; i++) {
+              if (detailIdxDict[key as string].who.includes(who[i])) {
+                f = true;
+                break;
+              }
+            }
+            if (!f) {
+              finalResult.delete(key);
             }
           }
-          if (!f) {
+        }
+        console.log(finalResult, 'finalResult');
+
+        const userPackageData = (await readLocalStorage(`UserPackageData_${unicroId}`)) as any;
+
+        if (userPackageData === null) {
+          sendResponse({
+            res: JSON.stringify([]),
+          });
+          return true;
+        }
+        for (let key of Array.from(finalResult)) {
+          const packageIdx = detailIdxDict[key as string].packageIdx;
+
+          if (userPackageData[packageIdx] === undefined) {
             finalResult.delete(key);
+          } else {
+            if (userPackageData[packageIdx].isHide) {
+              finalResult.delete(key);
+            }
           }
+        }
+
+        // for(let key of Array.from(finalResult)){
+        //   if(
+        //   }
+        // }
+
+        if (finalResult.size >= 20 && query.length == 1) {
+          sendResponse({
+            res: JSON.stringify(Array.from(finalResult).slice(0, 20)),
+          });
+          return true;
+        } else {
+          sendResponse({
+            res: JSON.stringify(Array.from(finalResult)),
+          });
+          return true;
         }
       }
 
-      sendResponse({
-        res: JSON.stringify(Array.from(finalResult)),
-      });
-      return true;
+      func();
     }
     return true;
   });
@@ -295,6 +345,12 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.type == 'SYNC_CON_LIST') {
     const unicroId = message.data.unicroId;
     const ci_t = message.data.ci_t;
+
+    const storageKey = `UserPackageData_${unicroId}`;
+
+    const oldUserPackageData = (await chrome.storage.local.get([storageKey]))[storageKey];
+
+    console.log(oldUserPackageData, 'oldUserPackageData');
 
     async function func() {
       async function fetchList(page: number) {
@@ -356,16 +412,26 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
           }
 
           const packageIdx = detailList[0].package_idx;
+
+          let isHide = false;
+          if (oldUserPackageData[packageIdx] !== undefined) {
+            if (oldUserPackageData[packageIdx].isHide) {
+              isHide = true;
+            }
+          }
+
           let packageResult: {
             packageIdx: number;
             conList: { [key: string]: any };
             title: string;
             mainImg: string;
+            isHide: boolean;
           } = {
             packageIdx: packageIdx,
             conList: {},
             title: item.title,
             mainImg: item.main_img_url,
+            isHide: isHide,
           };
           detailList.forEach((detailItem: any) => {
             const detailIdx = detailItem.detail_idx;
@@ -393,8 +459,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
           Object.assign(allResult, processData(data));
         }
       }
-
-      const storageKey = `UserPackageData_${unicroId}`;
 
       chrome.storage.local.set({ [storageKey]: allResult }, async function () {
         console.log('Value is set to ', allResult);
@@ -426,6 +490,25 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     //   sendResponse({ data });
     // }
     // );
+  } else if (message.type == 'UPDATE_HIDE_STATE') {
+    const unicroId = message.data.unicroId;
+    const hideState = message.data.hideState;
+
+    const storageKey = `UserPackageData_${unicroId}`;
+
+    let oldUserPackageData = (await chrome.storage.local.get([storageKey]))[storageKey];
+
+    console.log(oldUserPackageData, 'oldUserPackageData');
+
+    for (let packageIdx in oldUserPackageData) {
+      oldUserPackageData[packageIdx].isHide = hideState[packageIdx];
+    }
+
+    chrome.storage.local.set({ [storageKey]: oldUserPackageData }, async function () {
+      console.log('Value is set to ', oldUserPackageData);
+
+      sendResponse({ data: oldUserPackageData });
+    });
   }
 
   return true;

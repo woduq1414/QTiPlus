@@ -7,7 +7,7 @@ import getQueryValue from '@src/functions/query';
 import useDebounce from '@src/hook/useDebounce';
 import ImageWithSkeleton from './ImageWithSkeleton';
 import toast from 'react-hot-toast';
-import { CheckCircleIcon, TrashIcon } from '@heroicons/react/16/solid';
+import { CheckCircleIcon, Cog6ToothIcon, TrashIcon } from '@heroicons/react/16/solid';
 import { CheckCircleIcon as CheckCircleIconOutline } from '@heroicons/react/24/outline';
 import { title } from 'process';
 import makeToast from '@src/functions/toast';
@@ -17,7 +17,7 @@ interface SearchPageProps {
 }
 
 const SearchPage: React.FC<SearchPageProps> = props => {
-  const { currentPage, setCurrentPage, userPackageData, setIsModalOpen, isModalOpen } = useGlobalStore();
+  const { currentPage, setCurrentPage, userPackageData, setIsModalOpen, isModalOpen, unicroId } = useGlobalStore();
 
   const detailIdxDict = props.detailIdxDict;
 
@@ -74,7 +74,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
   useEffect(() => {
     if (debouncedSearchText) {
       let t = new Date();
-      chrome.runtime.sendMessage({ type: 'SEARCH_CON', query: debouncedSearchText }, response => {
+      chrome.runtime.sendMessage({ type: 'SEARCH_CON', query: debouncedSearchText, unicroId: unicroId }, response => {
         const res = JSON.parse(response.res);
         setQueryResult(new Set(res));
         setFocusedIndex(-1);
@@ -140,7 +140,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             {isDoubleCon ? (
               <CheckCircleIcon className="h-4 w-4 text-gray-600" />
             ) : (
-              <CheckCircleIconOutline className="h-4 w-4 text-gray-300" />
+              <CheckCircleIconOutline className="h-4 w-4 text-gray-400" />
             )}
             <span
               className={`text-sm font-semibold
@@ -178,23 +178,19 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           className="border border-gray-300 rounded-md p-2 bg-white/20"
           value={searchInput}
           onKeyDown={e => {
-            if (e.key === 'Enter') {
-              if (searchInput === debouncedSearchText) {
-                return;
-              }
-              console.log(searchInput);
-
-              let t = new Date();
-
-              chrome.runtime.sendMessage({ type: 'SEARCH_CON', query: searchInput }, response => {
-                const res = JSON.parse(response.res);
-                setQueryResult(new Set(res));
-
-                console.log('Time:', new Date().getTime() - t.getTime());
-              });
-
-              setSearchInput('');
-            }
+            // if (e.key === 'Enter') {
+            //   if (searchInput === debouncedSearchText) {
+            //     return;
+            //   }
+            //   console.log(searchInput);
+            //   let t = new Date();
+            //   chrome.runtime.sendMessage({ type: 'SEARCH_CON', query: searchInput }, response => {
+            //     const res = JSON.parse(response.res);
+            //     setQueryResult(new Set(res));
+            //     console.log('Time:', new Date().getTime() - t.getTime());
+            //   });
+            //   setSearchInput('');
+            // }
           }}></input>
 
         {/* <div>
@@ -379,103 +375,24 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           text-center
          hover:text-blue-700
          text-gray-600
-         underline
+        
  
           mt-2
+          flex flex-row gap-0.5 justify-center items-center
           "
           onClick={async () => {
             setCurrentPage(1);
 
             return;
-
-            const cookies = parseCookies();
-            const ci_t = cookies['ci_c'];
-
-            async function fetchList(page: number) {
-              const response = await fetch('https://gall.dcinside.com/dccon/lists', {
-                headers: {
-                  accept: '*/*',
-                  'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
-                  'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                  'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
-                  'sec-ch-ua-mobile': '?0',
-                  'sec-ch-ua-platform': '"Windows"',
-                  'sec-fetch-dest': 'empty',
-                  'sec-fetch-mode': 'cors',
-                  'sec-fetch-site': 'same-origin',
-                  'x-requested-with': 'XMLHttpRequest',
-                },
-                referrer: 'https://gall.dcinside.com/mgallery/board/view',
-                referrerPolicy: 'unsafe-url',
-                body: `ci_t=${ci_t}&target=icon&page=${page}`,
-                method: 'POST',
-                mode: 'cors',
-                credentials: 'include',
-              });
-              const data = await response.json();
-
-              // 500 밀리 초 후에 리턴
-              await new Promise(resolve => setTimeout(resolve, 500));
-              return data;
-            }
-
-            let data = await fetchList(0);
-
-            const maxPage = data.max_page + 1;
-            // const maxPage = 1;
-
-            function processData(data: any) {
-              const list = data.list;
-
-              const result: { [key: number]: { packageIdx: number; conList: { [key: string]: any }; title: string } } =
-                {};
-              list.forEach((item: any) => {
-                const detailList = item.detail;
-
-                if (detailList.length === 0) {
-                  return;
-                }
-
-                const packageIdx = detailList[0].package_idx;
-                let packageResult: { packageIdx: number; conList: { [key: string]: any }; title: string } = {
-                  packageIdx: packageIdx,
-                  conList: {},
-                  title: item.title,
-                };
-                detailList.forEach((detailItem: any) => {
-                  const detailIdx = detailItem.detail_idx;
-                  const sort = detailItem.sort;
-                  packageResult.conList[sort] = {
-                    detailIdx: detailIdx,
-                    title: detailItem.title,
-                    imgPath: detailItem.list_img,
-                  };
-                });
-
-                result[packageIdx] = packageResult;
-              });
-
-              return result;
-            }
-
-            let allResult = {} as any;
-
-            for (let i = 0; i < maxPage; i++) {
-              if (i === 0) {
-                Object.assign(allResult, processData(data));
-              } else {
-                data = await fetchList(i);
-                Object.assign(allResult, processData(data));
-              }
-            }
-
-            const storageKey = `UserPackageData_${ci_t}`;
-
-            chrome.storage.local.set({ [storageKey]: allResult }, async function () {
-              console.log('Value is set to ', allResult);
-            });
           }}>
-          콘 목록
+          <Cog6ToothIcon
+            className=" inline-block"
+            style={{
+              width: '1em',
+              height: '1em',
+            }}
+          />
+          설정
         </div>
       </div>
     </div>

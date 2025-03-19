@@ -48,46 +48,6 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
   };
   const packageIdx = props.packageIdx;
 
-  const [tags, setTags] = useState<Array<Tag>>([
-    { id: 'India', text: 'India', className: '' },
-    { id: 'Vietnam', text: 'Vietnam', className: '' },
-    { id: 'Turkey', text: 'Turkey', className: '' },
-  ]);
-
-  const handleDelete = (index: number) => {
-    setTags(tags.filter((_, i) => i !== index));
-  };
-
-  const onTagUpdate = (index: number, newTag: Tag) => {
-    const updatedTags = [...tags];
-    updatedTags.splice(index, 1, newTag);
-    setTags(updatedTags);
-  };
-
-  const handleAddition = (tag: Tag) => {
-    setTags(prevTags => {
-      return [...prevTags, tag];
-    });
-  };
-
-  const handleDrag = (tag: Tag, currPos: number, newPos: number) => {
-    const newTags = tags.slice();
-
-    newTags.splice(currPos, 1);
-    newTags.splice(newPos, 0, tag);
-
-    // re-render
-    setTags(newTags);
-  };
-
-  const handleTagClick = (index: number) => {
-    console.log('The tag at index ' + index + ' was clicked');
-  };
-
-  const onClearAll = () => {
-    setTags([]);
-  };
-
   useEffect(() => {
     if (userPackageData === null) return;
     if (userPackageData[packageIdx] === undefined) return;
@@ -186,7 +146,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                     placeholder="Title"
                     value={item.title}
                     onChange={e => handleChange(item.id, 'title', e.target.value)}
-                    className="border p-1 mb-2"
+                    className="border p-1"
                   />
                   <input
                     type="text"
