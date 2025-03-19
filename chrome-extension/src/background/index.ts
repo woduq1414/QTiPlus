@@ -255,6 +255,8 @@ conTreeInit().then(res => {
         additionalCategory = '크아악';
       } else if (['완장'].includes(query)) {
         additionalCategory = '크아악';
+      } else if (['춤'].includes(query)) {
+        additionalCategory = '댄스';
       }
 
       const detailIdxDict = tmpRes?.detailIdxDictTmp;

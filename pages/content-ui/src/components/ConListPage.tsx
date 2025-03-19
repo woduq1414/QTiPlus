@@ -1,4 +1,5 @@
 import parseCookies from '@src/functions/cookies';
+import readLocalStorage from '@src/functions/storage';
 import makeToast from '@src/functions/toast';
 import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef } from 'react';
@@ -24,7 +25,16 @@ const ConListPage: React.FC<SearchPageProps> = props => {
         setSyncProgress(` (${request.data.page + 1}/${request.data.maxPage + 1})`);
       }
     });
+
+    async function func() {
+      setCustomConList(await readLocalStorage('CustomConList'));
+      // console.log(await readLocalStorage('CustomConList'), "!@#!#!@#")
+    }
+
+    func();
   }, []);
+
+  const [customConList, setCustomConList] = useState<any>(null);
 
   return (
     <div
@@ -37,21 +47,41 @@ const ConListPage: React.FC<SearchPageProps> = props => {
               .sort((a, b) => userPackageData[a].title.localeCompare(userPackageData[b].title, 'ko'))
               .map(key => {
                 const packageData = userPackageData[key];
+
+                const customConData = customConList ? customConList[packageData.packageIdx] : null;
+
+                if (!customConData) {
+                  return null;
+                }
+                // console.log(packageData.conList);
+                let cnt = 0;
+                for (let conKey of Object.keys(customConData.conList)) {
+                  // console.log(customConData.conList[conKey]);
+                  if (customConData.conList[conKey].title !== '' || customConData.conList[conKey].tag !== '') {
+                    cnt += 1;
+                  }
+                }
+                // console.log(cnt, Object.keys(customConData.conList).length);
+
                 return (
-                  <div className="flex flex-row gap-2 items-center" key={key}>
+                  <div className="flex flex-row gap-2 items-center justify-between" key={key}>
                     <img
                       src={packageData.mainImg}
                       alt={packageData.title}
                       className="w-[3em] h-[3em] rounded-lg border-2 border-gray-600"
                     />
                     <div
-                      className="cursor-pointer"
+                      className="cursor-pointer font-semibold"
                       key={key}
                       onClick={async () => {
                         setCurrentPackageIdx(packageData.packageIdx);
                         setCurrentPage(2);
                       }}>
                       <h1>{packageData.title}</h1>
+                    </div>
+
+                    <div className="text-sm text-gray-600">
+                      ({cnt}/{Object.keys(customConData.conList).length})
                     </div>
                   </div>
                 );
