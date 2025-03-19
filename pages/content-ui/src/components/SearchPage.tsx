@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { CheckCircleIcon, TrashIcon } from '@heroicons/react/16/solid';
 import { CheckCircleIcon as CheckCircleIconOutline } from '@heroicons/react/24/outline';
 import { title } from 'process';
+import makeToast from '@src/functions/toast';
 
 interface SearchPageProps {
   detailIdxDict: Record<string, any>;
@@ -89,6 +90,9 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     if (isModalOpen) {
       searchInputRef.current?.focus();
 
+      setIsDoubleCon(false);
+      setFirstDoubleCon(null);
+
       return () => {
         setSearchInput('');
         setQueryResult(undefined);
@@ -116,11 +120,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
   }, []);
 
   function toggleDoubleCon() {
-    if (isModalOpen) {
-      setIsDoubleCon(prev => !prev);
-      setFirstDoubleCon(null);
-    } else {
-    }
+    setIsDoubleCon(prev => !prev);
+    setFirstDoubleCon(null);
   }
 
   return (
@@ -128,7 +129,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       className={`fixed inset-0 flex items-center justify-center pointer-events-none  z-[999999999]
             `}>
       <div
-        className="bg-[rgba(246,246,246,0.75)] p-6 rounded-lg shadow-2xl pointer-events-auto flex flex-col gap-1 
+        className="bg-[rgba(246,246,246,0.75)] p-6 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-1 
       
       "
         style={{
@@ -290,6 +291,14 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                         check7Value === undefined ||
                         check8Value === undefined
                       ) {
+                        setIsModalOpen(false);
+
+                        makeToast(
+                          `등록 실패 ㅠㅠ ${JSON.stringify({
+                            packageIdx,
+                            detailIdx,
+                          })}`,
+                        );
                         return;
                       }
                       const name = document.getElementsByClassName('user_info_input')[0].children[0].textContent;
@@ -330,6 +339,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                           'btn_cmt_refresh',
                         )[0] as HTMLButtonElement;
                         refreshButton?.click();
+                        makeToast('등록 성공!');
                       });
                     }}>
                     <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} />

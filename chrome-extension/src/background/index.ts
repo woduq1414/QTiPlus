@@ -1,5 +1,6 @@
 import 'webextension-polyfill';
 import { exampleThemeStorage } from '@extension/storage';
+import { sync } from 'fast-glob';
 
 // import JSZip from 'jszip';
 // import saveAs from 'file-saver';
@@ -251,6 +252,10 @@ conTreeInit().then(res => {
         additionalCategory = '떽';
       } else if (['따봉', '좋'].includes(query)) {
         additionalCategory = '굿';
+      } else if (['크아'].includes(query) && ['악'].includes(query)) {
+        additionalCategory = '크아악';
+      } else if (['완장'].includes(query)) {
+        additionalCategory = '크아악';
       }
 
       const detailIdxDict = tmpRes?.detailIdxDictTmp;
@@ -283,6 +288,146 @@ conTreeInit().then(res => {
     }
     return true;
   });
+});
+
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  if (message.type == 'SYNC_CON_LIST') {
+    const unicroId = message.data.unicroId;
+    const ci_t = message.data.ci_t;
+
+    async function func() {
+      async function fetchList(page: number) {
+        const response = await fetch('https://gall.dcinside.com/dccon/lists', {
+          headers: {
+            accept: '*/*',
+            'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'x-requested-with': 'XMLHttpRequest',
+          },
+          referrer: 'https://gall.dcinside.com/mgallery/board/view',
+          referrerPolicy: 'unsafe-url',
+          body: `ci_t=${ci_t}&target=icon&page=${page}`,
+          method: 'POST',
+          mode: 'cors',
+          credentials: 'include',
+        });
+        const data = await response.json();
+
+        if (sender.tab) {
+          if (sender.tab?.id !== undefined) {
+            chrome.tabs.sendMessage(sender.tab.id, {
+              type: 'SYNC_PROGRESS',
+              data: {
+                page: page,
+                maxPage: data.max_page,
+              },
+            });
+          }
+        }
+
+        // 500 밀리 초 후에 리턴
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return data;
+      }
+
+      let data = await fetchList(0);
+
+      const maxPage = data.max_page + 1;
+      // const maxPage = 1;
+
+      function processData(data: any) {
+        const list = data.list;
+
+        const result: {
+          [key: number]: { packageIdx: number; conList: { [key: string]: any }; title: string; mainImg: string };
+        } = {};
+        list.forEach((item: any) => {
+          const detailList = item.detail;
+
+          if (detailList.length === 0) {
+            return;
+          }
+
+          const packageIdx = detailList[0].package_idx;
+          let packageResult: {
+            packageIdx: number;
+            conList: { [key: string]: any };
+            title: string;
+            mainImg: string;
+          } = {
+            packageIdx: packageIdx,
+            conList: {},
+            title: item.title,
+            mainImg: item.main_img_url,
+          };
+          detailList.forEach((detailItem: any) => {
+            const detailIdx = detailItem.detail_idx;
+            const sort = detailItem.sort;
+            packageResult.conList[sort] = {
+              detailIdx: detailIdx,
+              title: detailItem.title,
+              imgPath: detailItem.list_img,
+            };
+          });
+
+          result[packageIdx] = packageResult;
+        });
+
+        return result;
+      }
+
+      let allResult = {} as any;
+
+      for (let i = 0; i < maxPage; i++) {
+        if (i === 0) {
+          Object.assign(allResult, processData(data));
+        } else {
+          data = await fetchList(i);
+          Object.assign(allResult, processData(data));
+        }
+      }
+
+      const storageKey = `UserPackageData_${unicroId}`;
+
+      chrome.storage.local.set({ [storageKey]: allResult }, async function () {
+        console.log('Value is set to ', allResult);
+
+        // refresh page
+
+        // setUserPackageData(allResult);
+
+        // makeToast('동기화 성공!');
+
+        sendResponse({ data: allResult });
+      });
+    }
+
+    await func();
+    // fetch("https://gall.dcinside.com/dccon/lists", {
+    //   "headers": {
+    //     "accept": "*/*", "accept-language": "ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6",
+    //     "cache-control": "no-cache", "content-type": "application/x-www-form-urlencoded; charset=UTF-8", "pragma": "no-cache",
+    //     "sec-ch-ua": "\"Chromium\";v=\"134\", \"Not:A-Brand\";v=\"24\", \"Google Chrome\";v=\"134\"", "sec-ch-ua-mobile": "?0",
+    //     "sec-ch-ua-platform": "\"Windows\"", "sec-fetch-dest": "empty", "sec-fetch-mode": "cors", "sec-fetch-site": "same-origin", "x-requested-with": "XMLHttpRequest"
+    //   },
+    //   "referrer": "https://gall.dcinside.com/mgallery/board/view/?id=qwer_fan",
+    //   "referrerPolicy": "unsafe-url",
+    //   "body": "ci_t=8cf266840e18664a8ce9eb37750d0e65&target=icon&page=1", "method": "POST", "mode": "cors", "credentials": "include"
+    // }).then(response => response.json()).then(data => {
+    //   console.log(data);
+
+    //   sendResponse({ data });
+    // }
+    // );
+  }
+
+  return true;
 });
 
 // chrome.downloads.onChanged.addListener((downloadDelta) => {
