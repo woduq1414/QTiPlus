@@ -152,6 +152,9 @@ async function loadJSON() {
 async function conTreeInit() {
   // const userPackageData = await readLocalStorage('UserPackageData');
 
+  // sleep 3s
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
   const emojiSearchTmp = new EmojiSearch();
 
   let detailIdxDictTmp = {} as any;
@@ -206,14 +209,18 @@ conTreeInit().then(res => {
       }); // JSON으로 변환하여 보냄
       return true;
     } else if (message.type === 'CHANGED_DATA') {
-      console.log('CHANGED_DATA!!');
-      conTreeInit().then(res2 => {
+      async function func() {
+        console.log('CHANGED_DATA!!');
+        const res2 = await conTreeInit();
         console.log(res2, '@@@@@');
         sendResponse({
           detailIdxDict: res2?.detailIdxDictTmp,
           // emojiSearch: res2?.emojiSearchTmp.serialize(),
         });
-      });
+      }
+
+      func();
+
       return true;
     } else if (message.type === 'SEARCH_CON') {
       async function func() {
@@ -341,18 +348,16 @@ conTreeInit().then(res => {
   });
 });
 
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type == 'SYNC_CON_LIST') {
-    const unicroId = message.data.unicroId;
-    const ci_t = message.data.ci_t;
-
-    const storageKey = `UserPackageData_${unicroId}`;
-
-    const oldUserPackageData = (await chrome.storage.local.get([storageKey]))[storageKey];
-
-    console.log(oldUserPackageData, 'oldUserPackageData');
-
     async function func() {
+      const unicroId = message.data.unicroId;
+      const ci_t = message.data.ci_t;
+
+      const storageKey = `UserPackageData_${unicroId}`;
+
+      const oldUserPackageData = (await chrome.storage.local.get([storageKey]))[storageKey];
+      console.log(oldUserPackageData, 'oldUserPackageData');
       async function fetchList(page: number) {
         // document.cookie = cookies;
         const response = await fetch('https://gall.dcinside.com/dccon/lists', {
@@ -477,7 +482,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       });
     }
 
-    await func();
+    func();
     // fetch("https://gall.dcinside.com/dccon/lists", {
     //   "headers": {
     //     "accept": "*/*", "accept-language": "ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6",
@@ -495,24 +500,28 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     // }
     // );
   } else if (message.type == 'UPDATE_HIDE_STATE') {
-    const unicroId = message.data.unicroId;
-    const hideState = message.data.hideState;
+    async function func() {
+      const unicroId = message.data.unicroId;
+      const hideState = message.data.hideState;
 
-    const storageKey = `UserPackageData_${unicroId}`;
+      const storageKey = `UserPackageData_${unicroId}`;
 
-    let oldUserPackageData = (await chrome.storage.local.get([storageKey]))[storageKey];
+      let oldUserPackageData = (await chrome.storage.local.get([storageKey]))[storageKey];
 
-    console.log(oldUserPackageData, 'oldUserPackageData');
+      console.log(oldUserPackageData, 'oldUserPackageData');
 
-    for (let packageIdx in oldUserPackageData) {
-      oldUserPackageData[packageIdx].isHide = hideState[packageIdx];
+      for (let packageIdx in oldUserPackageData) {
+        oldUserPackageData[packageIdx].isHide = hideState[packageIdx];
+      }
+
+      chrome.storage.local.set({ [storageKey]: oldUserPackageData }, async function () {
+        console.log('Value is set to ', oldUserPackageData);
+
+        sendResponse({ data: oldUserPackageData });
+      });
     }
 
-    chrome.storage.local.set({ [storageKey]: oldUserPackageData }, async function () {
-      console.log('Value is set to ', oldUserPackageData);
-
-      sendResponse({ data: oldUserPackageData });
-    });
+    func();
   }
 
   return true;

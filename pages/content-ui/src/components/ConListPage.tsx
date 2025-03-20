@@ -21,12 +21,12 @@ const ConListPage: React.FC<SearchPageProps> = props => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState('');
 
-  const [isEditMode, setIsEditMode] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
-  const [isExportHidePackageInclude, setIsExportHidePackageInclude] = useState(false);
-  const [isExportNotHavePackageInclude, setIsExportNotHavePackageInclude] = useState(false);
+  const [isExportHidePackageInclude, setIsExportHidePackageInclude] = useState(true);
+  const [isExportNotHavePackageInclude, setIsExportNotHavePackageInclude] = useState(true);
 
   const [importedFileData, setImportedFileData] = useState<any>(null);
 
@@ -79,11 +79,23 @@ const ConListPage: React.FC<SearchPageProps> = props => {
     }));
   };
 
+  useEffect(() => {
+    if (importedFileData) {
+      console.log(importedFileData['148325'].conList, '################');
+    }
+  }, [importedFileData]);
+
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center pointer-events-none  z-[999999999]
+      className={`fixed inset-0 flex items-center justify-center pointer-events-none  z-[899999999]
         `}>
-      <div className="bg-white p-6 rounded-lg shadow-lg pointer-events-auto flex flex-col gap-4 w-[480px]">
+      <div
+        className="bg-[rgba(246,246,246,0.75)] p-6 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4 w-[480px]
+      
+      "
+        style={{
+          backdropFilter: 'blur(15px)',
+        }}>
         <div className="flex flex-row ">
           {isEditMode ? (
             <div className="w-[90px] cursor-pointer font-semibold"></div>
@@ -162,21 +174,26 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                 return userPackageData[a].title.localeCompare(userPackageData[b].title, 'ko');
               })
               .map(key => {
+                if (userPackageData[key].isHide && !isEditMode) {
+                  return null;
+                }
+
                 const packageData = userPackageData[key];
 
                 const customConData = customConList ? customConList[packageData.packageIdx] : null;
-
-                if (!customConData) {
-                  return null;
-                }
-                // console.log(packageData.conList);
                 let cnt = 0;
-                for (let conKey of Object.keys(customConData.conList)) {
-                  // console.log(customConData.conList[conKey]);
-                  if (customConData.conList[conKey].title !== '' || customConData.conList[conKey].tag !== '') {
-                    cnt += 1;
+                if (!customConData) {
+                } else {
+                  // console.log(packageData.conList);
+
+                  for (let conKey of Object.keys(customConData.conList)) {
+                    // console.log(customConData.conList[conKey]);
+                    if (customConData.conList[conKey].title !== '' || customConData.conList[conKey].tag !== '') {
+                      cnt += 1;
+                    }
                   }
                 }
+
                 // console.log(cnt, Object.keys(customConData.conList).length);
 
                 return (
@@ -231,7 +248,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                       </div>
 
                       <div className="w-[65px] text-sm text-gray-600 text-right">
-                        ({cnt}/{Object.keys(customConData.conList).length})
+                        ({cnt}/{Object.keys(userPackageData[packageData.packageIdx].conList).length})
                       </div>
                     </div>
                   </div>
@@ -282,10 +299,12 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                       const content = e.target?.result as string;
                       const data = JSON.parse(content);
 
-                      console.log(data);
+                      console.log(data['148325'].conList, '!!!!!!!!!!!!!!!!!!!!!');
 
                       setImportedFileData(data);
                       setIsImportModalOpen(true);
+
+                      setIsImportOverwrite(true);
                       // setCustomConList(data);
                     };
                     reader.readAsText(file);
@@ -301,178 +320,12 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                             w-full"
               onClick={async () => {
                 setIsExportModalOpen(true);
+
+                setIsExportHidePackageInclude(true);
+                setIsExportNotHavePackageInclude(true);
               }}>
               내보내기
             </div>
-            <Modal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)}>
-              <div className="flex flex-col gap-2 items-start">
-                <div className="flex flex-row justify-between items-center w-full mb-3">
-                  <div className="w-[50px]"></div>
-                  <div className="font-bold text-center w-full ">불러오기</div>
-                  <div className="w-[50px] flex justify-end">
-                    <XMarkIcon className="w-6 h-6 cursor-pointer" onClick={() => setIsImportModalOpen(false)} />
-                  </div>
-                </div>
-                <div className="font-bold">이미 라벨링이 있는 콘에 대해</div>
-                <div className="flex flex-row gap-2 justify-between w-full font-bold">
-                  <div
-                    className={`py-3 flex-grow cursor-pointer text-center rounded-xl
-                                        ${isImportOverwrite ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}
-                                        `}
-                    onClick={() => {
-                      setIsImportOverwrite(true);
-                    }}>
-                    덮어쓰기
-                  </div>
-                  <div
-                    className={`py-3 flex-grow cursor-pointer text-center rounded-xl
-                                         ${!isImportOverwrite ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}
-                                        `}
-                    onClick={() => {
-                      setIsImportOverwrite(false);
-                    }}>
-                    건너뛰기
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className="
-                                mt-8
-                                cursor-pointer flex-grow    text-center
-          text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
-                            w-full"
-                onClick={async () => {
-                  const cookies = parseCookies();
-                  const ci_t = cookies['ci_c'];
-
-                  const customConList = (await readLocalStorage('CustomConList')) as any;
-                  console.log(Object.keys(customConList).length);
-                  console.log(importedFileData);
-
-                  for (let key of Object.keys(importedFileData)) {
-                    for (let conKey of Object.keys(importedFileData[key].conList)) {
-                      // console.log(key, conKey)
-
-                      if (isImportOverwrite) {
-                        customConList[key].conList[conKey] = importedFileData[key].conList[conKey];
-                      } else {
-                        if (
-                          customConList[key] !== undefined &&
-                          customConList[key].conList[conKey] !== undefined &&
-                          (customConList[key].conList[conKey].title !== '' ||
-                            customConList[key].conList[conKey].tag !== '')
-                        ) {
-                          continue;
-                        } else {
-                          customConList[key].conList[conKey] = importedFileData[key].conList[conKey];
-                        }
-
-                        // if (isImportOverwrite || !customConList[conKey]) {
-                        //     customConList[conKey] = importedFileData[key].conList[conKey];
-                        // }
-                      }
-                    }
-                  }
-                  console.log(customConList);
-                  setCustomConList(customConList);
-                  chrome.storage.local.set({ ['CustomConList']: customConList }, async function () {
-                    console.log('Value is set to ', customConList);
-
-                    chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
-                      console.log(response);
-                      // const emojiSearchTmp = new EmojiSearch();
-                      // emojiSearchTmp.deserialize(response.emojiSearch);
-
-                      // setEmojiSearch(emojiSearchTmp);
-                      setDetailIdxDict(response.detailIdxDict);
-
-                      makeToast('저장 완료!');
-
-                      setIsImportModalOpen(false);
-                    });
-                  });
-                }}>
-                확인
-              </div>
-            </Modal>
-            <Modal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)}>
-              <div className="flex flex-col gap-2 items-center">
-                <div className="flex flex-row justify-between items-center w-full mb-3">
-                  <div className="w-[50px]"></div>
-                  <div className="font-bold text-center w-full ">내보내기</div>
-                  <div className="w-[50px] flex justify-end">
-                    <XMarkIcon className="w-6 h-6 cursor-pointer" onClick={() => setIsExportModalOpen(false)} />
-                  </div>
-                </div>
-                <div className="flex flex-row gap-2 justify-between w-full font-bold">
-                  <span>숨긴 콘도 포함</span>
-                  <Switch
-                    checked={isExportHidePackageInclude}
-                    onChange={async () => {
-                      setIsExportHidePackageInclude(!isExportHidePackageInclude);
-                    }}
-                    onColor="#a7b4db"
-                    onHandleColor="#456bd8"
-                    handleDiameter={20}
-                    uncheckedIcon={false}
-                    checkedIcon={false}
-                    boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
-                    // activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
-                    height={15}
-                    width={36}
-                  />
-                </div>
-                <div className="flex flex-row gap-2 justify-between w-full font-bold">
-                  <span>미보유 콘도 포함</span>
-                  <Switch
-                    checked={isExportNotHavePackageInclude}
-                    onChange={async () => {
-                      setIsExportNotHavePackageInclude(!isExportNotHavePackageInclude);
-                    }}
-                    onColor="#a7b4db"
-                    onHandleColor="#456bd8"
-                    handleDiameter={20}
-                    uncheckedIcon={false}
-                    checkedIcon={false}
-                    boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
-                    // activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
-                    height={15}
-                    width={36}
-                  />
-                </div>
-
-                <div
-                  className="
-                                mt-4
-                                cursor-pointer flex-grow    text-center
-          text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
-                            w-full"
-                  onClick={async () => {
-                    const customConList = (await readLocalStorage('CustomConList')) as any;
-                    console.log(Object.keys(customConList).length);
-                    const element = document.createElement('a');
-
-                    for (let key of Object.keys(customConList)) {
-                      if (!isExportHidePackageInclude && userPackageData[key] && userPackageData[key].isHide) {
-                        delete customConList[key];
-                      }
-                      if (!isExportNotHavePackageInclude && !userPackageData[key]) {
-                        delete customConList[key];
-                      }
-                    }
-                    console.log(Object.keys(customConList).length);
-
-                    const file = new Blob([JSON.stringify(customConList)], { type: 'text/plain' });
-                    element.href = URL.createObjectURL(file);
-                    element.download = `customConList_${new Date().getTime()}.json`;
-                    document.body.appendChild(element); // Required for this to work in FireFox
-                    element.click();
-                  }}>
-                  확인
-                </div>
-              </div>
-            </Modal>
           </div>
         ) : (
           <div
@@ -514,6 +367,200 @@ const ConListPage: React.FC<SearchPageProps> = props => {
           </div>
         )}
         {/* <div>unicro_id : {unicroId}</div> */}
+        <Modal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)}>
+          <div className="flex flex-col gap-2 items-start">
+            <div className="flex flex-row justify-between items-center w-full mb-3">
+              <div className="w-[50px]"></div>
+              <div className="font-bold text-center w-full ">불러오기</div>
+              <div className="w-[50px] flex justify-end">
+                <XMarkIcon className="w-6 h-6 cursor-pointer" onClick={() => setIsImportModalOpen(false)} />
+              </div>
+            </div>
+            <div className="font-bold">이미 라벨링이 있는 콘에 대해</div>
+            <div className="flex flex-row gap-2 justify-between w-full font-bold">
+              <div
+                className={`py-3 flex-grow cursor-pointer text-center rounded-xl
+                                        ${isImportOverwrite ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}
+                                        `}
+                onClick={() => {
+                  setIsImportOverwrite(true);
+                }}>
+                덮어쓰기
+              </div>
+              <div
+                className={`py-3 flex-grow cursor-pointer text-center rounded-xl
+                                         ${!isImportOverwrite ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}
+                                        `}
+                onClick={() => {
+                  setIsImportOverwrite(false);
+                }}>
+                건너뛰기
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="
+                                mt-8
+                                cursor-pointer flex-grow    text-center
+          text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
+                            w-full"
+            onClick={async () => {
+              console.log(importedFileData['148325'].conList, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+
+              const cookies = parseCookies();
+              const ci_t = cookies['ci_c'];
+
+              const customConList = (await readLocalStorage('CustomConList')) as any;
+
+              console.log(importedFileData['148325'].conList, '!!!!!!!!!!!!!!!!!!!!12111!!!!!!!!!');
+
+              // console.log(Object.keys(customConList).length);
+
+              for (let key of Object.keys(importedFileData)) {
+                if (!customConList[key]) {
+                  customConList[key] = JSON.parse(JSON.stringify(importedFileData[key]));
+                  customConList[key].conList = {};
+
+                  // alert("!!!");
+                }
+                if (key === '148325') {
+                  console.log(Object.keys(importedFileData[key].conList), '!!!');
+                }
+                for (let conKey of Object.keys(importedFileData[key].conList)) {
+                  // console.log(ke
+
+                  if (isImportOverwrite) {
+                    customConList[key].conList[conKey] = importedFileData[key].conList[conKey];
+
+                    // console.log(customConList[key].conList[conKey], importedFileData[key].conList[conKey], "!!!!!!!!!!!", conKey, key);
+                  } else {
+                    if (
+                      customConList[key] !== undefined &&
+                      customConList[key].conList[conKey] !== undefined &&
+                      (customConList[key].conList[conKey].title !== '' || customConList[key].conList[conKey].tag !== '')
+                    ) {
+                      continue;
+                    } else {
+                      customConList[key].conList[conKey] = importedFileData[key].conList[conKey];
+                    }
+
+                    // if (isImportOverwrite || !customConList[conKey]) {
+                    //     customConList[conKey] = importedFileData[key].conList[conKey];
+                    // }
+                  }
+                }
+              }
+              console.log(customConList);
+              setCustomConList(customConList);
+              chrome.storage.local.set({ ['CustomConList']: customConList }, async function () {
+                console.log('Value is set to ', customConList);
+
+                chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
+                  console.log(response);
+                  // const emojiSearchTmp = new EmojiSearch();
+                  // emojiSearchTmp.deserialize(response.emojiSearch);
+
+                  // setEmojiSearch(emojiSearchTmp);
+                  setDetailIdxDict(response.detailIdxDict);
+
+                  makeToast('저장 완료!');
+
+                  setIsImportModalOpen(false);
+                });
+              });
+            }}>
+            확인
+          </div>
+        </Modal>
+        <Modal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)}>
+          <div className="flex flex-col gap-2 items-center">
+            <div className="flex flex-row justify-between items-center w-full mb-3">
+              <div className="w-[50px]"></div>
+              <div className="font-bold text-center w-full ">내보내기</div>
+              <div className="w-[50px] flex justify-end">
+                <XMarkIcon className="w-6 h-6 cursor-pointer" onClick={() => setIsExportModalOpen(false)} />
+              </div>
+            </div>
+            <div className="flex flex-row gap-2 justify-between w-full font-bold">
+              <span>숨긴 콘도 포함</span>
+              <Switch
+                checked={isExportHidePackageInclude}
+                onChange={async () => {
+                  setIsExportHidePackageInclude(!isExportHidePackageInclude);
+                }}
+                onColor="#a7b4db"
+                onHandleColor="#456bd8"
+                handleDiameter={20}
+                uncheckedIcon={false}
+                checkedIcon={false}
+                boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                // activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                height={15}
+                width={36}
+              />
+            </div>
+            <div className="flex flex-row gap-2 justify-between w-full font-bold">
+              <span>미보유 콘도 포함</span>
+              <Switch
+                checked={isExportNotHavePackageInclude}
+                onChange={async () => {
+                  setIsExportNotHavePackageInclude(!isExportNotHavePackageInclude);
+                }}
+                onColor="#a7b4db"
+                onHandleColor="#456bd8"
+                handleDiameter={20}
+                uncheckedIcon={false}
+                checkedIcon={false}
+                boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                // activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                height={15}
+                width={36}
+              />
+            </div>
+
+            <div
+              className="
+                                mt-4
+                                cursor-pointer flex-grow    text-center
+          text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
+                            w-full"
+              onClick={async () => {
+                const customConList = (await readLocalStorage('CustomConList')) as any;
+                console.log(Object.keys(customConList).length);
+                const element = document.createElement('a');
+
+                for (let key of Object.keys(customConList)) {
+                  if (!isExportHidePackageInclude && userPackageData[key] && userPackageData[key].isHide) {
+                    delete customConList[key];
+                    continue;
+                  }
+                  if (!isExportNotHavePackageInclude && !userPackageData[key]) {
+                    delete customConList[key];
+                    continue;
+                  }
+
+                  for (let conKey of Object.keys(customConList[key].conList)) {
+                    if (
+                      customConList[key].conList[conKey].title === '' &&
+                      customConList[key].conList[conKey].tag === ''
+                    ) {
+                      delete customConList[key].conList[conKey];
+                    }
+                  }
+                }
+                console.log(Object.keys(customConList).length);
+
+                const file = new Blob([JSON.stringify(customConList)], { type: 'text/plain' });
+                element.href = URL.createObjectURL(file);
+                element.download = `customConList_${new Date().getTime()}.json`;
+                document.body.appendChild(element); // Required for this to work in FireFox
+                element.click();
+              }}>
+              확인
+            </div>
+          </div>
+        </Modal>
       </div>
     </div>
   );

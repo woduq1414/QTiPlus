@@ -118,7 +118,13 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
     <div
       className={`fixed inset-0 flex items-center justify-center pointer-events-none max-w-[800px]  mx-auto flex-col z-[999999999]
         `}>
-      <div className="bg-white p-6 rounded-lg shadow-lg pointer-events-auto flex flex-col gap-4 ">
+      <div
+        className="bg-[rgba(246,246,246,0.75)] p-6 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4 
+      
+      "
+        style={{
+          backdropFilter: 'blur(15px)',
+        }}>
         <div className="flex flex-row ">
           <div
             className="w-[90px] cursor-pointer"
