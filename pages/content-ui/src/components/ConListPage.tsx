@@ -28,6 +28,10 @@ const ConListPage: React.FC<SearchPageProps> = props => {
   const [isExportHidePackageInclude, setIsExportHidePackageInclude] = useState(false);
   const [isExportNotHavePackageInclude, setIsExportNotHavePackageInclude] = useState(false);
 
+  const [importedFileData, setImportedFileData] = useState<any>(null);
+
+  const [isImportOverwrite, setIsImportOverwrite] = useState(true);
+
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   useEffect(() => {
@@ -198,11 +202,11 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                     ) : null}
                     <div
                       className={`flex flex-row gap-2 items-center justify-between flex-grow
-                                        ${isEditMode ? '' : 'cursor-pointer '}
+                                        ${!isEditMode ? '' : 'cursor-pointer '}
                                         `}
                       key={key}
                       onClick={async () => {
-                        if (isEditMode) return;
+                        if (!isEditMode) return;
 
                         setCurrentPackageIdx(packageData.packageIdx);
                         setCurrentPage(2);
@@ -233,12 +237,12 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                   </div>
                 );
               })}
-
-          <div className="flex text-sm gap-2 flex-wrap items-center max-h-[200px] overflow-auto text-gray-700">
-            보유하지 않은 콘 :
-            {customConList &&
-              userPackageData &&
-              Object.keys(customConList)
+          {customConList &&
+          userPackageData &&
+          Object.keys(customConList).filter(key => !userPackageData[key]).length > 0 ? (
+            <div className="flex text-sm gap-2 flex-wrap items-center max-h-[200px] overflow-auto text-gray-700">
+              보유하지 않은 콘 :
+              {Object.keys(customConList)
                 .filter(key => !userPackageData[key])
                 .map(key => {
                   return (
@@ -254,14 +258,41 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                     </div>
                   );
                 })}
-          </div>
+            </div>
+          ) : null}
         </div>
         {isEditMode ? (
           <div className="flex flex-row gap-2">
             <div
               className="cursor-pointer flex-grow    text-center
           text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
-                            w-full">
+                            w-full"
+              onClick={async () => {
+                // open file upload dialog
+
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = async e => {
+                  const file = (e.target as HTMLInputElement).files?.[0];
+
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = async e => {
+                      const content = e.target?.result as string;
+                      const data = JSON.parse(content);
+
+                      console.log(data);
+
+                      setImportedFileData(data);
+                      setIsImportModalOpen(true);
+                      // setCustomConList(data);
+                    };
+                    reader.readAsText(file);
+                  }
+                };
+                input.click();
+              }}>
               불러오기
             </div>
             <div
@@ -273,6 +304,98 @@ const ConListPage: React.FC<SearchPageProps> = props => {
               }}>
               내보내기
             </div>
+            <Modal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)}>
+              <div className="flex flex-col gap-2 items-start">
+                <div className="flex flex-row justify-between items-center w-full mb-3">
+                  <div className="w-[50px]"></div>
+                  <div className="font-bold text-center w-full ">불러오기</div>
+                  <div className="w-[50px] flex justify-end">
+                    <XMarkIcon className="w-6 h-6 cursor-pointer" onClick={() => setIsImportModalOpen(false)} />
+                  </div>
+                </div>
+                <div className="font-bold">이미 라벨링이 있는 콘에 대해</div>
+                <div className="flex flex-row gap-2 justify-between w-full font-bold">
+                  <div
+                    className={`py-3 flex-grow cursor-pointer text-center rounded-xl
+                                        ${isImportOverwrite ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}
+                                        `}
+                    onClick={() => {
+                      setIsImportOverwrite(true);
+                    }}>
+                    덮어쓰기
+                  </div>
+                  <div
+                    className={`py-3 flex-grow cursor-pointer text-center rounded-xl
+                                         ${!isImportOverwrite ? 'bg-blue-700 text-white' : 'bg-gray-200 text-gray-700'}
+                                        `}
+                    onClick={() => {
+                      setIsImportOverwrite(false);
+                    }}>
+                    건너뛰기
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className="
+                                mt-8
+                                cursor-pointer flex-grow    text-center
+          text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
+                            w-full"
+                onClick={async () => {
+                  const cookies = parseCookies();
+                  const ci_t = cookies['ci_c'];
+
+                  const customConList = (await readLocalStorage('CustomConList')) as any;
+                  console.log(Object.keys(customConList).length);
+                  console.log(importedFileData);
+
+                  for (let key of Object.keys(importedFileData)) {
+                    for (let conKey of Object.keys(importedFileData[key].conList)) {
+                      // console.log(key, conKey)
+
+                      if (isImportOverwrite) {
+                        customConList[key].conList[conKey] = importedFileData[key].conList[conKey];
+                      } else {
+                        if (
+                          customConList[key] !== undefined &&
+                          customConList[key].conList[conKey] !== undefined &&
+                          (customConList[key].conList[conKey].title !== '' ||
+                            customConList[key].conList[conKey].tag !== '')
+                        ) {
+                          continue;
+                        } else {
+                          customConList[key].conList[conKey] = importedFileData[key].conList[conKey];
+                        }
+
+                        // if (isImportOverwrite || !customConList[conKey]) {
+                        //     customConList[conKey] = importedFileData[key].conList[conKey];
+                        // }
+                      }
+                    }
+                  }
+                  console.log(customConList);
+                  setCustomConList(customConList);
+                  chrome.storage.local.set({ ['CustomConList']: customConList }, async function () {
+                    console.log('Value is set to ', customConList);
+
+                    chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
+                      console.log(response);
+                      // const emojiSearchTmp = new EmojiSearch();
+                      // emojiSearchTmp.deserialize(response.emojiSearch);
+
+                      // setEmojiSearch(emojiSearchTmp);
+                      setDetailIdxDict(response.detailIdxDict);
+
+                      makeToast('저장 완료!');
+
+                      setIsImportModalOpen(false);
+                    });
+                  });
+                }}>
+                확인
+              </div>
+            </Modal>
             <Modal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)}>
               <div className="flex flex-col gap-2 items-center">
                 <div className="flex flex-row justify-between items-center w-full mb-3">
