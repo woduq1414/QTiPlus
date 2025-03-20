@@ -30,7 +30,7 @@ const manifest = {
   version: packageJson.version,
   description: '__MSG_extensionDescription__',
   host_permissions: ['*://*.dcinside.com/*'],
-  permissions: ['storage', 'scripting', 'tabs', 'notifications', 'activeTab', 'downloads'],
+  permissions: ['storage', 'tabs', 'activeTab', 'scripting'],
   options_page: 'options/index.html',
   background: {
     service_worker: 'background.js',
@@ -47,10 +47,10 @@ const manifest = {
     128: 'icon-128.png',
   },
   content_scripts: [
-    {
-      matches: ['*://*.dcinside.com/*'],
-      js: ['content/index.iife.js'],
-    },
+    // {
+    //   matches: ['*://*.dcinside.com/*'],
+    //   js: ['content/index.iife.js'],
+    // },
     {
       matches: ['*://*.dcinside.com/*'],
       js: ['content-ui/index.iife.js'],
@@ -67,9 +67,12 @@ const manifest = {
       matches: ['*://*.dcinside.com/*'],
     },
   ],
-  side_panel: {
-    default_path: 'side-panel/index.html',
+  content_security_policy: {
+    extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",
   },
+  // side_panel: {
+  //   default_path: 'side-panel/index.html',
+  // },
 } satisfies chrome.runtime.ManifestV3;
 
 export default manifest;

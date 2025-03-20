@@ -5,6 +5,8 @@ import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef } from 'react';
 
 import Switch from 'react-switch';
+import Modal from './Modal';
+import { XMarkIcon } from '@heroicons/react/16/solid';
 
 interface SearchPageProps {
   detailIdxDict: Record<string, any>;
@@ -19,7 +21,14 @@ const ConListPage: React.FC<SearchPageProps> = props => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState('');
 
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(true);
+
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
+  const [isExportHidePackageInclude, setIsExportHidePackageInclude] = useState(false);
+  const [isExportNotHavePackageInclude, setIsExportNotHavePackageInclude] = useState(false);
+
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   useEffect(() => {
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -46,6 +55,8 @@ const ConListPage: React.FC<SearchPageProps> = props => {
       const updatedState = { ...prevState };
 
       // data의 key마다 state를 동기화 (새로운 key만 추가)
+      if (!userPackageData) return updatedState;
+
       Object.entries(userPackageData).forEach(([key, value]) => {
         if (!(key in updatedState)) {
           updatedState[key] = (value as { isHide: boolean }).isHide;
@@ -134,7 +145,18 @@ const ConListPage: React.FC<SearchPageProps> = props => {
         <div className="flex flex-col gap-2 overflow-auto max-h-[65vh]">
           {userPackageData &&
             Object.keys(userPackageData)
-              .sort((a, b) => userPackageData[a].title.localeCompare(userPackageData[b].title, 'ko'))
+              .sort((a, b) => {
+                const hideA = userPackageData[a].isHide ? 1 : 0;
+                const hideB = userPackageData[b].isHide ? 1 : 0;
+
+                // isHide 값이 false인 항목을 위로 정렬
+                if (hideA !== hideB) {
+                  return hideA - hideB;
+                }
+
+                // isHide 값이 같으면 title을 기준으로 정렬
+                return userPackageData[a].title.localeCompare(userPackageData[b].title, 'ko');
+              })
               .map(key => {
                 const packageData = userPackageData[key];
 
@@ -156,7 +178,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                 return (
                   <div className="flex flex-row  w-full items-center" key={key}>
                     {isEditMode ? (
-                      <div className="w-[65px] ">
+                      <div className="mr-1 ml-1">
                         <Switch
                           checked={!isHideState[packageData.packageIdx]}
                           onChange={async () => {
@@ -164,31 +186,43 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                           }}
                           onColor="#a7b4db"
                           onHandleColor="#456bd8"
-                          handleDiameter={30}
+                          handleDiameter={20}
                           uncheckedIcon={false}
                           checkedIcon={false}
                           boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
                           // activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
-                          height={20}
-                          width={48}
+                          height={15}
+                          width={36}
                         />
                       </div>
                     ) : null}
-                    <div className="flex flex-row gap-2 items-center justify-between flex-grow" key={key}>
+                    <div
+                      className={`flex flex-row gap-2 items-center justify-between flex-grow
+                                        ${isEditMode ? '' : 'cursor-pointer '}
+                                        `}
+                      key={key}
+                      onClick={async () => {
+                        if (isEditMode) return;
+
+                        setCurrentPackageIdx(packageData.packageIdx);
+                        setCurrentPage(2);
+                      }}>
                       <div className="w-[65px]">
                         <img
                           src={packageData.mainImg}
                           alt={packageData.title}
-                          className="w-[3em] h-[3em] rounded-lg border-2 border-gray-600"
+                          className="w-[3em] h-[3em] rounded-lg border-2 border-gray-600 "
                         />
                       </div>
                       <div
-                        className="cursor-pointer font-semibold"
-                        key={key}
-                        onClick={async () => {
-                          setCurrentPackageIdx(packageData.packageIdx);
-                          setCurrentPage(2);
-                        }}>
+                        className={` font-semibold
+                                                    ${
+                                                      isHideState[packageData.packageIdx]
+                                                        ? 'text-gray-400 '
+                                                        : 'text-black'
+                                                    }
+                                                    `}
+                        key={key}>
                         <h1>{packageData.title}</h1>
                       </div>
 
@@ -199,6 +233,28 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                   </div>
                 );
               })}
+
+          <div className="flex text-sm gap-2 flex-wrap items-center max-h-[200px] overflow-auto text-gray-700">
+            보유하지 않은 콘 :
+            {customConList &&
+              userPackageData &&
+              Object.keys(customConList)
+                .filter(key => !userPackageData[key])
+                .map(key => {
+                  return (
+                    <div
+                      className="cursor-pointer px-2 py-1 bg-gray-200 rounded-xl text-gray-700"
+                      key={key}
+                      onClick={() => {
+                        // open new tab by js
+
+                        window.open(`https://dccon.dcinside.com/hot/1/title/QWER#${key}`);
+                      }}>
+                      {customConList[key].title}
+                    </div>
+                  );
+                })}
+          </div>
         </div>
         {isEditMode ? (
           <div className="flex flex-row gap-2">
@@ -211,9 +267,89 @@ const ConListPage: React.FC<SearchPageProps> = props => {
             <div
               className="cursor-pointer flex-grow    text-center
           text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
-                            w-full">
+                            w-full"
+              onClick={async () => {
+                setIsExportModalOpen(true);
+              }}>
               내보내기
             </div>
+            <Modal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)}>
+              <div className="flex flex-col gap-2 items-center">
+                <div className="flex flex-row justify-between items-center w-full mb-3">
+                  <div className="w-[50px]"></div>
+                  <div className="font-bold text-center w-full ">내보내기</div>
+                  <div className="w-[50px] flex justify-end">
+                    <XMarkIcon className="w-6 h-6 cursor-pointer" onClick={() => setIsExportModalOpen(false)} />
+                  </div>
+                </div>
+                <div className="flex flex-row gap-2 justify-between w-full font-bold">
+                  <span>숨긴 콘도 포함</span>
+                  <Switch
+                    checked={isExportHidePackageInclude}
+                    onChange={async () => {
+                      setIsExportHidePackageInclude(!isExportHidePackageInclude);
+                    }}
+                    onColor="#a7b4db"
+                    onHandleColor="#456bd8"
+                    handleDiameter={20}
+                    uncheckedIcon={false}
+                    checkedIcon={false}
+                    boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                    // activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                    height={15}
+                    width={36}
+                  />
+                </div>
+                <div className="flex flex-row gap-2 justify-between w-full font-bold">
+                  <span>미보유 콘도 포함</span>
+                  <Switch
+                    checked={isExportNotHavePackageInclude}
+                    onChange={async () => {
+                      setIsExportNotHavePackageInclude(!isExportNotHavePackageInclude);
+                    }}
+                    onColor="#a7b4db"
+                    onHandleColor="#456bd8"
+                    handleDiameter={20}
+                    uncheckedIcon={false}
+                    checkedIcon={false}
+                    boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                    // activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                    height={15}
+                    width={36}
+                  />
+                </div>
+
+                <div
+                  className="
+                                mt-4
+                                cursor-pointer flex-grow    text-center
+          text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
+                            w-full"
+                  onClick={async () => {
+                    const customConList = (await readLocalStorage('CustomConList')) as any;
+                    console.log(Object.keys(customConList).length);
+                    const element = document.createElement('a');
+
+                    for (let key of Object.keys(customConList)) {
+                      if (!isExportHidePackageInclude && userPackageData[key] && userPackageData[key].isHide) {
+                        delete customConList[key];
+                      }
+                      if (!isExportNotHavePackageInclude && !userPackageData[key]) {
+                        delete customConList[key];
+                      }
+                    }
+                    console.log(Object.keys(customConList).length);
+
+                    const file = new Blob([JSON.stringify(customConList)], { type: 'text/plain' });
+                    element.href = URL.createObjectURL(file);
+                    element.download = `customConList_${new Date().getTime()}.json`;
+                    document.body.appendChild(element); // Required for this to work in FireFox
+                    element.click();
+                  }}>
+                  확인
+                </div>
+              </div>
+            </Modal>
           </div>
         ) : (
           <div

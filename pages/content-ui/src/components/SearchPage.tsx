@@ -381,6 +381,16 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           flex flex-row gap-0.5 justify-center items-center
           "
           onClick={async () => {
+            //   function pasteHTML(str: string) {
+            //     const memo = document.getElementById("memo");
+            //     if (!memo) return;
+
+            //     // 현재 선택된 위치에 HTML 삽입
+            //     memo.focus();
+            //     document.execCommand("insertHTML", false, str);
+            // }
+
+            // return;
             setCurrentPage(1);
 
             return;

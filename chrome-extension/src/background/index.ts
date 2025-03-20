@@ -354,6 +354,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
     async function func() {
       async function fetchList(page: number) {
+        // document.cookie = cookies;
         const response = await fetch('https://gall.dcinside.com/dccon/lists', {
           headers: {
             accept: '*/*',
@@ -367,12 +368,14 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             'sec-fetch-site': 'same-origin',
             'x-requested-with': 'XMLHttpRequest',
           },
+
           referrer: 'https://gall.dcinside.com/mgallery/board/view',
           referrerPolicy: 'unsafe-url',
           body: `ci_t=${ci_t}&target=icon&page=${page}`,
           method: 'POST',
           mode: 'cors',
-          credentials: 'include',
+          credentials: 'same-origin',
+          // credentials: 'include',
         });
         const data = await response.json();
 
@@ -414,7 +417,8 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
           const packageIdx = detailList[0].package_idx;
 
           let isHide = false;
-          if (oldUserPackageData[packageIdx] !== undefined) {
+
+          if (oldUserPackageData !== undefined && oldUserPackageData[packageIdx] !== undefined) {
             if (oldUserPackageData[packageIdx].isHide) {
               isHide = true;
             }

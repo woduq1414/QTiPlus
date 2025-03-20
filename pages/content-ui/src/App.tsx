@@ -97,10 +97,11 @@ function Router() {
   }, []);
 
   useEffect(() => {
-    // setCurrentPage(2);
+    // setCurrentPage(1);
     // setCurrentPackageIdx(151346);
-    setCurrentPage(0);
-    setIsModalOpen(false);
+
+    // setCurrentPage(0);
+    setIsModalOpen(true);
     // setCurrentPackageIdx(151346);
   }, []);
 
