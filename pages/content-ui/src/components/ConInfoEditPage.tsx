@@ -29,6 +29,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
     emojiSearch,
     setEmojiSearch,
     setDetailIdxDict,
+    setIsEditMode,
   } = useGlobalStore();
   const [items, setItems] = useState<Item[]>(
     Array.from({ length: 101 }, (_, index) => ({
@@ -131,6 +132,8 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
             onClick={() => {
               // setUserPackageData(null);
               setCurrentPage(1);
+
+              setIsEditMode(true);
             }}>
             이전
           </div>

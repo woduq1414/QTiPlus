@@ -70,7 +70,7 @@ function Router() {
 
   useEffect(() => {
     const handleKeyDown = (event: { altKey: any; key: string; preventDefault: () => void }) => {
-      if ((event.altKey && event.key === 'q') || event.key === 'Q') {
+      if (event.altKey && (event.key === 'q' || event.key === 'Q')) {
         event.preventDefault(); // 기본 동작 방지
         setIsModalOpen((prev: any) => !prev);
         setCurrentPage(0);

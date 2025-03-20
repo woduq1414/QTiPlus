@@ -334,7 +334,7 @@ conTreeInit().then(res => {
         //   }
         // }
 
-        if (finalResult.size >= 20 && query.length == 1) {
+        if (false && finalResult.size >= 20 && query.length == 1) {
           sendResponse({
             res: JSON.stringify(Array.from(finalResult).slice(0, 20)),
           });

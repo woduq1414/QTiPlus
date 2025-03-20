@@ -13,15 +13,21 @@ interface SearchPageProps {
 }
 
 const ConListPage: React.FC<SearchPageProps> = props => {
-  const { userPackageData, unicroId, setUserPackageData, setCurrentPage, setCurrentPackageIdx, setDetailIdxDict } =
-    useGlobalStore();
+  const {
+    userPackageData,
+    unicroId,
+    setUserPackageData,
+    setCurrentPage,
+    setCurrentPackageIdx,
+    setDetailIdxDict,
+    isEditMode,
+    setIsEditMode,
+  } = useGlobalStore();
 
   console.log(userPackageData);
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState('');
-
-  const [isEditMode, setIsEditMode] = useState(false);
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 

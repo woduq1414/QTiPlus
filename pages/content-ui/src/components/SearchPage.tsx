@@ -7,7 +7,13 @@ import getQueryValue from '@src/functions/query';
 import useDebounce from '@src/hook/useDebounce';
 import ImageWithSkeleton from './ImageWithSkeleton';
 import toast from 'react-hot-toast';
-import { CheckCircleIcon, Cog6ToothIcon, TrashIcon } from '@heroicons/react/16/solid';
+import {
+  CheckCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Cog6ToothIcon,
+  TrashIcon,
+} from '@heroicons/react/16/solid';
 import { CheckCircleIcon as CheckCircleIconOutline } from '@heroicons/react/24/outline';
 import { title } from 'process';
 import makeToast from '@src/functions/toast';
@@ -17,7 +23,9 @@ interface SearchPageProps {
 }
 
 const SearchPage: React.FC<SearchPageProps> = props => {
-  const { currentPage, setCurrentPage, userPackageData, setIsModalOpen, isModalOpen, unicroId } = useGlobalStore();
+  const pageSize = 8;
+  const { currentPage, setCurrentPage, userPackageData, setIsModalOpen, isModalOpen, unicroId, setIsEditMode } =
+    useGlobalStore();
 
   const detailIdxDict = props.detailIdxDict;
 
@@ -37,11 +45,10 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
   const [recentUsedConList, setRecentUsedConList] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (focusedIndex !== null && imageRefs.current[focusedIndex]) {
-      imageRefs.current[focusedIndex]?.focus();
-    }
-  }, [focusedIndex]);
+  const [queryPage, setQueryPage] = useState<number>(1);
+  const [queryMaxPage, setQueryMaxPage] = useState<number>(1);
+
+  const [originalQueryResult, setOriginalQueryResult] = useState<any>();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Tab' && queryResult !== undefined && queryResult.size > 0) {
@@ -56,6 +63,12 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       targetResultSize = recentUsedConList.length;
     } else {
       targetResultSize = queryResult.size;
+    }
+
+    // detect if ctrl key is pressed
+
+    if (e.ctrlKey) {
+      return;
     }
 
     if (e.key === 'ArrowRight' && index < targetResultSize - 1) {
@@ -81,7 +94,17 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       let t = new Date();
       chrome.runtime.sendMessage({ type: 'SEARCH_CON', query: debouncedSearchText, unicroId: unicroId }, response => {
         const res = JSON.parse(response.res);
-        setQueryResult(new Set(res));
+
+        //
+        // setQueryResult(new Set(res));
+
+        // one page is 16
+
+        setQueryMaxPage(Math.ceil(res.length / pageSize));
+        setQueryPage(1);
+
+        setOriginalQueryResult(res);
+
         setFocusedIndex(-1);
 
         console.log('Time:', new Date().getTime() - t.getTime());
@@ -90,6 +113,15 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       setQueryResult(undefined);
     }
   }, [debouncedSearchText]);
+
+  useEffect(() => {
+    const startIdx = (queryPage - 1) * pageSize;
+    const endIdx = queryPage * pageSize;
+    if (originalQueryResult === undefined) return;
+    const slicedRes = originalQueryResult.slice(startIdx, endIdx);
+
+    setQueryResult(new Set(slicedRes));
+  }, [queryPage, originalQueryResult]);
 
   useEffect(() => {
     if (isModalOpen) {
@@ -123,12 +155,53 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     return () => {};
   }, [isModalOpen]);
 
+  const queryPageRef = useRef(queryPage);
+  const queryMaxPageRef = useRef(queryMaxPage);
+
   useEffect(() => {
-    const handleKeyDown = (event: { altKey: any; key: string; preventDefault: () => void }) => {
+    if (focusedIndex != null)
+      console.log(focusedIndex, imageRefs.current[focusedIndex], queryPageRef.current, 'focusedIndex');
+    if (focusedIndex !== null && imageRefs.current[focusedIndex]) {
+      imageRefs.current[focusedIndex]?.focus();
+    }
+  }, [focusedIndex, imageRefs.current[focusedIndex as number], queryPageRef.current]);
+
+  useEffect(() => {
+    queryPageRef.current = queryPage;
+    queryMaxPageRef.current = queryMaxPage;
+  }, [queryPage, queryMaxPage]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: { altKey: any; shiftKey: any; key: string; preventDefault: () => void }) => {
       if (event.altKey && event.key === '2') {
         event.preventDefault(); // 기본 동작 방지
         toggleDoubleCon();
         console.log('alt + 2');
+      } else if (event.shiftKey && event.key === 'ArrowRight') {
+        event.preventDefault(); // 기본 동작 방지
+
+        // get current state of queryMaxPage
+        const queryPage = queryPageRef.current;
+        const queryMaxPage = queryMaxPageRef.current;
+
+        console.log(queryPage, queryMaxPage);
+
+        if (queryPage < queryMaxPage) {
+          setQueryPage(prev => prev + 1);
+          setFocusedIndex(0);
+        }
+        console.log('alt + ArrowRight');
+      } else if (event.shiftKey && event.key === 'ArrowLeft') {
+        event.preventDefault(); // 기본 동작 방지
+
+        // get current state of queryMaxPage
+        const queryPage = queryPageRef.current;
+
+        if (queryPage > 1) {
+          setQueryPage(prev => prev - 1);
+          setFocusedIndex(0);
+        }
+        console.log('alt + ArrowLeft');
       }
     };
 
@@ -145,6 +218,12 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
   async function onConClick({ detailData }: { detailData: any }) {
     {
+      const recentUsedConListKey = `RecentUsedConList_${unicroId}`;
+
+      let recentUsedConList = (await readLocalStorage(recentUsedConListKey)) as any[];
+      if (recentUsedConList === null) {
+        recentUsedConList = [];
+      }
       console.log(userPackageData);
       // return;
 
@@ -162,6 +241,22 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             title: detailData.title,
             sort: detailData.sort,
           });
+
+          recentUsedConList = recentUsedConList.filter((con: any) => {
+            return con.detailIdx !== detailIdx;
+          });
+          recentUsedConList.push({
+            packageIdx: packageIdx,
+            detailIdx: detailIdx,
+            imgPath: detailData.imgPath,
+            title: detailData.title,
+            sort: detailData.sort,
+          });
+          chrome.storage.local.set({ [recentUsedConListKey]: recentUsedConList }, async function () {
+            console.log('Value is set to ', recentUsedConList);
+          });
+
+          setRecentUsedConList(recentUsedConList);
 
           setQueryResult(undefined);
           setSearchInput('');
@@ -197,13 +292,6 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       const cookies = parseCookies();
       const ci_t = cookies['ci_c'];
 
-      const recentUsedConListKey = `RecentUsedConList_${unicroId}`;
-
-      let recentUsedConList = (await readLocalStorage(recentUsedConListKey)) as any[];
-      if (recentUsedConList === null) {
-        recentUsedConList = [];
-      }
-
       // check if the con is already in the list and remove it
 
       recentUsedConList = recentUsedConList.filter((con: any) => {
@@ -211,6 +299,9 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       });
 
       if (isDoubleCon) {
+        recentUsedConList = recentUsedConList.filter((con: any) => {
+          return con.detailIdx !== detailIdx.split(', ')[1];
+        });
         recentUsedConList.push({
           packageIdx: packageIdx.split(', ')[1],
           detailIdx: detailIdx.split(', ')[1],
@@ -218,10 +309,11 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           sort: detailData.sort,
           title: detailData.title,
         });
-        recentUsedConList = recentUsedConList.filter((con: any) => {
-          return con.detailIdx !== detailIdx;
-        });
+
         if (firstDoubleCon) {
+          recentUsedConList = recentUsedConList.filter((con: any) => {
+            return con.detailIdx !== firstDoubleCon.detailIdx;
+          });
           recentUsedConList.push({
             packageIdx: firstDoubleCon.packageIdx,
             detailIdx: firstDoubleCon.detailIdx,
@@ -229,11 +321,11 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             sort: firstDoubleCon.sort,
             title: firstDoubleCon.title,
           });
-          recentUsedConList = recentUsedConList.filter((con: any) => {
-            return con.detailIdx !== detailIdx;
-          });
         }
       } else {
+        recentUsedConList = recentUsedConList.filter((con: any) => {
+          return con.detailIdx !== detailIdx;
+        });
         recentUsedConList.push({
           packageIdx: packageIdx,
           detailIdx: detailIdx,
@@ -243,7 +335,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         });
       }
 
-      recentUsedConList = recentUsedConList.slice(-8);
+      recentUsedConList = recentUsedConList.slice(-12);
 
       chrome.storage.local.set({ [recentUsedConListKey]: recentUsedConList }, async function () {
         console.log('Value is set to ', recentUsedConList);
@@ -467,6 +559,38 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                 })}
           </div>
         }
+        {queryResult && queryMaxPageRef.current > 1 && (
+          <div className="flex flex-row gap-2 justify-center items-center">
+            <div
+              className={`cursor-pointer
+          text-center
+         hover:text-blue-700
+         text-gray-600
+         pl-5
+         ${queryPage === 1 ? 'opacity-50' : ''}
+          `}
+              onClick={async () => {
+                if (queryPage === 1) return;
+                setQueryPage(prev => prev - 1);
+              }}>
+              <ChevronLeftIcon className="h-6 w-6" />
+            </div>
+            <div
+              className={`cursor-pointer
+          text-center
+         hover:text-blue-700
+         text-gray-600
+         pr-5
+         ${queryPage === queryMaxPage ? 'opacity-50' : ''}
+          `}
+              onClick={async () => {
+                if (queryPage === queryMaxPage) return;
+                setQueryPage(prev => prev + 1);
+              }}>
+              <ChevronRightIcon className="h-6 w-6" />
+            </div>
+          </div>
+        )}
 
         {/* <div className="flex flex-col gap-2">
                   {userPackageData &&
@@ -514,6 +638,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
             // return;
             setCurrentPage(1);
+            setIsEditMode(false);
 
             return;
           }}>

@@ -21,6 +21,9 @@ interface GlobalStore {
 
   isModalOpen: boolean;
   setIsModalOpen: (toggle?: boolean | ((prev: boolean) => boolean)) => void;
+
+  isEditMode: boolean;
+  setIsEditMode: (isEditMode: boolean) => void;
 }
 
 const useGlobalStore = create<GlobalStore>(set => ({
@@ -47,6 +50,9 @@ const useGlobalStore = create<GlobalStore>(set => ({
     set(state => ({
       isModalOpen: typeof toggle === 'function' ? toggle(state.isModalOpen) : !!toggle,
     })),
+
+  isEditMode: false,
+  setIsEditMode: isEditMode => set({ isEditMode }),
 }));
 
 export default useGlobalStore;
