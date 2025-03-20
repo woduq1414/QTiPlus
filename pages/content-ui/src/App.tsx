@@ -19,42 +19,6 @@ function Router() {
   useEffect(() => {
     console.log('content ui loaded');
 
-    async function conTreeInit() {
-      let detailIdxDictTmp = {} as any;
-
-      let conInfoData;
-      const prevCustomConList: any = await readLocalStorage('CustomConList');
-      if (prevCustomConList === null || prevCustomConList === undefined) {
-        conInfoData = sampleConInfoData;
-      } else {
-        conInfoData = prevCustomConList;
-      }
-      conInfoData = sampleConInfoData;
-      console.log(conInfoData);
-
-      for (let packageIdx in conInfoData) {
-        const conList = conInfoData[packageIdx as keyof typeof conInfoData].conList;
-        for (let sort in conList) {
-          const con = conList[sort as keyof typeof conList];
-          console.log(con.title);
-
-          const key = packageIdx + '-' + sort;
-          // emojiSearchTmp.addEmoji(key, con.title, [con.title]);
-
-          detailIdxDictTmp[key] = {
-            // detailIdx: con.detailIdx,
-            title: con.title,
-            packageIdx: packageIdx,
-            sort: sort,
-            imgPath: con.imgPath,
-          };
-        }
-      }
-
-      // setEmojiSearch(emojiSearchTmp);
-      setDetailIdxDict(detailIdxDictTmp);
-    }
-
     // conTreeInit();
     // alert('content ui loaded');
     chrome.runtime.sendMessage({ type: 'GET_INIT_DATA' }, response => {

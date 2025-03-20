@@ -35,6 +35,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
   const [firstDoubleCon, setFirstDoubleCon] = useState<any>(null);
 
+  const [recentUsedConList, setRecentUsedConList] = useState<any[]>([]);
+
   useEffect(() => {
     if (focusedIndex !== null && imageRefs.current[focusedIndex]) {
       imageRefs.current[focusedIndex]?.focus();
@@ -49,22 +51,25 @@ const SearchPage: React.FC<SearchPageProps> = props => {
   };
 
   const handleImageKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, index: number) => {
+    let targetResultSize = undefined;
     if (queryResult === undefined) {
-      return;
+      targetResultSize = recentUsedConList.length;
+    } else {
+      targetResultSize = queryResult.size;
     }
 
-    if (e.key === 'ArrowRight' && index < queryResult.size - 1) {
+    if (e.key === 'ArrowRight' && index < targetResultSize - 1) {
       setFocusedIndex(index + 1);
     } else if (e.key === 'ArrowLeft' && index > 0) {
       setFocusedIndex(index - 1);
     } else if (e.key === 'ArrowDown') {
-      setFocusedIndex(prev => (prev !== null ? Math.min(prev + 4, queryResult.size - 1) : 0));
+      setFocusedIndex(prev => (prev !== null ? Math.min(prev + 4, targetResultSize - 1) : 0));
     } else if (e.key === 'ArrowUp') {
       setFocusedIndex(prev => (prev !== null ? Math.max(prev - 4, 0) : 0));
     } else if (e.key === 'Enter') {
       imageRefs.current[index]?.click();
     } else if (e.key === 'Tab') {
-      if (index === queryResult.size - 1) {
+      if (index === targetResultSize - 1) {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
@@ -92,12 +97,26 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
       setIsDoubleCon(false);
       setFirstDoubleCon(null);
+      const recentUsedConListKey = `RecentUsedConList_${unicroId}`;
+      readLocalStorage(recentUsedConListKey).then(data => {
+        if (data === null) {
+          setRecentUsedConList([]);
+        } else {
+          if (data === undefined) {
+            setRecentUsedConList([]);
+          } else {
+            setRecentUsedConList(data as any);
+          }
+        }
+      });
 
       return () => {
         setSearchInput('');
         setQueryResult(undefined);
         setIsDoubleCon(false);
         setFirstDoubleCon(null);
+
+        setFocusedIndex(null);
       };
     }
 
@@ -122,6 +141,171 @@ const SearchPage: React.FC<SearchPageProps> = props => {
   function toggleDoubleCon() {
     setIsDoubleCon(prev => !prev);
     setFirstDoubleCon(null);
+  }
+
+  async function onConClick({ detailData }: { detailData: any }) {
+    {
+      console.log(userPackageData);
+      // return;
+
+      let packageIdx = detailData.packageIdx;
+
+      let detailIdx = userPackageData[packageIdx].conList[detailData.sort].detailIdx;
+      console.log(packageIdx, detailIdx);
+
+      if (isDoubleCon) {
+        if (firstDoubleCon === null) {
+          setFirstDoubleCon({
+            packageIdx: packageIdx,
+            detailIdx: detailIdx,
+            imgPath: detailData.imgPath,
+            title: detailData.title,
+            sort: detailData.sort,
+          });
+
+          setQueryResult(undefined);
+          setSearchInput('');
+
+          searchInputRef.current?.focus();
+
+          return;
+        } else {
+          packageIdx = `${firstDoubleCon.packageIdx}, ${packageIdx}`;
+          detailIdx = `${firstDoubleCon.detailIdx}, ${detailIdx}`;
+        }
+      }
+
+      setQueryResult(undefined);
+
+      //   return;
+
+      // 사용 예시
+      const postNumber = getQueryValue('no');
+      const galleryId = getQueryValue('id');
+
+      const check6Value = document.getElementById('check_6')?.getAttribute('value');
+      const check7Value = document.getElementById('check_7')?.getAttribute('value');
+      const check8Value = document.getElementById('check_8')?.getAttribute('value');
+
+      console.log(postNumber, galleryId, check6Value, check7Value, check8Value);
+
+      // 사용 예시
+
+      // const packageIdx = 151346;
+      // const detailIdx = 1241690924;
+
+      const cookies = parseCookies();
+      const ci_t = cookies['ci_c'];
+
+      const recentUsedConListKey = `RecentUsedConList_${unicroId}`;
+
+      let recentUsedConList = (await readLocalStorage(recentUsedConListKey)) as any[];
+      if (recentUsedConList === null) {
+        recentUsedConList = [];
+      }
+
+      // check if the con is already in the list and remove it
+
+      recentUsedConList = recentUsedConList.filter((con: any) => {
+        return con.detailIdx !== detailIdx;
+      });
+
+      if (isDoubleCon) {
+        recentUsedConList.push({
+          packageIdx: packageIdx.split(', ')[1],
+          detailIdx: detailIdx.split(', ')[1],
+          imgPath: detailData.imgPath,
+          sort: detailData.sort,
+          title: detailData.title,
+        });
+        recentUsedConList = recentUsedConList.filter((con: any) => {
+          return con.detailIdx !== detailIdx;
+        });
+        if (firstDoubleCon) {
+          recentUsedConList.push({
+            packageIdx: firstDoubleCon.packageIdx,
+            detailIdx: firstDoubleCon.detailIdx,
+            imgPath: firstDoubleCon.imgPath,
+            sort: firstDoubleCon.sort,
+            title: firstDoubleCon.title,
+          });
+          recentUsedConList = recentUsedConList.filter((con: any) => {
+            return con.detailIdx !== detailIdx;
+          });
+        }
+      } else {
+        recentUsedConList.push({
+          packageIdx: packageIdx,
+          detailIdx: detailIdx,
+          imgPath: detailData.imgPath,
+          sort: detailData.sort,
+          title: detailData.title,
+        });
+      }
+
+      recentUsedConList = recentUsedConList.slice(-8);
+
+      chrome.storage.local.set({ [recentUsedConListKey]: recentUsedConList }, async function () {
+        console.log('Value is set to ', recentUsedConList);
+      });
+
+      if (
+        packageIdx === undefined ||
+        detailIdx === undefined ||
+        ci_t === undefined ||
+        check6Value === undefined ||
+        check7Value === undefined ||
+        check8Value === undefined
+      ) {
+        setIsModalOpen(false);
+
+        makeToast(
+          `등록 실패 ㅠㅠ ${JSON.stringify({
+            packageIdx,
+            detailIdx,
+          })}`,
+        );
+        return;
+      }
+      const name = document.getElementsByClassName('user_info_input')[0].children[0].textContent;
+
+      const replyBox = document.querySelectorAll('.reply_box #cmt_write_box')[0];
+      let replyTarget: string | null = '';
+      if (replyBox) {
+        replyTarget = replyBox.getAttribute('data-no');
+      }
+      if (replyTarget === null) {
+        replyTarget = '';
+      }
+
+      setIsModalOpen(false);
+
+      fetch('https://gall.dcinside.com/dccon/insert_icon', {
+        headers: {
+          accept: '*/*',
+          'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+          'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+          'sec-ch-ua-mobile': '?0',
+          'sec-ch-ua-platform': '"Windows"',
+          'sec-fetch-dest': 'empty',
+          'sec-fetch-mode': 'cors',
+          'sec-fetch-site': 'same-origin',
+          'x-requested-with': 'XMLHttpRequest',
+        },
+        referrer: `https://gall.dcinside.com/mgallery/board/view/?id=qwer_fan&no=${postNumber}&page=1`,
+        referrerPolicy: 'unsafe-url',
+        body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=${isDoubleCon ? '1' : ''}&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=qwer_fan&c_gall_no=${postNumber}&g-recaptcha-response=&check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M&${replyTarget ? 'c_no=' + replyTarget : ''}`,
+        method: 'POST',
+        mode: 'cors',
+        credentials: 'include',
+      }).then(async response => {
+        console.log(response);
+        const refreshButton = document.getElementsByClassName('btn_cmt_refresh')[0] as HTMLButtonElement;
+        refreshButton?.click();
+        makeToast('등록 성공!');
+      });
+    }
   }
 
   return (
@@ -175,7 +359,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           ref={searchInputRef}
           type="text"
           placeholder="검색어를 입력하세요"
-          className="border border-gray-300 rounded-md p-2 bg-white/20"
+          className="border border-gray-300 rounded-md p-2 bg-white/20 mb-2"
           value={searchInput}
           onKeyDown={e => {
             // if (e.key === 'Enter') {
@@ -199,11 +383,17 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                     }
                 </div> */}
 
+        {debouncedSearchText === '' && !queryResult && (
+          <span className="text-md font-semibold mb-1 text-gray-800">최근 사용한 콘</span>
+        )}
+
         {
           <div className="flex flex-wrap w-[350px] gap-1">
             {queryResult &&
               Array.from(queryResult).map((detailIdx, index) => {
                 const detailData = detailIdxDict[detailIdx];
+
+                // console.log(detailData, detailIdxDict, detailIdx, "detailData");
 
                 return (
                   <div
@@ -228,121 +418,53 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                       }
                     }}
                     tabIndex={0}
-                    onClick={async () => {
-                      console.log(userPackageData);
-                      // return;
-
-                      let packageIdx = detailData.packageIdx;
-
-                      let detailIdx = userPackageData[packageIdx].conList[detailData.sort].detailIdx;
-                      console.log(packageIdx, detailIdx);
-
-                      if (isDoubleCon) {
-                        if (firstDoubleCon === null) {
-                          setFirstDoubleCon({
-                            packageIdx: packageIdx,
-                            detailIdx: detailIdx,
-                            imgPath: detailData.imgPath,
-                          });
-
-                          setQueryResult(undefined);
-                          setSearchInput('');
-
-                          searchInputRef.current?.focus();
-
-                          return;
-                        } else {
-                          packageIdx = `${firstDoubleCon.packageIdx}, ${packageIdx}`;
-                          detailIdx = `${firstDoubleCon.detailIdx}, ${detailIdx}`;
-                        }
-                      }
-
-                      setQueryResult(undefined);
-
-                      //   return;
-
-                      // 사용 예시
-                      const postNumber = getQueryValue('no');
-                      const galleryId = getQueryValue('id');
-
-                      const check6Value = document.getElementById('check_6')?.getAttribute('value');
-                      const check7Value = document.getElementById('check_7')?.getAttribute('value');
-                      const check8Value = document.getElementById('check_8')?.getAttribute('value');
-
-                      console.log(postNumber, galleryId, check6Value, check7Value, check8Value);
-
-                      // 사용 예시
-
-                      // const packageIdx = 151346;
-                      // const detailIdx = 1241690924;
-
-                      const cookies = parseCookies();
-                      const ci_t = cookies['ci_c'];
-
-                      if (
-                        packageIdx === undefined ||
-                        detailIdx === undefined ||
-                        ci_t === undefined ||
-                        check6Value === undefined ||
-                        check7Value === undefined ||
-                        check8Value === undefined
-                      ) {
-                        setIsModalOpen(false);
-
-                        makeToast(
-                          `등록 실패 ㅠㅠ ${JSON.stringify({
-                            packageIdx,
-                            detailIdx,
-                          })}`,
-                        );
-                        return;
-                      }
-                      const name = document.getElementsByClassName('user_info_input')[0].children[0].textContent;
-
-                      const replyBox = document.querySelectorAll('.reply_box #cmt_write_box')[0];
-                      let replyTarget: string | null = '';
-                      if (replyBox) {
-                        replyTarget = replyBox.getAttribute('data-no');
-                      }
-                      if (replyTarget === null) {
-                        replyTarget = '';
-                      }
-
-                      setIsModalOpen(false);
-
-                      fetch('https://gall.dcinside.com/dccon/insert_icon', {
-                        headers: {
-                          accept: '*/*',
-                          'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
-                          'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                          'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
-                          'sec-ch-ua-mobile': '?0',
-                          'sec-ch-ua-platform': '"Windows"',
-                          'sec-fetch-dest': 'empty',
-                          'sec-fetch-mode': 'cors',
-                          'sec-fetch-site': 'same-origin',
-                          'x-requested-with': 'XMLHttpRequest',
-                        },
-                        referrer: `https://gall.dcinside.com/mgallery/board/view/?id=qwer_fan&no=${postNumber}&page=1`,
-                        referrerPolicy: 'unsafe-url',
-                        body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=${isDoubleCon ? '1' : ''}&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=qwer_fan&c_gall_no=${postNumber}&g-recaptcha-response=&check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M&${replyTarget ? 'c_no=' + replyTarget : ''}`,
-                        method: 'POST',
-                        mode: 'cors',
-                        credentials: 'include',
-                      }).then(response => {
-                        console.log(response);
-                        const refreshButton = document.getElementsByClassName(
-                          'btn_cmt_refresh',
-                        )[0] as HTMLButtonElement;
-                        refreshButton?.click();
-                        makeToast('등록 성공!');
-                      });
+                    onClick={() => {
+                      onConClick({ detailData });
                     }}>
                     <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} />
                     {/* <span>{detailData.title}</span> */}
                   </div>
                 );
               })}
+
+            {debouncedSearchText === '' &&
+              !queryResult &&
+              Array.from(recentUsedConList)
+                .reverse()
+                .map((detailData, index) => {
+                  const detailIdx = detailData.detailIdx;
+
+                  return (
+                    <div
+                      key={detailIdx}
+                      className={`flex cursor-pointer w-[calc(25%-0.2em)] rounded-md
+                                            ${
+                                              focusedIndex === index
+                                                ? ' border-4 scale-125 transition-all duration-200 z-[9999999999] '
+                                                : 'scale-100 z-[9999999]'
+                                            }
+                                            `}
+                      ref={el => {
+                        imageRefs.current[index] = el;
+                      }}
+                      onKeyDown={e => handleImageKeyDown(e, index)}
+                      onFocus={() => {
+                        setFocusedIndex(index);
+                      }}
+                      onBlur={() => {
+                        if (focusedIndex === index) {
+                          setFocusedIndex(null);
+                        }
+                      }}
+                      tabIndex={0}
+                      onClick={() => {
+                        onConClick({ detailData });
+                      }}>
+                      <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} />
+                      {/* <span>{detailData.title}</span> */}
+                    </div>
+                  );
+                })}
           </div>
         }
 

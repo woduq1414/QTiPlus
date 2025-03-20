@@ -257,7 +257,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
           {customConList &&
           userPackageData &&
           Object.keys(customConList).filter(key => !userPackageData[key]).length > 0 ? (
-            <div className="flex text-sm gap-2 flex-wrap items-center max-h-[200px] overflow-auto text-gray-700">
+            <div className="flex text-sm gap-2 flex-row overflow-x-auto items-center   text-gray-700">
               보유하지 않은 콘 :
               {Object.keys(customConList)
                 .filter(key => !userPackageData[key])

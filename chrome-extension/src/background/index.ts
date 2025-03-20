@@ -150,10 +150,11 @@ async function loadJSON() {
 }
 
 async function conTreeInit() {
+  const startT = performance.now();
   // const userPackageData = await readLocalStorage('UserPackageData');
 
   // sleep 3s
-  await new Promise(resolve => setTimeout(resolve, 3000));
+  // await new Promise(resolve => setTimeout(resolve, 3000));
 
   const emojiSearchTmp = new EmojiSearch();
 
@@ -194,6 +195,10 @@ async function conTreeInit() {
     }
   }
   tmpRes = { emojiSearchTmp, detailIdxDictTmp };
+
+  const endT = performance.now();
+
+  console.log('Execution time: ~', endT - startT, 'ms');
   return { emojiSearchTmp, detailIdxDictTmp };
 }
 
