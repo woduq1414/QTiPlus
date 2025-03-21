@@ -199,6 +199,7 @@ async function conTreeInit() {
   const endT = performance.now();
 
   console.log('Execution time: ~', endT - startT, 'ms');
+
   return { emojiSearchTmp, detailIdxDictTmp };
 }
 

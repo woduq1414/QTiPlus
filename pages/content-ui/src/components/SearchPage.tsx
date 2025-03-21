@@ -23,7 +23,7 @@ interface SearchPageProps {
 }
 
 const SearchPage: React.FC<SearchPageProps> = props => {
-  const pageSize = 8;
+  const pageSize = 16;
   const { currentPage, setCurrentPage, userPackageData, setIsModalOpen, isModalOpen, unicroId, setIsEditMode } =
     useGlobalStore();
 
@@ -341,62 +341,123 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         console.log('Value is set to ', recentUsedConList);
       });
 
-      if (
-        packageIdx === undefined ||
-        detailIdx === undefined ||
-        ci_t === undefined ||
-        check6Value === undefined ||
-        check7Value === undefined ||
-        check8Value === undefined
-      ) {
+      const noteEditableDom = document.getElementsByClassName('note-editable')[0];
+      if (noteEditableDom) {
+        if (packageIdx === undefined || detailIdx === undefined) {
+          setIsModalOpen(false);
+
+          makeToast(
+            `등록 실패 ㅠㅠ ${JSON.stringify({
+              packageIdx,
+              detailIdx,
+            })}`,
+          );
+          return;
+        }
+
+        const memo = document.getElementById('memo');
+        if (!memo) return;
+
+        const prevSelection = window.getSelection();
+        let savedRange;
+        if (prevSelection) {
+          if (prevSelection.rangeCount > 0) {
+            savedRange = prevSelection.getRangeAt(0); // 현재 커서 위치 저장
+          }
+        }
+
+        // 현재 선택된 위치에 HTML 삽입
+        (noteEditableDom as HTMLElement).focus();
+        const range = document.createRange();
+        const selection = window.getSelection();
+
+        range.selectNodeContents(noteEditableDom); // 전체 내용을 범위로 설정
+        range.collapse(false); // 범위를 끝으로 이동
+
+        if (selection) {
+          selection.removeAllRanges(); // 기존 선택 해제
+          selection.addRange(range); // 새로운 범위 설정
+        }
+        if (isDoubleCon) {
+          document.execCommand(
+            'insertHTML',
+            false,
+            `<img class="written_dccon " src="${firstDoubleCon.imgPath}" conalt="2" alt="2" con_alt="2" title="2" detail="${firstDoubleCon.detailIdx}">
+           
+            `,
+          );
+          document.execCommand(
+            'insertHTML',
+            false,
+            ` <img class="written_dccon " src="${detailData.imgPath}" conalt="2" alt="2" con_alt="2" title="2" detail="${detailIdx.split(', ')[1]}">`,
+          );
+        } else {
+          document.execCommand(
+            'insertHTML',
+            false,
+            `<img class="written_dccon " src="${detailData.imgPath}" conalt="2" alt="2" con_alt="2" title="2" detail="${detailIdx}">`,
+          );
+        }
+        setIsModalOpen(false);
+      } else {
+        if (
+          packageIdx === undefined ||
+          detailIdx === undefined ||
+          ci_t === undefined ||
+          check6Value === undefined ||
+          check7Value === undefined ||
+          check8Value === undefined
+        ) {
+          setIsModalOpen(false);
+
+          makeToast(
+            `등록 실패 ㅠㅠ ${JSON.stringify({
+              packageIdx,
+              detailIdx,
+            })}`,
+          );
+          return;
+        }
+
+        const name = document.getElementsByClassName('user_info_input')[0].children[0].textContent;
+
+        const replyBox = document.querySelectorAll('.reply_box #cmt_write_box')[0];
+        let replyTarget: string | null = '';
+        if (replyBox) {
+          replyTarget = replyBox.getAttribute('data-no');
+        }
+        if (replyTarget === null) {
+          replyTarget = '';
+        }
+
         setIsModalOpen(false);
 
-        makeToast(
-          `등록 실패 ㅠㅠ ${JSON.stringify({
-            packageIdx,
-            detailIdx,
-          })}`,
-        );
-        return;
+        fetch('https://gall.dcinside.com/dccon/insert_icon', {
+          headers: {
+            accept: '*/*',
+            'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'x-requested-with': 'XMLHttpRequest',
+          },
+          referrer: `https://gall.dcinside.com/mgallery/board/view/?id=qwer_fan&no=${postNumber}&page=1`,
+          referrerPolicy: 'unsafe-url',
+          body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=${isDoubleCon ? '1' : ''}&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=qwer_fan&c_gall_no=${postNumber}&g-recaptcha-response=&check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M&${replyTarget ? 'c_no=' + replyTarget : ''}`,
+          method: 'POST',
+          mode: 'cors',
+          credentials: 'include',
+        }).then(async response => {
+          console.log(response);
+          const refreshButton = document.getElementsByClassName('btn_cmt_refresh')[0] as HTMLButtonElement;
+          refreshButton?.click();
+          makeToast('등록 성공!');
+        });
       }
-      const name = document.getElementsByClassName('user_info_input')[0].children[0].textContent;
-
-      const replyBox = document.querySelectorAll('.reply_box #cmt_write_box')[0];
-      let replyTarget: string | null = '';
-      if (replyBox) {
-        replyTarget = replyBox.getAttribute('data-no');
-      }
-      if (replyTarget === null) {
-        replyTarget = '';
-      }
-
-      setIsModalOpen(false);
-
-      fetch('https://gall.dcinside.com/dccon/insert_icon', {
-        headers: {
-          accept: '*/*',
-          'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
-          'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-          'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
-          'sec-ch-ua-mobile': '?0',
-          'sec-ch-ua-platform': '"Windows"',
-          'sec-fetch-dest': 'empty',
-          'sec-fetch-mode': 'cors',
-          'sec-fetch-site': 'same-origin',
-          'x-requested-with': 'XMLHttpRequest',
-        },
-        referrer: `https://gall.dcinside.com/mgallery/board/view/?id=qwer_fan&no=${postNumber}&page=1`,
-        referrerPolicy: 'unsafe-url',
-        body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=${isDoubleCon ? '1' : ''}&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=qwer_fan&c_gall_no=${postNumber}&g-recaptcha-response=&check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M&${replyTarget ? 'c_no=' + replyTarget : ''}`,
-        method: 'POST',
-        mode: 'cors',
-        credentials: 'include',
-      }).then(async response => {
-        console.log(response);
-        const refreshButton = document.getElementsByClassName('btn_cmt_refresh')[0] as HTMLButtonElement;
-        refreshButton?.click();
-        makeToast('등록 성공!');
-      });
     }
   }
 
@@ -627,15 +688,6 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           flex flex-row gap-0.5 justify-center items-center
           "
           onClick={async () => {
-            //   function pasteHTML(str: string) {
-            //     const memo = document.getElementById("memo");
-            //     if (!memo) return;
-
-            //     // 현재 선택된 위치에 HTML 삽입
-            //     memo.focus();
-            //     document.execCommand("insertHTML", false, str);
-            // }
-
             // return;
             setCurrentPage(1);
             setIsEditMode(false);
