@@ -4,7 +4,7 @@ const ImageWithSkeleton = ({ src, alt }: { src: string; alt: string }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   return (
-    <div className="relative  bg-gray-200">
+    <div className="relative  ">
       {/* 스켈레톤 UI */}
       {isLoading && <div className="absolute inset-0 animate-pulse bg-gray-300"></div>}
 

@@ -292,7 +292,7 @@ conTreeInit().then(res => {
 
         const result2 = tmpRes?.emojiSearchTmp.searchTrie(additionalCategory);
 
-        const finalResult = new Set([...Array.from(result), ...Array.from(result2)]);
+        let finalResult = new Set([...Array.from(result), ...Array.from(result2)]);
 
         if (who !== '') {
           for (let key of Array.from(finalResult)) {
@@ -335,17 +335,34 @@ conTreeInit().then(res => {
         //   }
         // }
 
-        if (false && finalResult.size >= 20 && query.length == 1) {
-          sendResponse({
-            res: JSON.stringify(Array.from(finalResult).slice(0, 20)),
-          });
-          return true;
-        } else {
-          sendResponse({
-            res: JSON.stringify(Array.from(finalResult)),
-          });
-          return true;
+        const favoriteConList = (await readLocalStorage(`FavoriteConList_${unicroId}`)) as any;
+
+        // move favorite to top
+
+        let favoriteList = new Set();
+        let otherList = new Set();
+
+        for (let key of Array.from(finalResult)) {
+          console.log(key, favoriteConList[detailIdxDict[key as string].detailIdx], detailIdxDict[key as string]);
+          const detailData = detailIdxDict[key as string];
+
+          const detailIdx = userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx;
+
+          if (favoriteConList !== null && favoriteConList[detailIdx] !== undefined) {
+            favoriteList.add(key);
+          } else {
+            otherList.add(key);
+          }
         }
+
+        finalResult.clear();
+
+        finalResult = new Set([...Array.from(favoriteList), ...Array.from(otherList)]);
+
+        sendResponse({
+          res: JSON.stringify(Array.from(finalResult)),
+        });
+        return true;
       }
 
       func();

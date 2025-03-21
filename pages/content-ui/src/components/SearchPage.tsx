@@ -12,6 +12,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   Cog6ToothIcon,
+  StarIcon,
   TrashIcon,
 } from '@heroicons/react/16/solid';
 import { CheckCircleIcon as CheckCircleIconOutline } from '@heroicons/react/24/outline';
@@ -49,6 +50,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
   const [queryMaxPage, setQueryMaxPage] = useState<number>(1);
 
   const [originalQueryResult, setOriginalQueryResult] = useState<any>();
+
+  const [favoriteConList, setFavoriteConList] = useState<any>({});
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Tab' && queryResult !== undefined && queryResult.size > 0) {
@@ -142,6 +145,23 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         }
       });
 
+      const favoriteConListKey = `FavoriteConList_${unicroId}`;
+      readLocalStorage(favoriteConListKey).then(data => {
+        if (data === null) {
+          setFavoriteConList({});
+
+          chrome.storage.local.set({ [favoriteConListKey]: {} }, async function () {
+            console.log('Value is set to ', {});
+          });
+        } else {
+          if (data === undefined) {
+            setFavoriteConList({});
+          } else {
+            setFavoriteConList(data as any);
+          }
+        }
+      });
+
       return () => {
         setSearchInput('');
         setQueryResult(undefined);
@@ -214,6 +234,36 @@ const SearchPage: React.FC<SearchPageProps> = props => {
   function toggleDoubleCon() {
     setIsDoubleCon(prev => !prev);
     setFirstDoubleCon(null);
+  }
+
+  async function onConRightClick({ detailData, e }: { detailData: any; e: any }) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('right click', detailData);
+
+    const detailIdx = userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx;
+
+    console.log(detailIdx);
+
+    const favoriteConListKey = `FavoriteConList_${unicroId}`;
+
+    let prevfavoriteConList = (await readLocalStorage(favoriteConListKey)) as any;
+
+    if (prevfavoriteConList === null) {
+      prevfavoriteConList = {};
+    }
+
+    if (prevfavoriteConList[detailIdx] === undefined) {
+      prevfavoriteConList[detailIdx] = true;
+    } else {
+      delete prevfavoriteConList[detailIdx];
+    }
+
+    chrome.storage.local.set({ [favoriteConListKey]: prevfavoriteConList }, async function () {
+      console.log('Value is set to ', prevfavoriteConList);
+    });
+
+    setFavoriteConList(prevfavoriteConList);
   }
 
   async function onConClick({ detailData }: { detailData: any }) {
@@ -573,8 +623,31 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                     tabIndex={0}
                     onClick={() => {
                       onConClick({ detailData });
+                    }}
+                    onContextMenu={e => {
+                      onConRightClick({ detailData, e });
                     }}>
                     <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} />
+                    {favoriteConList &&
+                      favoriteConList[userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx] && (
+                        <div className="absolute top-0 right-0">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="rgb(240,177,0)"
+                            className="w-5 h-5"
+                            stroke="white"
+                            strokeWidth={1.3}
+                            strokeLinecap="round"
+                            strokeLinejoin="round">
+                            <path
+                              fillRule="evenodd"
+                              d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </div>
+                      )}
                     {/* <span>{detailData.title}</span> */}
                   </div>
                 );
@@ -612,8 +685,31 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                       tabIndex={0}
                       onClick={() => {
                         onConClick({ detailData });
+                      }}
+                      onContextMenu={e => {
+                        onConRightClick({ detailData, e });
                       }}>
                       <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} />
+
+                      {favoriteConList && favoriteConList[detailData.detailIdx] && (
+                        <div className="absolute top-0 right-0">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="rgb(240,177,0)"
+                            className="w-5 h-5"
+                            stroke="white"
+                            strokeWidth={1.3}
+                            strokeLinecap="round"
+                            strokeLinejoin="round">
+                            <path
+                              fillRule="evenodd"
+                              d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </div>
+                      )}
                       {/* <span>{detailData.title}</span> */}
                     </div>
                   );
