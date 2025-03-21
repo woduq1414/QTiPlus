@@ -426,6 +426,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       let data = await fetchList(0);
 
+      if (data.bigcon === undefined) {
+        sendResponse({ data: {}, error: '로그인이 필요합니다.' });
+        return;
+      }
+
       const maxPage = data.max_page + 1;
       // const maxPage = 1;
 

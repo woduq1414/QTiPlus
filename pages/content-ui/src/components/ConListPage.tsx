@@ -263,13 +263,13 @@ const ConListPage: React.FC<SearchPageProps> = props => {
           {customConList &&
           userPackageData &&
           Object.keys(customConList).filter(key => !userPackageData[key]).length > 0 ? (
-            <div className="flex text-sm gap-2 flex-row overflow-x-auto items-center   text-gray-700">
-              보유하지 않은 콘 :
+            <div className="flex w-full text-sm gap-x-2 gap-y-1 flex-wrap overflow-y-auto items-center  text-gray-700 max-h-[100px] ">
+              <span>보유하지 않은 콘 :</span>
               {Object.keys(customConList)
                 .filter(key => !userPackageData[key])
                 .map(key => {
                   return (
-                    <div
+                    <span
                       className="cursor-pointer px-2 py-1 bg-gray-200 rounded-xl text-gray-700"
                       key={key}
                       onClick={() => {
@@ -278,7 +278,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                         window.open(`https://dccon.dcinside.com/hot/1/title/QWER#${key}`);
                       }}>
                       {customConList[key].title}
-                    </div>
+                    </span>
                   );
                 })}
             </div>
@@ -361,6 +361,12 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                 },
                 function (response) {
                   console.log(response);
+
+                  if (response.error) {
+                    makeToast(response.error);
+                    setIsSyncing(false);
+                    return;
+                  }
 
                   setUserPackageData(response.data);
                   makeToast('동기화 성공!');

@@ -60,7 +60,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     }
   };
 
-  const handleImageKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, index: number) => {
+  const handleImageKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, index: number, detailData: any) => {
     let targetResultSize = undefined;
     if (queryResult === undefined) {
       targetResultSize = recentUsedConList.length;
@@ -89,6 +89,12 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
+    } else if (e.altKey && e.key === 's') {
+      e.preventDefault(); // 기본 동작 방지
+
+      onConRightClick({ detailData: detailData, e });
+
+      console.log('alt + s');
     }
   };
 
@@ -505,7 +511,13 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           console.log(response);
           const refreshButton = document.getElementsByClassName('btn_cmt_refresh')[0] as HTMLButtonElement;
           refreshButton?.click();
-          makeToast('등록 성공!');
+
+          const responseText = await response.text();
+          if (responseText === 'ok') {
+            makeToast('등록 성공!');
+          } else {
+            makeToast('등록 실패..(로그인 되었는지 확인 OR 재동기화 필요)');
+          }
         });
       }
     }
@@ -611,7 +623,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                     ref={el => {
                       imageRefs.current[index] = el;
                     }}
-                    onKeyDown={e => handleImageKeyDown(e, index)}
+                    onKeyDown={e => handleImageKeyDown(e, index, detailData)}
                     onFocus={() => {
                       setFocusedIndex(index);
                     }}
@@ -673,7 +685,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                       ref={el => {
                         imageRefs.current[index] = el;
                       }}
-                      onKeyDown={e => handleImageKeyDown(e, index)}
+                      onKeyDown={e => handleImageKeyDown(e, index, detailData)}
                       onFocus={() => {
                         setFocusedIndex(index);
                       }}
