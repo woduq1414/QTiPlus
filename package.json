@@ -1,14 +1,10 @@
 {
   "name": "chrome-extension-boilerplate-react-vite",
-  "version": "0.4.3",
+  "version": "1.0.0",
   "description": "chrome extension boilerplate",
   "license": "MIT",
   "private": true,
   "sideEffects": false,
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite.git"
-  },
   "type": "module",
   "scripts": {
     "clean:bundle": "rimraf dist && turbo clean:bundle",

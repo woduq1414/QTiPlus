@@ -30,7 +30,7 @@ const manifest = {
   version: packageJson.version,
   description: '__MSG_extensionDescription__',
   host_permissions: ['*://*.dcinside.com/*'],
-  permissions: ['storage', 'tabs', 'activeTab', 'scripting'],
+  permissions: ['storage'],
   options_page: 'options/index.html',
   background: {
     service_worker: 'background.js',

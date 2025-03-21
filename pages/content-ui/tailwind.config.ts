@@ -1,5 +1,6 @@
 import baseConfig from '@extension/tailwindcss-config';
 import { withUI } from '@extension/ui';
+import plugin from 'tailwindcss/plugin';
 
 export default withUI({
   ...baseConfig,
@@ -54,4 +55,28 @@ export default withUI({
       },
     },
   },
+  plugins: [
+    plugin(({ addBase, theme }) => {
+      addBase({
+        '.overflow-auto': {
+          overflowY: 'auto',
+          scrollbarWidth: 'thin',
+        },
+        '.overflow-auto::-webkit-scrollbar': {
+          height: '2px',
+          width: '2px',
+        },
+        '.overflow-auto::-webkit-scrollbar-thumb': {
+          backgroundColor: '#aaa',
+          borderRadius: '4px',
+        },
+        '.overflow-auto::-webkit-scrollbar-track': {
+          background: 'none',
+        },
+        '.overflow-auto::-webkit-scrollbar-button': {
+          display: 'none',
+        },
+      });
+    }),
+  ],
 });

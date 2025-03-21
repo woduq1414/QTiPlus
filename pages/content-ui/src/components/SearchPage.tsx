@@ -12,6 +12,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   Cog6ToothIcon,
+  ListBulletIcon,
   StarIcon,
   TrashIcon,
 } from '@heroicons/react/16/solid';
@@ -42,6 +43,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
   const [isDoubleCon, setIsDoubleCon] = useState<boolean>(false);
 
+  const [isBigCon, setIsBigCon] = useState<boolean>(false);
+
   const [firstDoubleCon, setFirstDoubleCon] = useState<any>(null);
 
   const [recentUsedConList, setRecentUsedConList] = useState<any[]>([]);
@@ -52,6 +55,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
   const [originalQueryResult, setOriginalQueryResult] = useState<any>();
 
   const [favoriteConList, setFavoriteConList] = useState<any>({});
+
+  const [bigConExpire, setBigConExpire] = useState<number>(0);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Tab' && queryResult !== undefined && queryResult.size > 0) {
@@ -137,6 +142,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       searchInputRef.current?.focus();
 
       setIsDoubleCon(false);
+
       setFirstDoubleCon(null);
       const recentUsedConListKey = `RecentUsedConList_${unicroId}`;
       readLocalStorage(recentUsedConListKey).then(data => {
@@ -165,6 +171,22 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           } else {
             setFavoriteConList(data as any);
           }
+        }
+      });
+
+      const bigConExpireKey = `BigConExpire_${unicroId}`;
+      readLocalStorage(bigConExpireKey).then(data => {
+        if (data === null) {
+          setBigConExpire(0);
+          setIsBigCon(false);
+        }
+        if (data === undefined) {
+          setBigConExpire(0);
+          setIsBigCon(false);
+        } else {
+          setBigConExpire(data as number);
+
+          setIsBigCon(true);
         }
       });
 
@@ -203,6 +225,11 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         event.preventDefault(); // 기본 동작 방지
         toggleDoubleCon();
         console.log('alt + 2');
+      } else if (event.altKey && (event.key === 'b' || event.key === 'B')) {
+        event.preventDefault(); // 기본 동작 방지
+
+        setIsBigCon(prev => !prev);
+        console.log('alt + B');
       } else if (event.shiftKey && event.key === 'ArrowRight') {
         event.preventDefault(); // 기본 동작 방지
 
@@ -438,20 +465,20 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           document.execCommand(
             'insertHTML',
             false,
-            `<img class="written_dccon " src="${firstDoubleCon.imgPath}" conalt="2" alt="2" con_alt="2" title="2" detail="${firstDoubleCon.detailIdx}">
+            `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${firstDoubleCon.imgPath}" conalt="2" alt="2" con_alt="2" title="2" detail="${firstDoubleCon.detailIdx}">
            
             `,
           );
           document.execCommand(
             'insertHTML',
             false,
-            ` <img class="written_dccon " src="${detailData.imgPath}" conalt="2" alt="2" con_alt="2" title="2" detail="${detailIdx.split(', ')[1]}">`,
+            ` <img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${detailData.imgPath}" conalt="2" alt="2" con_alt="2" title="2" detail="${detailIdx.split(', ')[1]}">`,
           );
         } else {
           document.execCommand(
             'insertHTML',
             false,
-            `<img class="written_dccon " src="${detailData.imgPath}" conalt="2" alt="2" con_alt="2" title="2" detail="${detailIdx}">`,
+            `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${detailData.imgPath}" conalt="2" alt="2" con_alt="2" title="2" detail="${detailIdx}">`,
           );
         }
         setIsModalOpen(false);
@@ -503,7 +530,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           },
           referrer: `https://gall.dcinside.com/mgallery/board/view/?id=qwer_fan&no=${postNumber}&page=1`,
           referrerPolicy: 'unsafe-url',
-          body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=${isDoubleCon ? '1' : ''}&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=qwer_fan&c_gall_no=${postNumber}&g-recaptcha-response=&check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M&${replyTarget ? 'c_no=' + replyTarget : ''}`,
+          body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=${isDoubleCon ? '1' : ''}&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=${galleryId}&c_gall_no=${postNumber}&g-recaptcha-response=&check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M&${replyTarget ? 'c_no=' + replyTarget : ''}&${isBigCon ? 'bigdccon=1' : ''}`,
           method: 'POST',
           mode: 'cors',
           credentials: 'include',
@@ -528,26 +555,46 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       className={`fixed inset-0 flex items-center justify-center pointer-events-none  z-[999999999]
             `}>
       <div
-        className="bg-[rgba(246,246,246,0.75)] p-6 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-1 
+        className="bg-[rgba(246,246,246,0.75)] pl-6 pr-6 pt-6 pb-3 rounded-2xl shadow-[0_30px_60px_-20px_rgba(0,0,0,0.3)] pointer-events-auto flex flex-col gap-1 
       
       "
         style={{
           backdropFilter: 'blur(15px)',
         }}>
         <div className="flex flex-row w-full justify-between items-end">
-          <div className="flex flex-row gap-[0.2em] items-center cursor-pointer" onClick={toggleDoubleCon}>
-            {isDoubleCon ? (
-              <CheckCircleIcon className="h-4 w-4 text-gray-600" />
-            ) : (
-              <CheckCircleIconOutline className="h-4 w-4 text-gray-400" />
-            )}
-            <span
-              className={`text-sm font-semibold
+          <div className="flex flex-row gap-3">
+            <div className="flex flex-row gap-[0.2em] items-center cursor-pointer" onClick={toggleDoubleCon}>
+              {isDoubleCon ? (
+                <CheckCircleIcon className="h-4 w-4 text-gray-600" />
+              ) : (
+                <CheckCircleIconOutline className="h-4 w-4 text-gray-400" />
+              )}
+              <span
+                className={`text-sm font-semibold
                     ${isDoubleCon ? 'text-gray-700' : 'text-gray-400'}
                         `}>
-              더블콘
-            </span>
+                더블콘
+              </span>
+            </div>
+            {bigConExpire > new Date().getTime() / 1000 && (
+              <div
+                className="flex flex-row gap-[0.2em] items-center cursor-pointer"
+                onClick={() => setIsBigCon(prev => !prev)}>
+                {isBigCon ? (
+                  <CheckCircleIcon className="h-4 w-4 text-gray-600" />
+                ) : (
+                  <CheckCircleIconOutline className="h-4 w-4 text-gray-400" />
+                )}
+                <span
+                  className={`text-sm font-semibold
+                    ${isBigCon ? 'text-gray-700' : 'text-gray-400'}
+                        `}>
+                  대왕콘
+                </span>
+              </div>
+            )}
           </div>
+
           {isDoubleCon &&
             (firstDoubleCon ? (
               <div
@@ -598,7 +645,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                     }
                 </div> */}
 
-        {debouncedSearchText === '' && !queryResult && (
+        {debouncedSearchText === '' && !queryResult && recentUsedConList && recentUsedConList.length > 0 && (
           <span className="text-md font-semibold mb-1 text-gray-800">최근 사용한 콘</span>
         )}
 
@@ -792,8 +839,10 @@ const SearchPage: React.FC<SearchPageProps> = props => {
          text-gray-600
         
  
-          mt-2
+          mt-5
           flex flex-row gap-0.5 justify-center items-center
+
+          font-semibold text-sm
           "
           onClick={async () => {
             // return;
@@ -802,14 +851,21 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
             return;
           }}>
-          <Cog6ToothIcon
+          {/* <Cog6ToothIcon
             className=" inline-block"
             style={{
               width: '1em',
               height: '1em',
             }}
+          /> */}
+          <ListBulletIcon
+            className="inline-block "
+            style={{
+              width: '1em',
+              height: '1em',
+            }}
           />
-          설정
+          콘 목록
         </div>
       </div>
     </div>

@@ -1,11 +1,11 @@
 {
   "extensionDescription": {
     "description": "Extension description",
-    "message": "React, Typescript, Vite를 사용한 크롬 익스텐션 보일러플레이트입니다."
+    "message": "QWER(큐떱이알)의 디시콘을 쉽게 검색해 사용해 보세요."
   },
   "extensionName": {
     "description": "Extension name",
-    "message": "크롬 익스텐션 보일러플레이트"
+    "message": "QWER(큐떱이알)콘 검색기"
   },
   "toggleTheme": {
     "message": "테마 변경"
@@ -15,13 +15,7 @@
   },
   "greeting": {
     "description": "인사 메시지",
-    "message": "안녕하세요, 제 이름은 $NAME$입니다.",
-    "placeholders": {
-      "name": {
-        "content": "$1",
-        "example": "서종학"
-      }
-    }
+    "message": "안녕하세요"
   },
   "hello": {
     "description": "Placeholder 예시",

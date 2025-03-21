@@ -164,7 +164,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-2 overflow-auto max-h-[65vh]">
+        <div className="flex flex-col gap-2 overflow-auto max-h-[65vh] px-1">
           {userPackageData &&
             Object.keys(userPackageData)
               .sort((a, b) => {
@@ -565,9 +565,12 @@ const ConListPage: React.FC<SearchPageProps> = props => {
 
                 const file = new Blob([JSON.stringify(customConList)], { type: 'text/plain' });
                 element.href = URL.createObjectURL(file);
-                element.download = `customConList_${new Date().getTime()}.json`;
+
+                element.download = `CustomConList_${unicroId.slice(0, 3)}_${new Date().getTime()}.json`;
                 document.body.appendChild(element); // Required for this to work in FireFox
                 element.click();
+
+                setIsExportModalOpen(false);
               }}>
               확인
             </div>

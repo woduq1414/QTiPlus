@@ -142,7 +142,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
           </div>
           <div className="w-[90px]"></div>
         </div>
-        <div className="flex flex-col gap-2 max-h-[65vh] overflow-y-auto">
+        <div className="flex flex-col gap-2 max-h-[65vh] overflow-y-auto scrollbar">
           {userPackageData[packageIdx] &&
             Object.keys(userPackageData[packageIdx].conList).map(key => {
               const item = items[parseInt(key)];
@@ -155,7 +155,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                     placeholder="Title"
                     value={item.title}
                     onChange={e => handleChange(item.id, 'title', e.target.value)}
-                    className="border p-1"
+                    className="border px-2 py-2 rounded-lg"
                   />
                   <input
                     type="text"
@@ -163,7 +163,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                     placeholder="Tag"
                     value={item.tag}
                     onChange={e => handleChange(item.id, 'tag', e.target.value)}
-                    className="border p-1"
+                    className="border px-2 py-2 rounded-lg"
                   />
 
                   <div className="flex flex-row gap-0.5">

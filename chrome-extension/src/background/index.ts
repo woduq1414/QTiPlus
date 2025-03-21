@@ -284,6 +284,8 @@ conTreeInit().then(res => {
           additionalCategory = '크아악';
         } else if (includesAny(query, ['춤'])) {
           additionalCategory = '댄스';
+        } else if (includesAny(query, ['추천', '게추'])) {
+          additionalCategory = '개추';
         }
 
         const detailIdxDict = tmpRes?.detailIdxDictTmp;
@@ -429,6 +431,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (data.bigcon === undefined) {
         sendResponse({ data: {}, error: '로그인이 필요합니다.' });
         return;
+      }
+
+      if (data.bigcon.status == 'enabled') {
+        const bigConExpire = data.bigcon.expire;
+        chrome.storage.local.set({ ['BigConExpire_' + unicroId]: bigConExpire }, async function () {
+          console.log('Value is set to ', {});
+        });
       }
 
       const maxPage = data.max_page + 1;
