@@ -228,7 +228,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                         <img
                           src={packageData.mainImg}
                           alt={packageData.title}
-                          className="w-[3em] h-[3em] rounded-lg border-2 border-gray-600 "
+                          className="w-[3em] h-[3em] rounded-lg border-2 border-gray-600 dark:border-gray-400"
                         />
                       </div>
                       <div

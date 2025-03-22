@@ -165,7 +165,11 @@ const SettingPage: React.FC<SearchPageProps> = props => {
             </div>
           </div>
         </div>
-        <div className="mb-4 text-lg flex flex-row cursor-pointer text-gray-900  dark:text-gray-100 hover:text-blue-500 dark:hover:text-blue-400 items-center mx-auto">
+        <div
+          className="mb-4 text-lg flex flex-row cursor-pointer text-gray-900  dark:text-gray-100 hover:text-blue-500 dark:hover:text-blue-400 items-center mx-auto"
+          onClick={() => {
+            window.open('https://adaptive-bovid-12e.notion.site/1beee4e2dbd98077996fdececf9c0b9a?pvs=73', '_blank');
+          }}>
           <PaperClipIcon strokeWidth={1} className="mr-0.5 w-[1em] h-[1em]" />
           사용 설명서
         </div>

@@ -13,7 +13,7 @@ console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.
 
 let tabId = 0;
 function removeSpecialChar(str: string) {
-  return str.replace(/[^a-zA-Z0-9가-힣]/g, '').toUpperCase();
+  return str.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎ]/g, '').toUpperCase();
 }
 class SuffixTrieNode {
   children: Record<string, SuffixTrieNode>;
