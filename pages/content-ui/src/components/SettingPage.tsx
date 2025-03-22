@@ -40,14 +40,14 @@ const SettingPage: React.FC<SearchPageProps> = props => {
       } else {
         setSetting({
           isDarkMode: false,
-          isShowRightBottomButton: false,
+          isShowRightBottomButton: true,
           isDefaultBigCon: true,
         });
 
         chrome.storage.local.set({
           UserConfig: {
             isDarkMode: false,
-            isShowRightBottomButton: false,
+            isShowRightBottomButton: true,
             isDefaultBigCon: true,
           },
         });

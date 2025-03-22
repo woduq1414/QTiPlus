@@ -25,8 +25,12 @@ interface GlobalStore {
   isEditMode: boolean;
   setIsEditMode: (isEditMode: boolean) => void;
 
-  setting: any;
-  setSetting: (setting: any) => void;
+  setting: {
+    isDarkMode: boolean;
+    isShowRightBottomButton: boolean;
+    isDefaultBigCon: boolean;
+  };
+  setSetting: (newSettings: any) => void;
 }
 
 const useGlobalStore = create<GlobalStore>(set => ({
@@ -59,10 +63,14 @@ const useGlobalStore = create<GlobalStore>(set => ({
 
   setting: {
     isDarkMode: false,
-    isShowRightBottomButton: false,
+    isShowRightBottomButton: true,
     isDefaultBigCon: true,
   },
-  setSetting: setting => set({ setting }),
+  // setSetting 메서드 구현
+  setSetting: newSettings =>
+    set(state => ({
+      setting: { ...state.setting, ...newSettings },
+    })),
 }));
 
 export default useGlobalStore;

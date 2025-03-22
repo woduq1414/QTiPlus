@@ -565,7 +565,7 @@ readLocalStorage(storageKey).then((data: any) => {
     chrome.storage.local.set({
       UserConfig: {
         isDarkMode: false,
-        isShowRightBottomButton: false,
+        isShowRightBottomButton: true,
         isDefaultBigCon: true,
       },
     });

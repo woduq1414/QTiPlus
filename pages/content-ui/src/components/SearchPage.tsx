@@ -710,6 +710,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                     }
                 </div> */}
 
+        {!userPackageData && <div>아래 [콘 목록]에서 동기화를 먼저 해주세요!</div>}
+
         {debouncedSearchText === '' && !queryResult && recentUsedConList && recentUsedConList.length > 0 && (
           <span className="text-md font-semibold mb-1 text-gray-800 dark:text-gray-200">최근 사용한 콘</span>
         )}

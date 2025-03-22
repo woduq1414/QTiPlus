@@ -48,6 +48,7 @@ function Router() {
     setIsModalOpen,
     setting,
     setSetting,
+    userPackageData,
   } = useGlobalStore();
 
   useEffect(() => {
@@ -73,14 +74,14 @@ function Router() {
       } else {
         setSetting({
           isDarkMode: false,
-          isShowRightBottomButton: false,
+          isShowRightBottomButton: true,
           isDefaultBigCon: true,
         });
 
         chrome.storage.local.set({
           UserConfig: {
             isDarkMode: false,
-            isShowRightBottomButton: false,
+            isShowRightBottomButton: true,
             isDefaultBigCon: true,
           },
         });
@@ -89,13 +90,20 @@ function Router() {
   }, []);
 
   useEffect(() => {
-    const handleKeyDown = (event: { altKey: any; key: string; preventDefault: () => void }) => {
+    const handleKeyDown = (event: { altKey: any; shiftKey: any; key: string; preventDefault: () => void }) => {
       if (event.altKey && (event.key === 'q' || event.key === 'Q' || event.key === 'ㅂ')) {
         event.preventDefault(); // 기본 동작 방지
         setIsModalOpen((prev: any) => !prev);
-        setCurrentPage(0);
 
         console.log('alt + q');
+      }
+
+      // detect alt + shift + d
+
+      if (event.altKey && event.shiftKey && (event.key === 'd' || event.key === 'D' || event.key === 'ㅇ')) {
+        event.preventDefault(); // 기본 동작 방지
+        setSetting({ isDarkMode: !useGlobalStore.getState().setting.isDarkMode });
+        console.log('alt + shift + d');
       }
     };
 
@@ -104,6 +112,7 @@ function Router() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
   return (
     <div className={`${setting.isDarkMode ? 'dark' : 'light'}`}>
       <div
