@@ -26,8 +26,16 @@ interface SearchPageProps {
 
 const SearchPage: React.FC<SearchPageProps> = props => {
   const pageSize = 16;
-  const { currentPage, setCurrentPage, userPackageData, setIsModalOpen, isModalOpen, unicroId, setIsEditMode } =
-    useGlobalStore();
+  const {
+    currentPage,
+    setCurrentPage,
+    userPackageData,
+    setIsModalOpen,
+    isModalOpen,
+    unicroId,
+    setIsEditMode,
+    setting,
+  } = useGlobalStore();
 
   const detailIdxDict = props.detailIdxDict;
 
@@ -80,12 +88,17 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     }
 
     if (e.key === 'ArrowRight' && index < targetResultSize - 1) {
+      e.preventDefault();
+
       setFocusedIndex(index + 1);
     } else if (e.key === 'ArrowLeft' && index > 0) {
+      e.preventDefault();
       setFocusedIndex(index - 1);
     } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
       setFocusedIndex(prev => (prev !== null ? Math.min(prev + 4, targetResultSize - 1) : 0));
     } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
       setFocusedIndex(prev => (prev !== null ? Math.max(prev - 4, 0) : 0));
     } else if (e.key === 'Enter') {
       imageRefs.current[index]?.click();
@@ -94,7 +107,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
-    } else if (e.altKey && e.key === 's') {
+    } else if (e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'ㄴ')) {
       e.preventDefault(); // 기본 동작 방지
 
       onConRightClick({ detailData: detailData, e });
@@ -163,7 +176,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           setFavoriteConList({});
 
           chrome.storage.local.set({ [favoriteConListKey]: {} }, async function () {
-            console.log('Value is set to ', {});
+            // console.log('Value is set to ', {});
           });
         } else {
           if (data === undefined) {
@@ -186,7 +199,15 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         } else {
           setBigConExpire(data as number);
 
-          setIsBigCon(true);
+          if ((data as number) > new Date().getTime() / 1000) {
+            if (setting.isDefaultBigCon) {
+              setIsBigCon(true);
+            } else {
+              setIsBigCon(false);
+            }
+          } else {
+            setIsBigCon(false);
+          }
         }
       });
 
@@ -208,10 +229,9 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
   useEffect(() => {
     if (focusedIndex != null)
-      console.log(focusedIndex, imageRefs.current[focusedIndex], queryPageRef.current, 'focusedIndex');
-    if (focusedIndex !== null && imageRefs.current[focusedIndex]) {
-      imageRefs.current[focusedIndex]?.focus();
-    }
+      if (focusedIndex !== null && imageRefs.current[focusedIndex]) {
+        imageRefs.current[focusedIndex]?.focus();
+      }
   }, [focusedIndex, imageRefs.current[focusedIndex as number], queryPageRef.current]);
 
   useEffect(() => {
@@ -236,8 +256,6 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         // get current state of queryMaxPage
         const queryPage = queryPageRef.current;
         const queryMaxPage = queryMaxPageRef.current;
-
-        console.log(queryPage, queryMaxPage);
 
         if (queryPage < queryMaxPage) {
           setQueryPage(prev => prev + 1);
@@ -276,8 +294,6 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
     const detailIdx = userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx;
 
-    console.log(detailIdx);
-
     const favoriteConListKey = `FavoriteConList_${unicroId}`;
 
     let prevfavoriteConList = (await readLocalStorage(favoriteConListKey)) as any;
@@ -293,7 +309,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     }
 
     chrome.storage.local.set({ [favoriteConListKey]: prevfavoriteConList }, async function () {
-      console.log('Value is set to ', prevfavoriteConList);
+      // console.log('Value is set to ', prevfavoriteConList);
     });
 
     setFavoriteConList(prevfavoriteConList);
@@ -307,13 +323,12 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       if (recentUsedConList === null) {
         recentUsedConList = [];
       }
-      console.log(userPackageData);
+
       // return;
 
       let packageIdx = detailData.packageIdx;
 
       let detailIdx = userPackageData[packageIdx].conList[detailData.sort].detailIdx;
-      console.log(packageIdx, detailIdx);
 
       if (isDoubleCon) {
         if (firstDoubleCon === null) {
@@ -336,7 +351,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             sort: detailData.sort,
           });
           chrome.storage.local.set({ [recentUsedConListKey]: recentUsedConList }, async function () {
-            console.log('Value is set to ', recentUsedConList);
+            // console.log('Value is set to ', recentUsedConList);
           });
 
           setRecentUsedConList(recentUsedConList);
@@ -364,8 +379,6 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       const check6Value = document.getElementById('check_6')?.getAttribute('value');
       const check7Value = document.getElementById('check_7')?.getAttribute('value');
       const check8Value = document.getElementById('check_8')?.getAttribute('value');
-
-      console.log(postNumber, galleryId, check6Value, check7Value, check8Value);
 
       // 사용 예시
 
@@ -421,7 +434,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       recentUsedConList = recentUsedConList.slice(-12);
 
       chrome.storage.local.set({ [recentUsedConListKey]: recentUsedConList }, async function () {
-        console.log('Value is set to ', recentUsedConList);
+        // console.log('Value is set to ', recentUsedConList);
       });
 
       const noteEditableDom = document.getElementsByClassName('note-editable')[0];
@@ -535,7 +548,6 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           mode: 'cors',
           credentials: 'include',
         }).then(async response => {
-          console.log(response);
           const refreshButton = document.getElementsByClassName('btn_cmt_refresh')[0] as HTMLButtonElement;
           refreshButton?.click();
 
@@ -556,7 +568,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             `}>
       <div
         className="bg-[rgba(246,246,246,0.75)] pl-6 pr-6 pt-6 pb-3 rounded-2xl shadow-[0_30px_60px_-20px_rgba(0,0,0,0.3)] pointer-events-auto flex flex-col gap-1 
-      
+      dark:bg-[rgba(46,46,46,0.75)] dark:text-white/90
       "
         style={{
           backdropFilter: 'blur(15px)',
@@ -565,13 +577,13 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           <div className="flex flex-row gap-3">
             <div className="flex flex-row gap-[0.2em] items-center cursor-pointer" onClick={toggleDoubleCon}>
               {isDoubleCon ? (
-                <CheckCircleIcon className="h-4 w-4 text-gray-600" />
+                <CheckCircleIcon className="h-4 w-4 text-gray-600 dark:text-gray-300" />
               ) : (
                 <CheckCircleIconOutline className="h-4 w-4 text-gray-400" />
               )}
               <span
                 className={`text-sm font-semibold
-                    ${isDoubleCon ? 'text-gray-700' : 'text-gray-400'}
+                    ${isDoubleCon ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400'}
                         `}>
                 더블콘
               </span>
@@ -581,13 +593,13 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                 className="flex flex-row gap-[0.2em] items-center cursor-pointer"
                 onClick={() => setIsBigCon(prev => !prev)}>
                 {isBigCon ? (
-                  <CheckCircleIcon className="h-4 w-4 text-gray-600" />
+                  <CheckCircleIcon className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                 ) : (
                   <CheckCircleIconOutline className="h-4 w-4 text-gray-400" />
                 )}
                 <span
                   className={`text-sm font-semibold
-                    ${isBigCon ? 'text-gray-700' : 'text-gray-400'}
+                    ${isBigCon ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400'}
                         `}>
                   대왕콘
                 </span>
@@ -646,7 +658,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                 </div> */}
 
         {debouncedSearchText === '' && !queryResult && recentUsedConList && recentUsedConList.length > 0 && (
-          <span className="text-md font-semibold mb-1 text-gray-800">최근 사용한 콘</span>
+          <span className="text-md font-semibold mb-1 text-gray-800 dark:text-gray-200">최근 사용한 콘</span>
         )}
 
         {
@@ -781,7 +793,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
               className={`cursor-pointer
           text-center
          hover:text-blue-700
-         text-gray-600
+         text-gray-600 dark:text-gray-400
          pl-5
          ${queryPage === 1 ? 'opacity-50' : ''}
           `}
@@ -795,7 +807,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
               className={`cursor-pointer
           text-center
          hover:text-blue-700
-         text-gray-600
+         text-gray-600 dark:text-gray-400
          pr-5
          ${queryPage === queryMaxPage ? 'opacity-50' : ''}
           `}
@@ -836,7 +848,9 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           className="cursor-pointer
           text-center
          hover:text-blue-700
-         text-gray-600
+         text-gray-600 
+         dark:text-gray-400
+         dark:hover:text-blue-400
         
  
           mt-5

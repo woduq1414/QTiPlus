@@ -114,14 +114,7 @@ class EmojiSearch {
     // );
   }
 }
-const emojiTrie = new EmojiSearch();
-emojiTrie.addEmoji('😀', 'happy', ['joy', 'smile']);
-emojiTrie.addEmoji('😂', 'laugh', ['funny', 'lol']);
-emojiTrie.addEmoji('🥲', 'tears', ['sad', 'cry']);
 
-console.log(emojiTrie.searchTrie('py')); // "happy"에 포함됨 → { "😀" }
-console.log(emojiTrie.searchTrie('un')); // "funny"에 포함됨 → { "😂" }
-console.log(emojiTrie.searchTrie('ea')); // "tears"에 포함됨 → { "🥲" }
 let tmpRes: any = undefined;
 
 const readLocalStorage = async (key: any) => {
@@ -207,7 +200,6 @@ conTreeInit().then(res => {
   console.log(res);
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log(message);
     if (message.type === 'GET_INIT_DATA') {
       sendResponse({
         detailIdxDict: tmpRes?.detailIdxDictTmp,
@@ -216,9 +208,8 @@ conTreeInit().then(res => {
       return true;
     } else if (message.type === 'CHANGED_DATA') {
       async function func() {
-        console.log('CHANGED_DATA!!');
         const res2 = await conTreeInit();
-        console.log(res2, '@@@@@');
+
         sendResponse({
           detailIdxDict: res2?.detailIdxDictTmp,
           // emojiSearch: res2?.emojiSearchTmp.serialize(),
@@ -310,7 +301,6 @@ conTreeInit().then(res => {
             }
           }
         }
-        console.log(finalResult, 'finalResult');
 
         const userPackageData = (await readLocalStorage(`UserPackageData_${unicroId}`)) as any;
 
@@ -345,7 +335,6 @@ conTreeInit().then(res => {
         let otherList = new Set();
 
         for (let key of Array.from(finalResult)) {
-          console.log(key, favoriteConList[detailIdxDict[key as string].detailIdx], detailIdxDict[key as string]);
           const detailData = detailIdxDict[key as string];
 
           const detailIdx = userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx;
@@ -382,7 +371,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const storageKey = `UserPackageData_${unicroId}`;
 
       const oldUserPackageData = (await chrome.storage.local.get([storageKey]))[storageKey];
-      console.log(oldUserPackageData, 'oldUserPackageData');
+
       async function fetchList(page: number) {
         // document.cookie = cookies;
         const response = await fetch('https://gall.dcinside.com/dccon/lists', {
@@ -436,7 +425,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (data.bigcon.status == 'enabled') {
         const bigConExpire = data.bigcon.expire;
         chrome.storage.local.set({ ['BigConExpire_' + unicroId]: bigConExpire }, async function () {
-          console.log('Value is set to ', {});
+          // console.log('Value is set to ', {});
         });
       }
 
@@ -507,7 +496,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
 
       chrome.storage.local.set({ [storageKey]: allResult }, async function () {
-        console.log('Value is set to ', allResult);
+        // console.log('Value is set to ', allResult);
 
         // refresh page
 
@@ -545,15 +534,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       let oldUserPackageData = (await chrome.storage.local.get([storageKey]))[storageKey];
 
-      console.log(oldUserPackageData, 'oldUserPackageData');
-
       for (let packageIdx in oldUserPackageData) {
         oldUserPackageData[packageIdx].isHide = hideState[packageIdx];
       }
 
       chrome.storage.local.set({ [storageKey]: oldUserPackageData }, async function () {
-        console.log('Value is set to ', oldUserPackageData);
-
         sendResponse({ data: oldUserPackageData });
       });
     }
@@ -562,6 +547,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   return true;
+});
+
+const storageKey = `UserConfig`;
+readLocalStorage(storageKey).then((data: any) => {
+  console.log(data);
+  if (data) {
+  } else {
+    chrome.storage.local.set({
+      UserConfig: {
+        isDarkMode: false,
+        isShowRightBottomButton: false,
+        isDefaultBigCon: true,
+      },
+    });
+  }
 });
 
 // chrome.downloads.onChanged.addListener((downloadDelta) => {

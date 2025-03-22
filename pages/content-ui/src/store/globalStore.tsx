@@ -24,6 +24,9 @@ interface GlobalStore {
 
   isEditMode: boolean;
   setIsEditMode: (isEditMode: boolean) => void;
+
+  setting: any;
+  setSetting: (setting: any) => void;
 }
 
 const useGlobalStore = create<GlobalStore>(set => ({
@@ -53,6 +56,13 @@ const useGlobalStore = create<GlobalStore>(set => ({
 
   isEditMode: false,
   setIsEditMode: isEditMode => set({ isEditMode }),
+
+  setting: {
+    isDarkMode: false,
+    isShowRightBottomButton: false,
+    isDefaultBigCon: true,
+  },
+  setSetting: setting => set({ setting }),
 }));
 
 export default useGlobalStore;

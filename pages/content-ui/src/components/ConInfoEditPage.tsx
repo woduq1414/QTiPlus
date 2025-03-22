@@ -71,8 +71,6 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
         };
       }
 
-      console.log(tmp, '!!');
-
       setItems(
         Array.from({ length: 101 }, (_, index) => {
           if (tmp[packageIdx].conList[String(index)] === undefined)
@@ -121,7 +119,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
         `}>
       <div
         className="bg-[rgba(246,246,246,0.75)] p-6 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4 
-      
+      dark:bg-[rgba(46,46,46,0.75)] dark:text-white 
       "
         style={{
           backdropFilter: 'blur(15px)',
@@ -155,7 +153,9 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                     placeholder="Title"
                     value={item.title}
                     onChange={e => handleChange(item.id, 'title', e.target.value)}
-                    className="border px-2 py-2 rounded-lg"
+                    className="border px-2 py-2 rounded-lg
+                    bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white
+                    "
                   />
                   <input
                     type="text"
@@ -163,7 +163,9 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                     placeholder="Tag"
                     value={item.tag}
                     onChange={e => handleChange(item.id, 'tag', e.target.value)}
-                    className="border px-2 py-2 rounded-lg"
+                    className="border px-2 py-2 rounded-lg
+                    bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white
+                    "
                   />
 
                   <div className="flex flex-row gap-0.5">
@@ -179,7 +181,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                           key={who}
                           className={`flex w-8 h-8 items-center justify-center cursor-pointer rounded-lg
                                         ${colorMap[who]}
-                                        ${item.who[idx] ? 'opacity-100 border-4 border-gray-600' : 'opacity-20'}
+                                        ${item.who[idx] ? 'opacity-100 border-4 border-gray-600 dark:border-gray-300' : 'opacity-20'}
                                         
                                         `}
                           onClick={e => {
@@ -238,13 +240,13 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
 
             let newCustomConList = { ...(oldCustomConList || {}), [packageIdx]: newConList };
 
-            console.log(newCustomConList);
+            // console.log(newCustomConList);
 
             chrome.storage.local.set({ ['CustomConList']: newCustomConList }, async function () {
-              console.log('Value is set to ', newCustomConList);
+              // console.log('Value is set to ', newCustomConList);
 
               chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
-                console.log(response);
+                // console.log(response);
                 // const emojiSearchTmp = new EmojiSearch();
                 // emojiSearchTmp.deserialize(response.emojiSearch);
 

@@ -6,7 +6,7 @@ import { useEffect, useState, useRef } from 'react';
 
 import Switch from 'react-switch';
 import Modal from './Modal';
-import { XMarkIcon } from '@heroicons/react/16/solid';
+import { Cog6ToothIcon, XMarkIcon } from '@heroicons/react/16/solid';
 
 interface SearchPageProps {
   detailIdxDict: Record<string, any>;
@@ -23,8 +23,6 @@ const ConListPage: React.FC<SearchPageProps> = props => {
     isEditMode,
     setIsEditMode,
   } = useGlobalStore();
-
-  console.log(userPackageData);
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState('');
@@ -43,8 +41,6 @@ const ConListPage: React.FC<SearchPageProps> = props => {
   useEffect(() => {
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       if (request.type === 'SYNC_PROGRESS') {
-        console.log(request.data);
-
         setSyncProgress(` (${request.data.page + 1}/${request.data.maxPage + 1})`);
       }
     });
@@ -85,19 +81,13 @@ const ConListPage: React.FC<SearchPageProps> = props => {
     }));
   };
 
-  useEffect(() => {
-    if (importedFileData) {
-      console.log(importedFileData['148325'].conList, '################');
-    }
-  }, [importedFileData]);
-
   return (
     <div
       className={`fixed inset-0 flex items-center justify-center pointer-events-none  z-[899999999]
         `}>
       <div
-        className="bg-[rgba(246,246,246,0.75)] p-6 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4 w-[480px]
-      
+        className="bg-[rgba(246,246,246,0.75)] pl-6 pr-6 pt-6 pb-3 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4 w-[480px]
+      dark:bg-[rgba(46,46,46,0.75)] dark:text-white/90
       "
         style={{
           backdropFilter: 'blur(15px)',
@@ -133,11 +123,9 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                     },
                   },
                   function (response) {
-                    console.log(response);
                     setUserPackageData(response.data);
 
                     chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
-                      console.log(response);
                       // const emojiSearchTmp = new EmojiSearch();
                       // emojiSearchTmp.deserialize(response.emojiSearch);
 
@@ -153,7 +141,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
               }}>
               저장
             </div>
-          ) : (
+          ) : userPackageData ? (
             <div
               className="w-[90px] cursor-pointer text-right font-semibold"
               onClick={() => {
@@ -162,6 +150,8 @@ const ConListPage: React.FC<SearchPageProps> = props => {
               }}>
               편집
             </div>
+          ) : (
+            <div className="w-[90px] "></div>
           )}
         </div>
         <div className="flex flex-col gap-2 overflow-auto max-h-[65vh] px-1">
@@ -245,32 +235,43 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                         className={` font-semibold
                                                     ${
                                                       isHideState[packageData.packageIdx]
-                                                        ? 'text-gray-400 '
-                                                        : 'text-black'
+                                                        ? 'text-gray-400 dark:text-gray-500'
+                                                        : 'text-black dark:text-white/90'
                                                     }
+                          
                                                     `}
                         key={key}>
                         <h1>{packageData.title}</h1>
                       </div>
 
-                      <div className="w-[65px] text-sm text-gray-600 text-right">
+                      <div className="w-[65px] text-sm text-gray-600 dark:text-gray-400 text-right">
                         ({cnt}/{Object.keys(userPackageData[packageData.packageIdx].conList).length})
                       </div>
                     </div>
                   </div>
                 );
               })}
+          {!userPackageData && (
+            <div className="flex flex-col gap-2 items-center justify-center w-full py-8 border-gray-200 border-dashed border-2 rounded-lg">
+              <div className="text-center">디시인사이드에 로그인 후 구매한 콘을 동기화해보세요!</div>
+              <img
+                src="//dcimg5.dcinside.com/dccon.php?no=62b5df2be09d3ca567b1c5bc12d46b394aa3b1058c6e4d0ca41648b658ea2276b35d2653f6c3ff31ff9090d8a40bc9e99620a21f56df7a621b47ce41ed0c8b20dcd847caedf3e62efe7c02ba1e"
+                className="w-[80px] h-[80px] rounded-lg"
+                alt={'부탁드려요'}
+              />
+            </div>
+          )}
           {customConList &&
           userPackageData &&
           Object.keys(customConList).filter(key => !userPackageData[key]).length > 0 ? (
-            <div className="flex w-full text-sm gap-x-2 gap-y-1 flex-wrap overflow-y-auto items-center  text-gray-700 max-h-[100px] ">
+            <div className="flex w-full text-sm gap-x-2 gap-y-1 flex-wrap overflow-y-auto items-center  text-gray-700 dark:text-gray-300 max-h-[100px] ">
               <span>보유하지 않은 콘 :</span>
               {Object.keys(customConList)
                 .filter(key => !userPackageData[key])
                 .map(key => {
                   return (
                     <span
-                      className="cursor-pointer px-2 py-1 bg-gray-200 rounded-xl text-gray-700"
+                      className="cursor-pointer px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-xl text-gray-700 dark:text-gray-300"
                       key={key}
                       onClick={() => {
                         // open new tab by js
@@ -304,8 +305,6 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                     reader.onload = async e => {
                       const content = e.target?.result as string;
                       const data = JSON.parse(content);
-
-                      console.log(data['148325'].conList, '!!!!!!!!!!!!!!!!!!!!!');
 
                       setImportedFileData(data);
                       setIsImportModalOpen(true);
@@ -360,8 +359,6 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                   },
                 },
                 function (response) {
-                  console.log(response);
-
                   if (response.error) {
                     makeToast(response.error);
                     setIsSyncing(false);
@@ -418,14 +415,10 @@ const ConListPage: React.FC<SearchPageProps> = props => {
           text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
                             w-full"
             onClick={async () => {
-              console.log(importedFileData['148325'].conList, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-
               const cookies = parseCookies();
               const ci_t = cookies['ci_c'];
 
               const customConList = (await readLocalStorage('CustomConList')) as any;
-
-              console.log(importedFileData['148325'].conList, '!!!!!!!!!!!!!!!!!!!!12111!!!!!!!!!');
 
               // console.log(Object.keys(customConList).length);
 
@@ -436,9 +429,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
 
                   // alert("!!!");
                 }
-                if (key === '148325') {
-                  console.log(Object.keys(importedFileData[key].conList), '!!!');
-                }
+
                 for (let conKey of Object.keys(importedFileData[key].conList)) {
                   // console.log(ke
 
@@ -463,13 +454,10 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                   }
                 }
               }
-              console.log(customConList);
+
               setCustomConList(customConList);
               chrome.storage.local.set({ ['CustomConList']: customConList }, async function () {
-                console.log('Value is set to ', customConList);
-
                 chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
-                  console.log(response);
                   // const emojiSearchTmp = new EmojiSearch();
                   // emojiSearchTmp.deserialize(response.emojiSearch);
 
@@ -539,7 +527,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                             w-full"
               onClick={async () => {
                 const customConList = (await readLocalStorage('CustomConList')) as any;
-                console.log(Object.keys(customConList).length);
+
                 const element = document.createElement('a');
 
                 for (let key of Object.keys(customConList)) {
@@ -561,7 +549,6 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                     }
                   }
                 }
-                console.log(Object.keys(customConList).length);
 
                 const file = new Blob([JSON.stringify(customConList)], { type: 'text/plain' });
                 element.href = URL.createObjectURL(file);
@@ -576,6 +563,41 @@ const ConListPage: React.FC<SearchPageProps> = props => {
             </div>
           </div>
         </Modal>
+        <div
+          className="cursor-pointer
+          text-center
+         hover:text-blue-700
+         text-gray-600
+        dark:text-gray-400
+         dark:hover:text-blue-400
+ 
+          
+          flex flex-row gap-0.5 justify-center items-center
+
+          font-semibold text-sm
+          "
+          onClick={async () => {
+            // return;
+            setCurrentPage(3);
+
+            return;
+          }}>
+          {/* <Cog6ToothIcon
+            className=" inline-block"
+            style={{
+              width: '1em',
+              height: '1em',
+            }}
+          /> */}
+          <Cog6ToothIcon
+            className="inline-block "
+            style={{
+              width: '1em',
+              height: '1em',
+            }}
+          />
+          설정
+        </div>
       </div>
     </div>
   );

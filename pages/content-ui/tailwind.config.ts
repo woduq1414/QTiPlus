@@ -79,4 +79,5 @@ export default withUI({
       });
     }),
   ],
+  darkMode: 'class',
 });
