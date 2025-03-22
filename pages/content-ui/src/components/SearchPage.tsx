@@ -442,12 +442,14 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         if (packageIdx === undefined || detailIdx === undefined) {
           setIsModalOpen(false);
 
-          makeToast(
-            `등록 실패 ㅠㅠ ${JSON.stringify({
-              packageIdx,
-              detailIdx,
-            })}`,
-          );
+          // copy img to clipboard
+
+          // makeToast(
+          //   `등록 실패 ㅠㅠ ${JSON.stringify({
+          //     packageIdx,
+          //     detailIdx,
+          //   })}`,
+          // );
           return;
         }
 
@@ -494,7 +496,33 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${detailData.imgPath}" conalt="2" alt="2" con_alt="2" title="2" detail="${detailIdx}">`,
           );
         }
+
         setIsModalOpen(false);
+
+        if (isBigCon) {
+          fetch('https://gall.dcinside.com/dccon/lists', {
+            headers: {
+              accept: '*/*',
+              'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+              'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+              'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+              'sec-ch-ua-mobile': '?0',
+              'sec-ch-ua-platform': '"Windows"',
+              'sec-fetch-dest': 'empty',
+              'sec-fetch-mode': 'cors',
+              'sec-fetch-site': 'same-origin',
+              'x-requested-with': 'XMLHttpRequest',
+            },
+
+            referrer: 'https://gall.dcinside.com/mgallery/board/view',
+            referrerPolicy: 'unsafe-url',
+            body: `ci_t=${ci_t}&target=icon&page=${0}`,
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'same-origin',
+            // credentials: 'include',
+          });
+        }
       } else {
         if (
           packageIdx === undefined ||
@@ -527,6 +555,31 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         }
 
         setIsModalOpen(false);
+
+        if (isBigCon) {
+          const response = await fetch('https://gall.dcinside.com/dccon/lists', {
+            headers: {
+              accept: '*/*',
+              'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+              'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+              'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+              'sec-ch-ua-mobile': '?0',
+              'sec-ch-ua-platform': '"Windows"',
+              'sec-fetch-dest': 'empty',
+              'sec-fetch-mode': 'cors',
+              'sec-fetch-site': 'same-origin',
+              'x-requested-with': 'XMLHttpRequest',
+            },
+
+            referrer: 'https://gall.dcinside.com/mgallery/board/view',
+            referrerPolicy: 'unsafe-url',
+            body: `ci_t=${ci_t}&target=icon&page=${0}`,
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'same-origin',
+            // credentials: 'include',
+          });
+        }
 
         fetch('https://gall.dcinside.com/dccon/insert_icon', {
           headers: {

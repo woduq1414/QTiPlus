@@ -127,7 +127,7 @@ function recoverNewTabOverride(manifestObject: chrome.runtime.ManifestV3) {
 function recoverPopup(manifestObject: chrome.runtime.ManifestV3) {
   manifestObject.action = {
     default_popup: 'popup/index.html',
-    default_icon: 'icon-34.png',
+    default_icon: 'icon32.png',
   };
   const zipFilePath = path.resolve(archivePath, 'popup.zip');
   upZipAndDelete(zipFilePath, path.resolve(pagesPath, 'popup'));

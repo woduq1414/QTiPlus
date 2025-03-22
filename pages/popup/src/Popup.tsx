@@ -6,7 +6,7 @@ import { ToggleButton } from '@extension/ui';
 
 const notificationOptions = {
   type: 'basic',
-  iconUrl: chrome.runtime.getURL('icon-34.png'),
+  iconUrl: chrome.runtime.getURL('icon32.png'),
   title: 'Injecting content script error',
   message: 'You cannot inject script here!',
 } as const;

@@ -6,7 +6,8 @@ import { useEffect, useState, useRef } from 'react';
 
 import Switch from 'react-switch';
 import Modal from './Modal';
-import { Cog6ToothIcon, XMarkIcon } from '@heroicons/react/16/solid';
+import { Cog6ToothIcon, PaperClipIcon, XMarkIcon } from '@heroicons/react/16/solid';
+import { DocumentIcon } from '@heroicons/react/24/outline';
 
 interface SearchPageProps {
   detailIdxDict: Record<string, any>;
@@ -72,18 +73,14 @@ const SettingPage: React.FC<SearchPageProps> = props => {
           backdropFilter: 'blur(15px)',
         }}>
         <div className="flex flex-row ">
-          {isEditMode ? (
-            <div className="w-[90px] cursor-pointer font-semibold"></div>
-          ) : (
-            <div
-              className="w-[90px] cursor-pointer font-semibold"
-              onClick={() => {
-                // setUserPackageData(null);
-                setCurrentPage(1);
-              }}>
-              이전
-            </div>
-          )}
+          <div
+            className="w-[90px] cursor-pointer font-semibold"
+            onClick={() => {
+              // setUserPackageData(null);
+              setCurrentPage(1);
+            }}>
+            이전
+          </div>
           <div className="flex-grow text-center font-semibold">
             <h1>설정</h1>
           </div>
@@ -166,6 +163,21 @@ const SettingPage: React.FC<SearchPageProps> = props => {
                 width={45}
               />
             </div>
+          </div>
+        </div>
+        <div className="mb-4 text-lg flex flex-row cursor-pointer text-gray-900  dark:text-gray-100 hover:text-blue-500 dark:hover:text-blue-400 items-center mx-auto">
+          <PaperClipIcon strokeWidth={1} className="mr-0.5 w-[1em] h-[1em]" />
+          사용 설명서
+        </div>
+        <div className="flex flex-col gap-1 mt-1 items-center w-full">
+          <img
+            src={chrome.runtime.getURL('iconOriginal.png')}
+            alt=""
+            className="rounded-lg w-[50px] h-[50px] opacity-80"
+          />
+          <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+            QWER(큐떱이알)콘 검색기 v1.0.0 <br />
+            By 깔깔새우 (qwer.shrimp@gmail.com)
           </div>
         </div>
       </div>

@@ -12,7 +12,9 @@ console.log('Background loaded11');
 console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
 
 let tabId = 0;
-
+function removeSpecialChar(str: string) {
+  return str.replace(/[^a-zA-Z0-9가-힣]/g, '').toUpperCase();
+}
 class SuffixTrieNode {
   children: Record<string, SuffixTrieNode>;
   emojis: Set<string>;
@@ -49,8 +51,11 @@ class EmojiSearch {
 
   // 📌 이모티콘 추가 (접미사 트라이 + 역색인)
   addEmoji(emoji: string, name: string, tags: string[]): void {
-    this.insertSuffixes(name, emoji);
-    tags.forEach(tag => this.insertSuffixes(tag, emoji));
+    this.insertSuffixes(removeSpecialChar(name), emoji);
+
+    tags.forEach(tag => this.insertSuffixes(removeSpecialChar(tag), emoji));
+
+    // tags.forEach(tag => this.insertSuffixes(tag, emoji));
 
     // 역색인 저장
     if (!this.invertedIndex[name]) this.invertedIndex[name] = new Set();
@@ -175,6 +180,7 @@ async function conTreeInit() {
       // console.log(con.title);
 
       const key = packageIdx + '-' + sort;
+
       emojiSearchTmp.addEmoji(key, con.title, con.tag.split(' '));
 
       detailIdxDictTmp[key] = {
@@ -225,6 +231,7 @@ conTreeInit().then(res => {
         const unicroId = message.unicroId as string;
 
         query = query.replaceAll(' ', '');
+
         // console.log(query, '@@');
         let who = '';
 
@@ -232,6 +239,7 @@ conTreeInit().then(res => {
           who = query.split('#')[1].toUpperCase();
           query = query.split('#')[0];
         }
+        query = removeSpecialChar(query);
 
         function includesAny(query: string, list: string[]): boolean {
           return list.some(q => query.includes(q));
