@@ -1,10 +1,10 @@
 {
   "extensionDescription": {
-    "description": "Extension description",
+    "description": "QWER(큐떱이알)의 디시콘을 쉽게 검색해 사용해 보세요.",
     "message": "QWER(큐떱이알)의 디시콘을 쉽게 검색해 사용해 보세요."
   },
   "extensionName": {
-    "description": "Extension name",
+    "description": "QWER(큐떱이알)콘 검색기",
     "message": "QWER(큐떱이알)콘 검색기"
   },
   "toggleTheme": {

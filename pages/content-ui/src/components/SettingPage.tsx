@@ -31,35 +31,13 @@ const SettingPage: React.FC<SearchPageProps> = props => {
     const cookies = parseCookies();
     const unicroId = cookies['unicro_id'];
     console.log(unicroId);
-
-    const storageKey = `UserConfig`;
-    readLocalStorage(storageKey).then((data: any) => {
-      console.log(data);
-      if (data) {
-        setSetting(data);
-      } else {
-        setSetting({
-          isDarkMode: false,
-          isShowRightBottomButton: true,
-          isDefaultBigCon: true,
-        });
-
-        chrome.storage.local.set({
-          UserConfig: {
-            isDarkMode: false,
-            isShowRightBottomButton: true,
-            isDefaultBigCon: true,
-          },
-        });
-      }
-    });
   }, []);
 
   useEffect(() => {
     chrome.storage.local.set({
       UserConfig: setting,
     });
-  }, [setting.isDarkMode, setting.isShowRightBottomButton, setting.isDefaultBigCon]);
+  }, [setting]);
 
   return (
     <div
@@ -97,6 +75,30 @@ const SettingPage: React.FC<SearchPageProps> = props => {
                   setSetting({
                     ...setting,
                     isDarkMode: !setting.isDarkMode,
+                  });
+                }}
+                onColor="#a7b4db"
+                onHandleColor="#456bd8"
+                handleDiameter={25}
+                uncheckedIcon={false}
+                checkedIcon={false}
+                boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                // activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                height={25}
+                width={45}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-row gap-4 items-center">
+            <div className="flex-grow font-semibold text-lg">초성 검색</div>
+            <div>
+              <Switch
+                checked={setting.isChoseongSearch}
+                onChange={async () => {
+                  setSetting({
+                    ...setting,
+                    isChoseongSearch: !setting.isChoseongSearch,
                   });
                 }}
                 onColor="#a7b4db"

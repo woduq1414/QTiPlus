@@ -29,6 +29,7 @@ interface GlobalStore {
     isDarkMode: boolean;
     isShowRightBottomButton: boolean;
     isDefaultBigCon: boolean;
+    isChoseongSearch: boolean;
   };
   setSetting: (newSettings: any) => void;
 }
@@ -65,6 +66,7 @@ const useGlobalStore = create<GlobalStore>(set => ({
     isDarkMode: false,
     isShowRightBottomButton: true,
     isDefaultBigCon: true,
+    isChoseongSearch: true,
   },
   // setSetting 메서드 구현
   setSetting: newSettings =>

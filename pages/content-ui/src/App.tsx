@@ -24,7 +24,7 @@ function Router() {
     // conTreeInit();
     // alert('content ui loaded');
     chrome.runtime.sendMessage({ type: 'GET_INIT_DATA' }, response => {
-      console.log(response, 'get_init_data');
+      // console.log(response, 'get_init_data');
       // const emojiSearchTmp = new EmojiSearch();
       // emojiSearchTmp.deserialize(response.emojiSearch);
 
@@ -55,12 +55,10 @@ function Router() {
     const cookies = parseCookies();
 
     const unicroId = cookies['unicro_id'];
-    console.log(unicroId);
 
     setUnicroId(unicroId);
     const storageKey = `UserPackageData_${unicroId}`;
     readLocalStorage(storageKey).then(data => {
-      console.log(data);
       setUserPackageData(data);
     });
   }, []);
@@ -68,7 +66,6 @@ function Router() {
   useEffect(() => {
     const storageKey = `UserConfig`;
     readLocalStorage(storageKey).then(data => {
-      console.log(data);
       if (data) {
         setSetting(data);
       } else {
@@ -76,6 +73,7 @@ function Router() {
           isDarkMode: false,
           isShowRightBottomButton: true,
           isDefaultBigCon: true,
+          isChoseongSearch: true,
         });
 
         chrome.storage.local.set({
@@ -83,6 +81,7 @@ function Router() {
             isDarkMode: false,
             isShowRightBottomButton: true,
             isDefaultBigCon: true,
+            isChoseongSearch: true,
           },
         });
       }

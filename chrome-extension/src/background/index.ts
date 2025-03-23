@@ -15,6 +15,93 @@ let tabId = 0;
 function removeSpecialChar(str: string) {
   return str.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎ]/g, '').toUpperCase();
 }
+
+function convertDoubleConsonantToSingle(str: string) {
+  const doubleConsonant = {
+    ㄳ: 'ㄱㅅ',
+    ㄵ: 'ㄴㅈ',
+    ㄶ: 'ㄴㅎ',
+    ㄺ: 'ㄹㄱ',
+    ㄻ: 'ㄹㅁ',
+    ㄼ: 'ㄹㅂ',
+    ㄽ: 'ㄹㅅ',
+    ㄾ: 'ㄹㅌ',
+    ㄿ: 'ㄹㅍ',
+    ㅀ: 'ㄹㅎ',
+    ㅄ: 'ㅂㅅ',
+  } as any;
+
+  let result = '';
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if (doubleConsonant[char] !== undefined) {
+      result += doubleConsonant[char];
+    } else {
+      result += char;
+    }
+  }
+  console.log(result);
+  return result;
+}
+
+function convertKoreanCharToChoseong(str: string) {
+  const choseong = [
+    'ㄱ',
+    'ㄲ',
+    'ㄴ',
+    'ㄷ',
+    'ㄸ',
+    'ㄹ',
+    'ㅁ',
+    'ㅂ',
+    'ㅃ',
+    'ㅅ',
+    'ㅆ',
+    'ㅇ',
+    'ㅈ',
+    'ㅉ',
+    'ㅊ',
+    'ㅋ',
+    'ㅌ',
+    'ㅍ',
+    'ㅎ',
+  ];
+
+  const result = [];
+
+  const doubleChoseong = {
+    ㄳ: ['ㄱ', 'ㅅ'],
+    ㄵ: ['ㄴ', 'ㅈ'],
+    ㄶ: ['ㄴ', 'ㅎ'],
+    ㄺ: ['ㄹ', 'ㄱ'],
+    ㄻ: ['ㄹ', 'ㅁ'],
+    ㄼ: ['ㄹ', 'ㅂ'],
+    ㄽ: ['ㄹ', 'ㅅ'],
+    ㄾ: ['ㄹ', 'ㅌ'],
+    ㄿ: ['ㄹ', 'ㅍ'],
+    ㅀ: ['ㄹ', 'ㅎ'],
+    ㅄ: ['ㅂ', 'ㅅ'],
+  } as any;
+
+  for (let i = 0; i < str.length; i++) {
+    const code = str.charCodeAt(i);
+
+    if (code >= 44032 && code <= 55203) {
+      const choseongIndex = Math.floor((code - 44032) / 588);
+      result.push(choseong[choseongIndex]);
+    } else {
+      // ㄳ, ㅄ과 같은 겹자음일 경우 두 개 초성으로 분리하여 추가
+
+      const char = str[i];
+      if (doubleChoseong[char] !== undefined) {
+        result.push(...doubleChoseong[char]);
+      }
+    }
+  }
+
+  return result.join('');
+}
+
 class SuffixTrieNode {
   children: Record<string, SuffixTrieNode>;
   emojis: Set<string>;
@@ -58,13 +145,13 @@ class EmojiSearch {
     // tags.forEach(tag => this.insertSuffixes(tag, emoji));
 
     // 역색인 저장
-    if (!this.invertedIndex[name]) this.invertedIndex[name] = new Set();
-    this.invertedIndex[name].add(emoji);
+    // if (!this.invertedIndex[name]) this.invertedIndex[name] = new Set();
+    // this.invertedIndex[name].add(emoji);
 
-    tags.forEach(tag => {
-      if (!this.invertedIndex[tag]) this.invertedIndex[tag] = new Set();
-      this.invertedIndex[tag].add(emoji);
-    });
+    // tags.forEach(tag => {
+    //   if (!this.invertedIndex[tag]) this.invertedIndex[tag] = new Set();
+    //   this.invertedIndex[tag].add(emoji);
+    // });
   }
 
   // 📌 접미사 트라이 검색 (부분 문자열 검색 가능)
@@ -122,8 +209,42 @@ class EmojiSearch {
 
 let tmpRes: any = undefined;
 
+let storageData: any = {};
+
+// init storageData from local storage
+
+chrome.storage.local.get(null, function (items) {
+  storageData = items;
+  // console.log(storageData);
+});
+
+let cachedSearchResult: any = {};
+
+chrome.storage.onChanged.addListener(function (changes, areaName) {
+  if (areaName === 'local' && changes) {
+    // myKey의 값이 변경되었을 때 myVariable 업데이트
+
+    for (let key in changes) {
+      const storageChange = changes[key];
+      if (key.startsWith('CustomConList') || key.startsWith('UserPackageData') || key === 'UserConfig') {
+        cachedSearchResult = {};
+      }
+
+      storageData[key] = JSON.parse(JSON.stringify(storageChange.newValue));
+
+      // console.log(storageChange);
+    }
+  }
+});
+
 const readLocalStorage = async (key: any) => {
   return new Promise((resolve, reject) => {
+    if (storageData[key] !== undefined) {
+      // console.log("cached")
+      resolve(storageData[key]);
+      return;
+    }
+
     chrome.storage.local.get([key], function (result) {
       if (result[key] === undefined) {
         // reject();
@@ -156,6 +277,8 @@ async function conTreeInit() {
 
   const emojiSearchTmp = new EmojiSearch();
 
+  const emojiSearchChoseongTmp = new EmojiSearch();
+
   let detailIdxDictTmp = {} as any;
 
   let conInfoData: { [x: string]: { conList: any } };
@@ -183,6 +306,12 @@ async function conTreeInit() {
 
       emojiSearchTmp.addEmoji(key, con.title, con.tag.split(' '));
 
+      emojiSearchChoseongTmp.addEmoji(
+        key,
+        convertKoreanCharToChoseong(con.title),
+        con.tag.split(' ').map((tag: string) => convertKoreanCharToChoseong(tag)),
+      );
+
       detailIdxDictTmp[key] = {
         // detailIdx: con.detailIdx,
         title: con.title,
@@ -193,13 +322,13 @@ async function conTreeInit() {
       };
     }
   }
-  tmpRes = { emojiSearchTmp, detailIdxDictTmp };
+  tmpRes = { emojiSearchTmp, emojiSearchChoseongTmp, detailIdxDictTmp };
 
   const endT = performance.now();
 
   console.log('Execution time: ~', endT - startT, 'ms');
 
-  return { emojiSearchTmp, detailIdxDictTmp };
+  return { emojiSearchTmp, emojiSearchChoseongTmp, detailIdxDictTmp };
 }
 
 conTreeInit().then(res => {
@@ -232,83 +361,8 @@ conTreeInit().then(res => {
 
         query = query.replaceAll(' ', '');
 
-        // console.log(query, '@@');
-        let who = '';
-
-        if (query.includes('#')) {
-          who = query.split('#')[1].toUpperCase();
-          query = query.split('#')[0];
-        }
-        query = removeSpecialChar(query);
-
-        function includesAny(query: string, list: string[]): boolean {
-          return list.some(q => query.includes(q));
-        }
-
-        let additionalCategory = '';
-
-        if (query.includes('ㅠ')) {
-          additionalCategory = '슬픔';
-        } else if (query.includes('ㅋ')) {
-          additionalCategory = '웃음';
-        } else if (includesAny(query, ['ㅎㅇ', '하이'])) {
-          additionalCategory = '안녕';
-        } else if (includesAny(query, ['ㅂㅇ', '바이'])) {
-          additionalCategory = '바이';
-        } else if (includesAny(query, ['ㅈㅅ', '죄송'])) {
-          additionalCategory = '미안';
-        } else if (includesAny(query, ['ㄴㅇㄱ', '헉'])) {
-          additionalCategory = '놀람';
-        } else if (includesAny(query, ['ㄳ', 'ㄱㅅ'])) {
-          additionalCategory = '감사';
-        } else if (includesAny(query, ['ㄷㄷ', 'ㅎㄷㄷ', '후덜덜', '두렵', '무섭', '무서', '두려'])) {
-          additionalCategory = '덜덜';
-        } else if (includesAny(query, ['웃겨'])) {
-          additionalCategory = '웃음';
-        } else if (includesAny(query, ['울었', '울고', '슬퍼', '슬프'])) {
-          additionalCategory = '슬픔';
-        } else if (includesAny(query, ['행복', '신나', '기뻐', '신났'])) {
-          additionalCategory = '신남';
-        } else if (includesAny(query, ['화남', '화났', '화나', '분노'])) {
-          additionalCategory = '화남';
-        } else if (includesAny(query, ['커여', '커엽', '귀여', '귀엽'])) {
-          additionalCategory = '커';
-        } else if (includesAny(query, ['섹시', '떽띠'])) {
-          additionalCategory = '떽';
-        } else if (includesAny(query, ['따봉', '좋'])) {
-          additionalCategory = '굿';
-        } else if (includesAny(query, ['크아'])) {
-          additionalCategory = '크아악';
-        } else if (includesAny(query, ['완장'])) {
-          additionalCategory = '크아악';
-        } else if (includesAny(query, ['춤'])) {
-          additionalCategory = '댄스';
-        } else if (includesAny(query, ['추천', '게추'])) {
-          additionalCategory = '개추';
-        }
-
+        let finalResult = new Set();
         const detailIdxDict = tmpRes?.detailIdxDictTmp;
-
-        const result = tmpRes?.emojiSearchTmp.searchTrie(query);
-
-        const result2 = tmpRes?.emojiSearchTmp.searchTrie(additionalCategory);
-
-        let finalResult = new Set([...Array.from(result), ...Array.from(result2)]);
-
-        if (who !== '') {
-          for (let key of Array.from(finalResult)) {
-            let f = false;
-            for (let i = 0; i < who.length; i++) {
-              if (detailIdxDict[key as string].who.includes(who[i])) {
-                f = true;
-                break;
-              }
-            }
-            if (!f) {
-              finalResult.delete(key);
-            }
-          }
-        }
 
         const userPackageData = (await readLocalStorage(`UserPackageData_${unicroId}`)) as any;
 
@@ -318,14 +372,102 @@ conTreeInit().then(res => {
           });
           return true;
         }
-        for (let key of Array.from(finalResult)) {
-          const packageIdx = detailIdxDict[key as string].packageIdx;
 
-          if (userPackageData[packageIdx] === undefined) {
-            finalResult.delete(key);
+        if (cachedSearchResult[query] !== undefined) {
+          finalResult = new Set(cachedSearchResult[query]);
+        } else {
+          // console.log(query, '@@');
+          let who = '';
+
+          if (query.includes('#')) {
+            who = query.split('#')[1].toUpperCase();
+            query = query.split('#')[0];
+          }
+          query = removeSpecialChar(query);
+
+          function includesAny(query: string, list: string[]): boolean {
+            return list.some(q => query.includes(q));
+          }
+
+          let additionalCategory = '';
+
+          if (query.includes('ㅠ')) {
+            additionalCategory = '슬픔';
+          } else if (query.includes('ㅋ')) {
+            additionalCategory = '웃음';
+          } else if (includesAny(query, ['ㅎㅇ', '하이'])) {
+            additionalCategory = '안녕';
+          } else if (includesAny(query, ['ㅂㅇ', '바이'])) {
+            additionalCategory = '바이';
+          } else if (includesAny(query, ['ㅈㅅ', '죄송'])) {
+            additionalCategory = '미안';
+          } else if (includesAny(query, ['ㄴㅇㄱ', '헉'])) {
+            additionalCategory = '놀람';
+          } else if (includesAny(query, ['ㄳ', 'ㄱㅅ'])) {
+            additionalCategory = '감사';
+          } else if (includesAny(query, ['ㄷㄷ', 'ㅎㄷㄷ', '후덜덜', '두렵', '무섭', '무서', '두려'])) {
+            additionalCategory = '덜덜';
+          } else if (includesAny(query, ['웃겨'])) {
+            additionalCategory = '웃음';
+          } else if (includesAny(query, ['울었', '울고', '슬퍼', '슬프'])) {
+            additionalCategory = '슬픔';
+          } else if (includesAny(query, ['행복', '신나', '기뻐', '신났'])) {
+            additionalCategory = '신남';
+          } else if (includesAny(query, ['화남', '화났', '화나', '분노'])) {
+            additionalCategory = '화남';
+          } else if (includesAny(query, ['커여', '커엽', '귀여', '귀엽'])) {
+            additionalCategory = '커';
+          } else if (includesAny(query, ['섹시', '떽띠'])) {
+            additionalCategory = '떽';
+          } else if (includesAny(query, ['따봉', '좋'])) {
+            additionalCategory = '굿';
+          } else if (includesAny(query, ['크아'])) {
+            additionalCategory = '크아악';
+          } else if (includesAny(query, ['완장'])) {
+            additionalCategory = '크아악';
+          } else if (includesAny(query, ['춤'])) {
+            additionalCategory = '댄스';
+          } else if (includesAny(query, ['추천', '게추'])) {
+            additionalCategory = '개추';
+          }
+
+          const result = tmpRes?.emojiSearchTmp.searchTrie(query);
+
+          const result2 = tmpRes?.emojiSearchTmp.searchTrie(additionalCategory);
+
+          let result3 = new Set();
+
+          console.log(storageData['UserConfig'], '!!');
+          if (storageData['UserConfig']?.isChoseongSearch) {
+            result3 = tmpRes?.emojiSearchChoseongTmp.searchTrie(convertDoubleConsonantToSingle(query));
           } else {
-            if (userPackageData[packageIdx].isHide) {
+          }
+
+          finalResult = new Set([...Array.from(result), ...Array.from(result2), ...Array.from(result3)]);
+
+          if (who !== '') {
+            for (let key of Array.from(finalResult)) {
+              let f = false;
+              for (let i = 0; i < who.length; i++) {
+                if (detailIdxDict[key as string].who.includes(who[i])) {
+                  f = true;
+                  break;
+                }
+              }
+              if (!f) {
+                finalResult.delete(key);
+              }
+            }
+          }
+          for (let key of Array.from(finalResult)) {
+            const packageIdx = detailIdxDict[key as string].packageIdx;
+
+            if (userPackageData[packageIdx] === undefined) {
               finalResult.delete(key);
+            } else {
+              if (userPackageData[packageIdx].isHide) {
+                finalResult.delete(key);
+              }
             }
           }
         }
@@ -334,6 +476,7 @@ conTreeInit().then(res => {
         //   if(
         //   }
         // }
+        cachedSearchResult[query] = Array.from(finalResult);
 
         const favoriteConList = (await readLocalStorage(`FavoriteConList_${unicroId}`)) as any;
 
@@ -559,7 +702,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 const storageKey = `UserConfig`;
 readLocalStorage(storageKey).then((data: any) => {
-  console.log(data);
+  // console.log(data);
   if (data) {
   } else {
     chrome.storage.local.set({
@@ -567,6 +710,7 @@ readLocalStorage(storageKey).then((data: any) => {
         isDarkMode: false,
         isShowRightBottomButton: true,
         isDefaultBigCon: true,
+        isChoseongSearch: true,
       },
     });
   }

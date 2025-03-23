@@ -28,7 +28,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
       className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[999999999] rounded-2xl"
       onClick={onClose}>
       <div
-        className="bg-white p-6 rounded-lg shadow-lg w-96"
+        className="bg-white dark:bg-black/90 p-6 rounded-lg shadow-lg w-96"
         onClick={e => e.stopPropagation()} // Prevent closing when clicking inside modal
       >
         {/* <button className="absolute top-2 right-2 text-gray-600" onClick={onClose}>

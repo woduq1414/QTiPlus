@@ -134,7 +134,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
         setFocusedIndex(-1);
 
-        console.log('Time:', new Date().getTime() - t.getTime());
+        console.log(`Query : ${debouncedSearchText} took ${new Date().getTime() - t.getTime()}ms`);
       });
     } else {
       setQueryResult(undefined);
@@ -534,12 +534,46 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         ) {
           setIsModalOpen(false);
 
-          makeToast(
-            `등록 실패 ㅠㅠ ${JSON.stringify({
-              packageIdx,
-              detailIdx,
-            })}`,
-          );
+          let gifUrl = `https:${detailData.imgPath}`;
+          const copyImageToClipboard = async () => {
+            if (gifUrl) {
+              try {
+                // 이미지 URL을 이미지 객체로 로드
+                const img = new Image();
+                img.src = gifUrl;
+
+                img.onload = async () => {
+                  // canvas에 이미지를 그리기
+                  const canvas = document.createElement('canvas');
+                  const ctx = canvas.getContext('2d');
+
+                  if (ctx) {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+
+                    // canvas의 이미지를 Blob으로 변환
+                    canvas.toBlob(async blob => {
+                      if (blob) {
+                        try {
+                          // 클립보드에 Blob을 복사 (PNG 형식)
+                          const item = new ClipboardItem({
+                            'image/png': blob, // PNG 형식으로 복사
+                          });
+
+                          await navigator.clipboard.write([item]);
+                        } catch (error) {}
+                      }
+                    }, 'image/png');
+                  }
+                };
+              } catch (error) {}
+            } else {
+            }
+          };
+          copyImageToClipboard();
+
+          makeToast(`PNG 이미지가 클립보드에 복사되었습니다!`);
           return;
         }
 
@@ -850,7 +884,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
          hover:text-blue-700
          text-gray-600 dark:text-gray-400
          pl-5
-         ${queryPage === 1 ? 'opacity-50' : ''}
+         ${queryPage === 1 ? 'opacity-50 dark:opacity-25' : ''}
           `}
               onClick={async () => {
                 if (queryPage === 1) return;
@@ -864,7 +898,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
          hover:text-blue-700
          text-gray-600 dark:text-gray-400
          pr-5
-         ${queryPage === queryMaxPage ? 'opacity-50' : ''}
+         ${queryPage === queryMaxPage ? 'opacity-50 dark:opacity-25' : ''}
           `}
               onClick={async () => {
                 if (queryPage === queryMaxPage) return;
