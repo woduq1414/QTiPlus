@@ -93,6 +93,7 @@ function Router() {
       if (event.altKey && (event.key === 'q' || event.key === 'Q' || event.key === 'ㅂ')) {
         event.preventDefault(); // 기본 동작 방지
         setIsModalOpen((prev: any) => !prev);
+        setCurrentPage(0);
 
         console.log('alt + q');
       }

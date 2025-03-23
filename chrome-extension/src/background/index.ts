@@ -13,7 +13,8 @@ console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.
 
 let tabId = 0;
 function removeSpecialChar(str: string) {
-  return str.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎ]/g, '').toUpperCase();
+  return str;
+  // return str.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎ]/g, '').toUpperCase();
 }
 
 function convertDoubleConsonantToSingle(str: string) {
@@ -393,11 +394,11 @@ conTreeInit().then(res => {
 
           if (query.includes('ㅠ')) {
             additionalCategory = '슬픔';
-          } else if (query.includes('ㅋ')) {
+          } else if (query.includes('ㅋㅋ')) {
             additionalCategory = '웃음';
           } else if (includesAny(query, ['ㅎㅇ', '하이'])) {
             additionalCategory = '안녕';
-          } else if (includesAny(query, ['ㅂㅇ', '바이'])) {
+          } else if (includesAny(query, ['잘가'])) {
             additionalCategory = '바이';
           } else if (includesAny(query, ['ㅈㅅ', '죄송'])) {
             additionalCategory = '미안';
@@ -429,6 +430,8 @@ conTreeInit().then(res => {
             additionalCategory = '댄스';
           } else if (includesAny(query, ['추천', '게추'])) {
             additionalCategory = '개추';
+          } else if (includesAny(query, ['박수'])) {
+            additionalCategory = '짝짝';
           }
 
           const result = tmpRes?.emojiSearchTmp.searchTrie(query);
