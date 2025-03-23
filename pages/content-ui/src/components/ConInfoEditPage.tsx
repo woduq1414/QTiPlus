@@ -1,7 +1,7 @@
 import parseCookies from '@src/functions/cookies';
 import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef } from 'react';
-import conInfoData from '../../public/data.json';
+
 import readLocalStorage from '@src/functions/storage';
 import EmojiSearch from '@src/class/Trie';
 import { WithContext as ReactTags, SEPARATORS } from 'react-tag-input';

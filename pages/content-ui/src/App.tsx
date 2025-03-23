@@ -3,7 +3,6 @@ import { ToggleButton } from '@extension/ui';
 import { exampleThemeStorage } from '@extension/storage';
 import { t } from '@extension/i18n';
 
-import sampleConInfoData from '../public/data.json';
 import SearchPage from './components/SearchPage';
 import ConListPage from './components/ConListPage';
 import useGlobalStore from './store/globalStore';
