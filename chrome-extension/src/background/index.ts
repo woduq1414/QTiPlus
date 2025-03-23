@@ -227,7 +227,12 @@ chrome.storage.onChanged.addListener(function (changes, areaName) {
 
     for (let key in changes) {
       const storageChange = changes[key];
-      if (key.startsWith('CustomConList') || key.startsWith('UserPackageData') || key === 'UserConfig') {
+      if (
+        key.startsWith('CustomConList') ||
+        key.startsWith('UserPackageData') ||
+        key === 'UserConfig' ||
+        key === 'ReplaceWordData'
+      ) {
         cachedSearchResult = {};
       }
 
@@ -389,54 +394,52 @@ conTreeInit().then(res => {
           function includesAny(query: string, list: string[]): boolean {
             return list.some(q => query.includes(q));
           }
+          let additionalCategoryList = [];
 
-          let additionalCategory = '';
+          let replaceWordData = (await readLocalStorage('ReplaceWordData')) as any;
 
-          if (query.includes('ㅠ')) {
-            additionalCategory = '슬픔';
-          } else if (query.includes('ㅋㅋ')) {
-            additionalCategory = '웃음';
-          } else if (includesAny(query, ['ㅎㅇ', '하이'])) {
-            additionalCategory = '안녕';
-          } else if (includesAny(query, ['잘가'])) {
-            additionalCategory = '바이';
-          } else if (includesAny(query, ['ㅈㅅ', '죄송'])) {
-            additionalCategory = '미안';
-          } else if (includesAny(query, ['ㄴㅇㄱ', '헉'])) {
-            additionalCategory = '놀람';
-          } else if (includesAny(query, ['ㄳ', 'ㄱㅅ'])) {
-            additionalCategory = '감사';
-          } else if (includesAny(query, ['ㄷㄷ', 'ㅎㄷㄷ', '후덜덜', '두렵', '무섭', '무서', '두려'])) {
-            additionalCategory = '덜덜';
-          } else if (includesAny(query, ['웃겨'])) {
-            additionalCategory = '웃음';
-          } else if (includesAny(query, ['울었', '울고', '슬퍼', '슬프'])) {
-            additionalCategory = '슬픔';
-          } else if (includesAny(query, ['행복', '신나', '기뻐', '신났'])) {
-            additionalCategory = '신남';
-          } else if (includesAny(query, ['화남', '화났', '화나', '분노'])) {
-            additionalCategory = '화남';
-          } else if (includesAny(query, ['커여', '커엽', '귀여', '귀엽'])) {
-            additionalCategory = '커';
-          } else if (includesAny(query, ['섹시', '떽띠'])) {
-            additionalCategory = '떽';
-          } else if (includesAny(query, ['따봉', '좋'])) {
-            additionalCategory = '굿';
-          } else if (includesAny(query, ['크아'])) {
-            additionalCategory = '크아악';
-          } else if (includesAny(query, ['완장'])) {
-            additionalCategory = '크아악';
-          } else if (includesAny(query, ['춤'])) {
-            additionalCategory = '댄스';
-          } else if (includesAny(query, ['추천', '게추'])) {
-            additionalCategory = '개추';
-          } else if (includesAny(query, ['박수'])) {
-            additionalCategory = '짝짝';
+          if (replaceWordData === null) {
+            replaceWordData = {
+              웃음: ['ㅋㅋ'],
+              슬픔: ['ㅠ'],
+              하이: ['ㅎㅇ', '안녕'],
+              바이: ['잘가'],
+              미안: ['ㅈㅅ', '죄송'],
+              놀람: ['ㄴㅇㄱ', '헉'],
+              감사: ['ㄳ', 'ㄱㅅ'],
+              덜덜: ['ㄷㄷ', 'ㅎㄷㄷ', '후덜덜', '두렵', '무섭', '무서', '두려'],
+              신남: ['행복', '신나', '기뻐', '신났'],
+              화남: ['화났', '화나', '분노'],
+              커: ['커여', '커엽', '귀여', '귀엽'],
+              떽: ['섹시', '떽띠'],
+              굿: ['따봉', '좋'],
+              크아악: ['크아', '완장'],
+              댄스: ['춤'],
+              개추: ['추천', '게추', '따봉'],
+              비추: ['붐따'],
+              짝짝: ['박수'],
+            };
           }
+          // console.log(replaceWordData);
+
+          for (let key in replaceWordData) {
+            if (includesAny(query, [key, ...replaceWordData[key]])) {
+              additionalCategoryList.push(key);
+            }
+          }
+
+          // console.log(additionalCategoryList);
 
           const result = tmpRes?.emojiSearchTmp.searchTrie(query);
 
-          const result2 = tmpRes?.emojiSearchTmp.searchTrie(additionalCategory);
+          let result2 = new Set();
+          for (let additionalCategory of additionalCategoryList) {
+            result2 = new Set([
+              ...Array.from(result2),
+              ...Array.from(tmpRes?.emojiSearchTmp.searchTrie(additionalCategory)),
+            ]);
+          }
+          // const result2 = tmpRes?.emojiSearchTmp.searchTrie(additionalCategory);
 
           let result3 = new Set();
 
@@ -714,6 +717,36 @@ readLocalStorage(storageKey).then((data: any) => {
         isShowRightBottomButton: true,
         isDefaultBigCon: true,
         isChoseongSearch: true,
+      },
+    });
+  }
+});
+
+const storageKey2 = `ReplaceWordData`;
+readLocalStorage(storageKey2).then((data: any) => {
+  // console.log(data);
+  if (data) {
+  } else {
+    chrome.storage.local.set({
+      ReplaceWordData: {
+        웃음: ['ㅋㅋ'],
+        슬픔: ['ㅠ'],
+        하이: ['ㅎㅇ', '안녕'],
+        바이: ['잘가'],
+        미안: ['ㅈㅅ', '죄송'],
+        놀람: ['ㄴㅇㄱ', '헉'],
+        감사: ['ㄳ', 'ㄱㅅ'],
+        덜덜: ['ㄷㄷ', 'ㅎㄷㄷ', '후덜덜', '두렵', '무섭', '무서', '두려'],
+        신남: ['행복', '신나', '기뻐', '신났'],
+        화남: ['화났', '화나', '분노'],
+        커: ['커여', '커엽', '귀여', '귀엽'],
+        떽: ['섹시', '떽띠'],
+        굿: ['따봉', '좋'],
+        크아악: ['크아', '완장'],
+        댄스: ['춤'],
+        개추: ['추천', '게추', '따봉'],
+        비추: ['붐따'],
+        짝짝: ['박수'],
       },
     });
   }

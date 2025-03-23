@@ -27,6 +27,8 @@ const SettingPage: React.FC<SearchPageProps> = props => {
     setSetting,
   } = useGlobalStore();
 
+  const [replaceWordData, setReplaceWordData] = useState<any>(null);
+
   useEffect(() => {
     const cookies = parseCookies();
     const unicroId = cookies['unicro_id'];
@@ -38,6 +40,19 @@ const SettingPage: React.FC<SearchPageProps> = props => {
       UserConfig: setting,
     });
   }, [setting]);
+
+  useEffect(() => {
+    readLocalStorage('ReplaceWordData').then((data: any) => {
+      console.log(data);
+      if (data === null) {
+        // setReplaceWordData(data);
+      } else {
+        setReplaceWordData(data);
+      }
+    });
+  }, []);
+
+  const [isReplaceWordModalOpen, setIsReplaceWordModalOpen] = useState(false);
 
   return (
     <div
@@ -164,6 +179,33 @@ const SettingPage: React.FC<SearchPageProps> = props => {
                 height={25}
                 width={45}
               />
+            </div>
+          </div>
+
+          <div className="flex flex-row gap-4 items-center">
+            <div className="flex-grow font-semibold text-lg">
+              <div>검색어 자동 추가</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                검색어가 B 중에 하나를 포함 시, A도 검색쿼리에 추가
+              </div>
+            </div>
+            <div
+              className="
+              bg-blue-500
+              text-white
+              rounded-lg
+              px-3
+              py-2
+              text-md
+              font-semibold
+              cursor-pointer
+              hover:bg-blue-600
+              dark:hover:bg-blue-400
+            "
+              onClick={() => {
+                setCurrentPage(4);
+              }}>
+              수정
             </div>
           </div>
         </div>

@@ -54,10 +54,10 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
     if (userPackageData[packageIdx] === undefined) return;
 
     async function fetchConInfo() {
-      let tmp = conInfoData as any;
+      let tmp: any;
       const prevCustomConList = await readLocalStorage('CustomConList');
       if (prevCustomConList === null || prevCustomConList === undefined) {
-        tmp = conInfoData;
+        return;
       } else {
         tmp = prevCustomConList;
       }
@@ -150,7 +150,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                   <img src={userPackageData[packageIdx].conList[key].imgPath} alt="" className="w-[70px] h-[70px]" />
                   <input
                     type="text"
-                    placeholder="Title"
+                    placeholder="이름"
                     value={item.title}
                     onChange={e => handleChange(item.id, 'title', e.target.value)}
                     className="border px-2 py-2 rounded-lg
@@ -160,7 +160,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                   <input
                     type="text"
                     // list="tagList"
-                    placeholder="Tag"
+                    placeholder="태그"
                     value={item.tag}
                     onChange={e => handleChange(item.id, 'tag', e.target.value)}
                     className="border px-2 py-2 rounded-lg
@@ -211,7 +211,6 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
           text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
           "
           onClick={async () => {
-            const tmp = conInfoData as any;
             let newConList = items.reduce((acc, cur) => {
               // if (cur.title === '' && cur.tag === '') return acc;
               if (userPackageData[packageIdx].conList[cur.id] === undefined) {
@@ -219,7 +218,10 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
               }
               acc[String(cur.id)] = {
                 title: cur.title,
-                tag: cur.tag,
+                tag: cur.tag
+                  .split(' ')
+                  .filter((word: string) => word.length > 0)
+                  .join(' '),
                 imgPath: userPackageData[packageIdx].conList[cur.id].imgPath,
                 who: cur.who.map((who, idx) => (who ? ['Q', 'W', 'E', 'R'][idx] : '')).filter(who => who !== ''),
               };

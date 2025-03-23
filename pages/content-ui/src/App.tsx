@@ -13,6 +13,7 @@ import ConInfoEditPage from './components/ConInfoEditPage';
 import { Toaster } from 'react-hot-toast';
 import { ChatBubbleBottomCenterIcon, XMarkIcon } from '@heroicons/react/16/solid';
 import SettingPage from './components/SettingPage';
+import ReplaceWordEditPage from './components/ReplaceWordEditPage';
 
 // import "../public/style.css";
 
@@ -92,7 +93,7 @@ function Router() {
       if (event.altKey && (event.key === 'q' || event.key === 'Q' || event.key === 'ㅂ')) {
         event.preventDefault(); // 기본 동작 방지
         setIsModalOpen((prev: any) => !prev);
-        setCurrentPage(0);
+        setCurrentPage(3);
 
         console.log('alt + q');
       }
@@ -101,7 +102,18 @@ function Router() {
 
       if (event.altKey && event.shiftKey && (event.key === 'd' || event.key === 'D' || event.key === 'ㅇ')) {
         event.preventDefault(); // 기본 동작 방지
-        setSetting({ isDarkMode: !useGlobalStore.getState().setting.isDarkMode });
+
+        let prevSetting = useGlobalStore.getState().setting;
+        let newSetting = { ...useGlobalStore.getState().setting, isDarkMode: !prevSetting.isDarkMode };
+
+        chrome.storage.local.set({
+          UserConfig: {
+            ...newSetting,
+          },
+        });
+
+        setSetting(newSetting);
+
         console.log('alt + shift + d');
       }
     };
@@ -126,6 +138,8 @@ function Router() {
           <ConInfoEditPage packageIdx={currentPackageIdx} />
         ) : currentPage === 3 ? (
           <SettingPage detailIdxDict={detailIdxDict} />
+        ) : currentPage === 4 ? (
+          <ReplaceWordEditPage />
         ) : null}
       </div>
       {!setting.isShowRightBottomButton ? null : (
