@@ -154,7 +154,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
             <div className="w-[90px] "></div>
           )}
         </div>
-        <div className="flex flex-col gap-2 overflow-auto max-h-[65vh] px-1">
+        <div className="flex flex-col gap-2 overflow-auto max-h-[50dvh] px-1">
           {userPackageData &&
             Object.keys(userPackageData)
               .sort((a, b) => {
@@ -261,30 +261,31 @@ const ConListPage: React.FC<SearchPageProps> = props => {
               />
             </div>
           )}
-          {customConList &&
-          userPackageData &&
-          Object.keys(customConList).filter(key => !userPackageData[key]).length > 0 ? (
-            <div className="flex w-full text-sm gap-x-2 gap-y-1 flex-wrap overflow-y-auto items-center  text-gray-700 dark:text-gray-300 max-h-[100px] ">
-              <span>보유하지 않은 콘 :</span>
-              {Object.keys(customConList)
-                .filter(key => !userPackageData[key])
-                .map(key => {
-                  return (
-                    <span
-                      className="cursor-pointer px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-xl text-gray-700 dark:text-gray-300"
-                      key={key}
-                      onClick={() => {
-                        // open new tab by js
-
-                        window.open(`https://dccon.dcinside.com/hot/1/title/QWER#${key}`);
-                      }}>
-                      {customConList[key].title}
-                    </span>
-                  );
-                })}
-            </div>
-          ) : null}
         </div>
+        {customConList &&
+        userPackageData &&
+        Object.keys(customConList).filter(key => !userPackageData[key]).length > 0 ? (
+          <div className="flex w-full text-sm gap-x-2 gap-y-1 flex-wrap overflow-y-auto items-center  text-gray-700 dark:text-gray-300 max-h-[100px] sm:max-h-[50px] ">
+            <span>보유하지 않은 콘 :</span>
+            {Object.keys(customConList)
+              .filter(key => !userPackageData[key])
+              .map(key => {
+                return (
+                  <span
+                    className="cursor-pointer px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-xl text-gray-700 dark:text-gray-300"
+                    key={key}
+                    onClick={() => {
+                      // open new tab by js
+
+                      window.open(`https://dccon.dcinside.com/hot/1/title/QWER#${key}`);
+                    }}>
+                    {customConList[key].title}
+                  </span>
+                );
+              })}
+          </div>
+        ) : null}
+
         {isEditMode ? (
           <div className="flex flex-row gap-2">
             <div

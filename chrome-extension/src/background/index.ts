@@ -299,6 +299,9 @@ conTreeInit().then(res => {
 
           if (query.includes('#')) {
             who = query.split('#')[1].toUpperCase();
+            who = who.replaceAll('ㅂ', 'Q').replaceAll('ㅈ', 'W').replaceAll('ㄷ', 'E').replaceAll('ㄱ', 'R');
+            who = who.replaceAll('ㅃ', 'Q').replaceAll('ㅉ', 'W').replaceAll('ㄸ', 'E').replaceAll('ㄲ', 'R');
+
             query = query.split('#')[0];
           }
           query = removeSpecialChar(query);
