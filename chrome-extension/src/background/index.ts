@@ -28,7 +28,10 @@ const readLocalStorage = async (key: any) => {
   });
 };
 
-amplitude.init(process.env['CEB_AMPLITUDE_KEY'] as string, { autocapture: true });
+amplitude.init(process.env['CEB_AMPLITUDE_KEY'] as string, {
+  autocapture: true,
+  trackingOptions: { ipAddress: false },
+});
 
 amplitude.setGroup('version', '1.0.0');
 
@@ -308,26 +311,7 @@ conTreeInit().then(res => {
           let replaceWordData = (await readLocalStorage('ReplaceWordData')) as any;
 
           if (replaceWordData === null) {
-            replaceWordData = {
-              웃음: ['ㅋㅋ'],
-              슬픔: ['ㅠ'],
-              하이: ['ㅎㅇ', '안녕'],
-              바이: ['잘가'],
-              미안: ['ㅈㅅ', '죄송'],
-              놀람: ['ㄴㅇㄱ', '헉'],
-              감사: ['ㄳ', 'ㄱㅅ'],
-              덜덜: ['ㄷㄷ', 'ㅎㄷㄷ', '후덜덜', '두렵', '무섭', '무서', '두려'],
-              신남: ['행복', '신나', '기뻐', '신났'],
-              화남: ['화났', '화나', '분노'],
-              커: ['커여', '커엽', '귀여', '귀엽'],
-              떽: ['섹시', '떽띠'],
-              굿: ['따봉', '좋'],
-              크아악: ['크아', '완장'],
-              댄스: ['춤'],
-              개추: ['추천', '게추', '따봉'],
-              비추: ['붐따'],
-              짝짝: ['박수'],
-            };
+            replaceWordData = {};
           }
           // console.log(replaceWordData);
 
@@ -674,7 +658,7 @@ readLocalStorage(storageKey2).then((data: any) => {
   } else {
     chrome.storage.local.set({
       ReplaceWordData: {
-        웃음: ['ㅋㅋ'],
+        웃음: ['ㅋㅋ', '웃겨', '낄낄'],
         슬픔: ['ㅠ', '슬퍼', '슬프', '울었'],
         하이: ['ㅎㅇ', '안녕'],
         바이: ['잘가', '빠이'],

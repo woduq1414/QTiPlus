@@ -326,6 +326,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     {
       // console.log(e);
 
+      const isMobileVersion = window.location.host === 'm.dcinside.com';
+
       const recentUsedConListKey = `RecentUsedConList_${unicroId}`;
 
       let recentUsedConList = (await readLocalStorage(recentUsedConListKey)) as any[];
@@ -487,24 +489,52 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           selection.removeAllRanges(); // 기존 선택 해제
           selection.addRange(range); // 새로운 범위 설정
         }
-        if (isDoubleCon) {
-          document.execCommand(
-            'insertHTML',
-            false,
-            `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${firstDoubleCon.imgPath}" conalt="2" alt="2" con_alt="2" title="2" detail="${firstDoubleCon.detailIdx}">
-           
-            `,
-          );
-          document.execCommand(
-            'insertHTML',
-            false,
-            ` <img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${detailData.imgPath}" conalt="2" alt="2" con_alt="2" title="2" detail="${detailIdx.split(', ')[1]}">`,
-          );
+        if (isMobileVersion) {
+          if (isDoubleCon) {
+            document.execCommand(
+              'insertHTML',
+              false,
+              `
+                <div class="block dccon" contenteditable="false"><span class="cont dccon"><span class="cont-inr"><button type="button"
+                class="sp-imgclose con-close"><span class="blind">삭제</span></button><img class="written_dccon dccon-img ${isBigCon ? 'bigdccon' : ''}"
+                src="https:${firstDoubleCon.imgPath}"
+                alt="1" detail="${firstDoubleCon.detailIdx}"></span><span class="cont-inr"><span class="pos"><span
+                    class="order-handle"></span></span><img class="written_dccon dccon-img ${isBigCon ? 'bigdccon' : ''}"
+                src="https:${detailData.imgPath}"
+                alt="2" detail="${detailData.detailIdx}"></span></span></div>
+                   <p><br></p>
+              `,
+            );
+          } else {
+            document.execCommand(
+              'insertHTML',
+              false,
+              `
+                <div class="block dccon" contenteditable="false"><span class="cont dccon"><span class="cont-inr"><button type="button"
+                class="sp-imgclose con-close"><span class="blind">삭제</span></button><img class="written_dccon dccon-img ${isBigCon ? 'bigdccon' : ''}"
+                src="https:${detailData.imgPath}"
+                alt="0" detail="${detailData.detailIdx}"></span></span></div>
+
+                <p><br></p>
+              `,
+            );
+          }
+
+          // alert("!!");
         } else {
+          if (isDoubleCon) {
+            document.execCommand(
+              'insertHTML',
+              false,
+              `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${firstDoubleCon.imgPath}" conalt="0" alt="0" con_alt="0" title="0" detail="${firstDoubleCon.detailIdx}">
+             
+              `,
+            );
+          }
           document.execCommand(
             'insertHTML',
             false,
-            `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${detailData.imgPath}" conalt="2" alt="2" con_alt="2" title="2" detail="${detailIdx}">`,
+            `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${detailData.imgPath}" conalt="0" alt="0" con_alt="0" title=0" detail="${detailData.detailIdx}">`,
           );
         }
 
@@ -543,6 +573,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           check7Value === undefined ||
           check8Value === undefined
         ) {
+          console.log(packageIdx, detailIdx, ci_t, check6Value, check7Value, check8Value);
+
           setIsModalOpen(false);
 
           if (isDoubleCon) {

@@ -91,7 +91,7 @@ const ReplaceWordEditPage: React.FC = props => {
             <div className="w-4"></div>
             <div className="w-[100px] text-center text-sm font-semibold">추가 키워드(A)</div>
             <div className="flex-grow text-center text-sm font-semibold">
-              조건 키워드(B) - 띄어쓰기로 구분해서 입력해주세요.
+              조건 키워드(B) - 띄어쓰기로 구분하여 입력해주세요.
             </div>
           </div>
           {items &&
