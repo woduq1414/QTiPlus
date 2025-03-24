@@ -565,49 +565,213 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           });
         }
       } else {
-        if (
-          packageIdx === undefined ||
-          detailIdx === undefined ||
-          ci_t === undefined ||
-          check6Value === undefined ||
-          check7Value === undefined ||
-          check8Value === undefined
-        ) {
-          console.log(packageIdx, detailIdx, ci_t, check6Value, check7Value, check8Value);
+        if (isMobileVersion) {
+          const hiddenValueInput = document.getElementsByClassName('hide-robot')[0] as HTMLInputElement;
+
+          const hiddenValue = hiddenValueInput ? hiddenValueInput.getAttribute('name') : undefined;
+          if (packageIdx === undefined || detailIdx === undefined || ci_t === undefined || hiddenValue === undefined) {
+            console.log(packageIdx, detailIdx, ci_t, check6Value, check7Value, check8Value);
+
+            setIsModalOpen(false);
+
+            if (isDoubleCon) {
+              let gifUrl = `https:${firstDoubleCon.imgPath}`;
+              window.open(gifUrl, '_blank');
+
+              gifUrl = `https:${detailData.imgPath}`;
+              window.open(gifUrl, '_blank');
+            } else {
+              let gifUrl = `https:${detailData.imgPath}`;
+
+              window.open(gifUrl, '_blank');
+            }
+
+            makeToast(`다운로드 성공!`);
+            return;
+          }
+          const accessResponse = await fetch('https://m.dcinside.com/ajax/access', {
+            headers: {
+              accept: '*/*',
+              'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+              'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+              'sec-fetch-dest': 'empty',
+              'sec-fetch-mode': 'cors',
+              'sec-fetch-site': 'same-origin',
+              'x-csrf-token': '582d8e4b515ca5b04e7c9bcd9ec7b3ee',
+              'x-requested-with': 'XMLHttpRequest',
+            },
+            referrer: 'https://m.dcinside.com/board/freewrite/4906',
+            referrerPolicy: 'unsafe-url',
+            body: 'token_verify=com_submit',
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'include',
+          });
+
+          const accessResponseJson = await accessResponse.json();
+          console.log(accessResponseJson);
+          const blockKey = accessResponseJson.Block_key;
+
+          const isReply = document.getElementById('comment_memo_reple') ? true : false;
+
+          const no = document.getElementById('no')?.getAttribute('value');
+          const subject = document.getElementById('subject')?.getAttribute('value');
+
+          const comment_no = document.getElementById('comment_no')?.getAttribute('value');
+
+          let commentMemo = `<img src='https:${detailData.imgPath}' class='written_dccon' alt='8' conalt='8' title='8' detail='${detailIdx}'>`;
+          if (isDoubleCon) {
+            commentMemo =
+              `<img src='https:${firstDoubleCon.imgPath}' class='written_dccon' alt='8' conalt='8' title='8' detail='${firstDoubleCon.detailIdx}'>` +
+              commentMemo;
+          }
+
+          let newDetailIdx = detailIdx;
+
+          if (isDoubleCon) {
+            newDetailIdx = `${firstDoubleCon.detailIdx}|dccon|${detailIdx}`;
+          }
+
+          const writeCommentResponse = await fetch('https://m.dcinside.com/ajax/comment-write', {
+            headers: {
+              accept: '*/*',
+              'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+              'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+              'sec-fetch-dest': 'empty',
+              'sec-fetch-mode': 'cors',
+              'sec-fetch-site': 'same-origin',
+              'x-csrf-token': '582d8e4b515ca5b04e7c9bcd9ec7b3ee',
+              'x-requested-with': 'XMLHttpRequest',
+            },
+            referrer: `https://m.dcinside.com/board/freewrite/${no}`,
+            referrerPolicy: 'unsafe-url',
+            body: `comment_memo=${encodeURIComponent(commentMemo)}&comment_nick=&comment_pw=&mode=${
+              isReply ? 'com_reple' : 'com_write'
+            }&comment_no=${comment_no}&detail_idx=${newDetailIdx}&id=freewrite&no=${no}&best_chk=&subject=${subject}&board_id=1&reple_id=&con_key=${blockKey}&${hiddenValue}=1&use_gall_nickname=&${
+              isBigCon ? 'use_bigdccon=1' : ''
+            }`,
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'include',
+          });
+
+          const writeCommentResponseJson = await writeCommentResponse.json();
+
+          console.log(writeCommentResponseJson);
+
+          if (writeCommentResponseJson.result === true) {
+            // alert("SDFD");
+            makeToast('등록 성공!');
+
+            const el = document.getElementsByClassName('sp-reload')[0] as HTMLElement;
+            el.setAttribute('href', '');
+            el.setAttribute('onclick', 'comment_list(0)');
+            el.click();
+
+            setIsModalOpen(false);
+
+            if (isDoubleCon) {
+              chrome.runtime.sendMessage({
+                type: 'TRIGGER_EVENT',
+                action: 'DCCON_INSERT',
+                data: {
+                  packageIdx: firstDoubleCon.packageIdx,
+                  sort: firstDoubleCon.sort,
+                  doubleCon: 1,
+                  env: 'mobile',
+                },
+              });
+              chrome.runtime.sendMessage({
+                type: 'TRIGGER_EVENT',
+                action: 'DCCON_INSERT',
+                data: {
+                  packageIdx: packageIdx.split(', ')[1],
+                  sort: detailData.sort,
+                  doubleCon: 2,
+                  env: 'mobile',
+                },
+              });
+            } else {
+              chrome.runtime.sendMessage({
+                type: 'TRIGGER_EVENT',
+                action: 'DCCON_INSERT',
+                data: {
+                  packageIdx: packageIdx,
+                  sort: detailData.sort,
+                  doubleCon: -1,
+                  env: 'mobile',
+                },
+              });
+            }
+          }
+        } else {
+          if (
+            packageIdx === undefined ||
+            detailIdx === undefined ||
+            ci_t === undefined ||
+            check6Value === undefined ||
+            check7Value === undefined ||
+            check8Value === undefined
+          ) {
+            console.log(packageIdx, detailIdx, ci_t, check6Value, check7Value, check8Value);
+
+            setIsModalOpen(false);
+
+            if (isDoubleCon) {
+              let gifUrl = `https:${firstDoubleCon.imgPath}`;
+              window.open(gifUrl, '_blank');
+
+              gifUrl = `https:${detailData.imgPath}`;
+              window.open(gifUrl, '_blank');
+            } else {
+              let gifUrl = `https:${detailData.imgPath}`;
+
+              window.open(gifUrl, '_blank');
+            }
+
+            makeToast(`다운로드 성공!`);
+            return;
+          }
+
+          const name = document.getElementsByClassName('user_info_input')[0].children[0].textContent;
+
+          const replyBox = document.querySelectorAll('.reply_box #cmt_write_box')[0];
+          let replyTarget: string | null = '';
+          if (replyBox) {
+            replyTarget = replyBox.getAttribute('data-no');
+          }
+          if (replyTarget === null) {
+            replyTarget = '';
+          }
 
           setIsModalOpen(false);
 
-          if (isDoubleCon) {
-            let gifUrl = `https:${firstDoubleCon.imgPath}`;
-            window.open(gifUrl, '_blank');
+          if (isBigCon) {
+            const response = await fetch('https://gall.dcinside.com/dccon/lists', {
+              headers: {
+                accept: '*/*',
+                'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+                'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-origin',
+                'x-requested-with': 'XMLHttpRequest',
+              },
 
-            gifUrl = `https:${detailData.imgPath}`;
-            window.open(gifUrl, '_blank');
-          } else {
-            let gifUrl = `https:${detailData.imgPath}`;
-
-            window.open(gifUrl, '_blank');
+              referrer: 'https://gall.dcinside.com/mgallery/board/view',
+              referrerPolicy: 'unsafe-url',
+              body: `ci_t=${ci_t}&target=icon&page=${0}`,
+              method: 'POST',
+              mode: 'cors',
+              credentials: 'same-origin',
+              // credentials: 'include',
+            });
           }
 
-          makeToast(`다운로드 성공!`);
-          return;
-        }
-
-        const name = document.getElementsByClassName('user_info_input')[0].children[0].textContent;
-
-        const replyBox = document.querySelectorAll('.reply_box #cmt_write_box')[0];
-        let replyTarget: string | null = '';
-        if (replyBox) {
-          replyTarget = replyBox.getAttribute('data-no');
-        }
-        if (replyTarget === null) {
-          replyTarget = '';
-        }
-
-        setIsModalOpen(false);
-
-        if (isBigCon) {
-          const response = await fetch('https://gall.dcinside.com/dccon/lists', {
+          fetch('https://gall.dcinside.com/dccon/insert_icon', {
             headers: {
               accept: '*/*',
               'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
@@ -620,88 +784,68 @@ const SearchPage: React.FC<SearchPageProps> = props => {
               'sec-fetch-site': 'same-origin',
               'x-requested-with': 'XMLHttpRequest',
             },
-
-            referrer: 'https://gall.dcinside.com/mgallery/board/view',
+            referrer: `https://gall.dcinside.com/mgallery/board/view/?id=qwer_fan&no=${postNumber}&page=1`,
             referrerPolicy: 'unsafe-url',
-            body: `ci_t=${ci_t}&target=icon&page=${0}`,
+            body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=${isDoubleCon ? '1' : ''}&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=${galleryId}&c_gall_no=${postNumber}&g-recaptcha-response=&check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M&${replyTarget ? 'c_no=' + replyTarget : ''}&${isBigCon ? 'bigdccon=1' : ''}`,
             method: 'POST',
             mode: 'cors',
-            credentials: 'same-origin',
-            // credentials: 'include',
-          });
-        }
+            credentials: 'include',
+          }).then(async response => {
+            const refreshButton = document.getElementsByClassName('btn_cmt_refresh')[0] as HTMLButtonElement;
+            refreshButton?.click();
 
-        fetch('https://gall.dcinside.com/dccon/insert_icon', {
-          headers: {
-            accept: '*/*',
-            'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
-            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Windows"',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'x-requested-with': 'XMLHttpRequest',
-          },
-          referrer: `https://gall.dcinside.com/mgallery/board/view/?id=qwer_fan&no=${postNumber}&page=1`,
-          referrerPolicy: 'unsafe-url',
-          body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=${isDoubleCon ? '1' : ''}&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=${galleryId}&c_gall_no=${postNumber}&g-recaptcha-response=&check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M&${replyTarget ? 'c_no=' + replyTarget : ''}&${isBigCon ? 'bigdccon=1' : ''}`,
-          method: 'POST',
-          mode: 'cors',
-          credentials: 'include',
-        }).then(async response => {
-          const refreshButton = document.getElementsByClassName('btn_cmt_refresh')[0] as HTMLButtonElement;
-          refreshButton?.click();
+            const responseText = await response.text();
+            if (responseText === 'ok') {
+              makeToast('등록 성공!');
 
-          const responseText = await response.text();
-          if (responseText === 'ok') {
-            makeToast('등록 성공!');
-
-            if (isDoubleCon) {
-              chrome.runtime.sendMessage({
-                type: 'TRIGGER_EVENT',
-                action: 'DCCON_INSERT',
-                data: {
-                  packageIdx: firstDoubleCon.packageIdx,
-                  sort: firstDoubleCon.sort,
-                  doubleCon: 1,
-                },
-              });
-              chrome.runtime.sendMessage({
-                type: 'TRIGGER_EVENT',
-                action: 'DCCON_INSERT',
-                data: {
-                  packageIdx: packageIdx.split(', ')[1],
-                  sort: detailData.sort,
-                  doubleCon: 2,
-                },
-              });
+              if (isDoubleCon) {
+                chrome.runtime.sendMessage({
+                  type: 'TRIGGER_EVENT',
+                  action: 'DCCON_INSERT',
+                  data: {
+                    packageIdx: firstDoubleCon.packageIdx,
+                    sort: firstDoubleCon.sort,
+                    doubleCon: 1,
+                    env: 'pc',
+                  },
+                });
+                chrome.runtime.sendMessage({
+                  type: 'TRIGGER_EVENT',
+                  action: 'DCCON_INSERT',
+                  data: {
+                    packageIdx: packageIdx.split(', ')[1],
+                    sort: detailData.sort,
+                    doubleCon: 2,
+                    env: 'pc',
+                  },
+                });
+              } else {
+                chrome.runtime.sendMessage({
+                  type: 'TRIGGER_EVENT',
+                  action: 'DCCON_INSERT',
+                  data: {
+                    packageIdx: packageIdx,
+                    sort: detailData.sort,
+                    doubleCon: -1,
+                    env: 'pc',
+                  },
+                });
+              }
             } else {
+              makeToast('등록 실패..(로그인 되었는지 확인 OR 재동기화 필요)');
+
               chrome.runtime.sendMessage({
                 type: 'TRIGGER_EVENT',
                 action: 'DCCON_INSERT',
                 data: {
                   packageIdx: packageIdx,
                   sort: detailData.sort,
-                  doubleCon: -1,
+                  error: responseText,
                 },
               });
             }
-          } else {
-            makeToast('등록 실패..(로그인 되었는지 확인 OR 재동기화 필요)');
-
-            chrome.runtime.sendMessage({
-              type: 'TRIGGER_EVENT',
-              action: 'DCCON_INSERT',
-              data: {
-                packageIdx: packageIdx,
-                sort: detailData.sort,
-                error: responseText,
-              },
-            });
-          }
-        });
+          });
+        }
       }
     }
   }

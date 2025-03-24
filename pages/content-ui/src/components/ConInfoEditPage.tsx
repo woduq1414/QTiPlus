@@ -115,7 +115,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
 
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center pointer-events-none max-w-[800px]  mx-auto flex-col z-[999999999]
+      className={`fixed inset-0 flex items-center justify-center pointer-events-none max-w-[100vw] mx-auto flex-col z-[999999999]
         `}>
       <div
         className="bg-[rgba(246,246,246,0.75)] p-6 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4 
@@ -140,13 +140,13 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
           </div>
           <div className="w-[90px]"></div>
         </div>
-        <div className="flex flex-col gap-2 max-h-[65vh] overflow-y-auto scrollbar">
+        <div className="flex flex-col gap-2 sm:gap-8 max-h-[65vh] overflow-y-auto scrollbar">
           {userPackageData[packageIdx] &&
             Object.keys(userPackageData[packageIdx].conList).map(key => {
               const item = items[parseInt(key)];
 
               return (
-                <div key={key} className="flex flex-row gap-2 items-center">
+                <div key={key} className="flex flex-row gap-2 items-center sm:flex-col sm:gap-2">
                   <img src={userPackageData[packageIdx].conList[key].imgPath} alt="" className="w-[70px] h-[70px]" />
                   <input
                     type="text"
@@ -155,6 +155,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                     onChange={e => handleChange(item.id, 'title', e.target.value)}
                     className="border px-2 py-2 rounded-lg
                     bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white
+                    w-[220px] sm:w-[70vw]
                     "
                   />
                   <input
@@ -165,6 +166,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                     onChange={e => handleChange(item.id, 'tag', e.target.value)}
                     className="border px-2 py-2 rounded-lg
                     bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white
+                     w-[220px] sm:w-[70vw]
                     "
                   />
 

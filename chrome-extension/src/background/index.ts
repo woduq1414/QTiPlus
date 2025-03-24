@@ -29,7 +29,7 @@ const readLocalStorage = async (key: any) => {
 };
 
 amplitude.init(process.env['CEB_AMPLITUDE_KEY'] as string, {
-  autocapture: true,
+  autocapture: false,
   trackingOptions: { ipAddress: false },
 });
 

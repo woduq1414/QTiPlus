@@ -64,7 +64,7 @@ const ReplaceWordEditPage: React.FC = props => {
       className={`fixed inset-0 flex items-center justify-center pointer-events-none max-w-[800px]  mx-auto flex-col z-[999999999]
         `}>
       <div
-        className="bg-[rgba(246,246,246,0.75)] p-6 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4   w-[600px] max-w-[90vw]
+        className="bg-[rgba(246,246,246,0.75)] p-6 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4   w-[600px] max-w-[100vw]
       dark:bg-[rgba(46,46,46,0.75)] dark:text-white 
       "
         style={{
