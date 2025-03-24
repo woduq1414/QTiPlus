@@ -5,11 +5,12 @@ function makeToast(message: string) {
     t => (
       <div
         style={{
-          backgroundColor: '#2d3748',
+          backgroundColor: 'rgba(45, 55, 72, 0.85)',
           color: '#f7fafc',
           padding: '0.5rem 1rem',
           borderRadius: '1rem',
           fontSize: '1rem',
+          zIndex: 9999999999,
         }}>
         {message}
       </div>

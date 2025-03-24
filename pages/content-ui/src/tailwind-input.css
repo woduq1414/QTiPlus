@@ -1,3 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+#_rht_toaster {
+    z-index: 99999999998 !important;
+}

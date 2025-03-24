@@ -879,7 +879,11 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             {bigConExpire > new Date().getTime() / 1000 && (
               <div
                 className="flex flex-row gap-[0.2em] items-center cursor-pointer"
-                onClick={() => setIsBigCon(prev => !prev)}>
+                onClick={() => {
+                  setIsBigCon(prev => !prev);
+
+                  makeToast('대왕콘 설정이 변경되었습니다.');
+                }}>
                 {isBigCon ? (
                   <CheckCircleIcon className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                 ) : (
