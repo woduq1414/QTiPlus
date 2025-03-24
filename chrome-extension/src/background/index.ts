@@ -1,7 +1,7 @@
 import 'webextension-polyfill';
 import { exampleThemeStorage } from '@extension/storage';
 
-import EmojiSearch from './EmojiSearch';
+import ConSearch from './ConSearch';
 import { Analytics } from '@extension/shared';
 
 import * as amplitude from '@amplitude/analytics-browser';
@@ -37,34 +37,6 @@ readLocalStorage('UnicroId').then((data: any) => {
     amplitude.setUserId(data);
   }
 });
-
-// register user id
-
-// get cookie
-
-// const cookies = parseCookies();
-
-// amplitude.setUserId('test-user-id');
-
-// let GA = new Analytics();
-
-// addEventListener('unhandledrejection', async (event) => {
-//   GA.fireErrorEvent(event.reason);
-// });
-
-// chrome.runtime.onInstalled.addListener(() => {
-//   GA.fireEvent('install');
-// });
-
-// // Throw an exception after a timeout to trigger an exception analytics event
-// setTimeout(throwAnException, 2000);
-
-// async function throwAnException() {
-//   throw new Error("👋 I'm an error");
-// }
-
-// import JSZip from 'jszip';
-// import saveAs from 'file-saver';
 
 console.log('Background loaded');
 // console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
@@ -218,9 +190,9 @@ async function conTreeInit() {
   // sleep 3s
   // await new Promise(resolve => setTimeout(resolve, 3000));
 
-  const emojiSearchTmp = new EmojiSearch();
+  const conSearchTmp = new ConSearch();
 
-  const emojiSearchChoseongTmp = new EmojiSearch();
+  const conSearchChoseongTmp = new ConSearch();
 
   let detailIdxDictTmp = {} as any;
 
@@ -247,9 +219,9 @@ async function conTreeInit() {
 
       const key = packageIdx + '-' + sort;
 
-      emojiSearchTmp.addEmoji(key, con.title, con.tag.split(' '));
+      conSearchTmp.addCon(key, con.title, con.tag.split(' '));
 
-      emojiSearchChoseongTmp.addEmoji(
+      conSearchChoseongTmp.addCon(
         key,
         convertKoreanCharToChoseong(con.title),
         con.tag.split(' ').map((tag: string) => convertKoreanCharToChoseong(tag)),
@@ -265,13 +237,13 @@ async function conTreeInit() {
       };
     }
   }
-  tmpRes = { emojiSearchTmp, emojiSearchChoseongTmp, detailIdxDictTmp };
+  tmpRes = { conSearchTmp, conSearchChoseongTmp, detailIdxDictTmp };
 
   const endT = performance.now();
 
   console.log('Execution time: ~', endT - startT, 'ms');
 
-  return { emojiSearchTmp, emojiSearchChoseongTmp, detailIdxDictTmp };
+  return { conSearchTmp, conSearchChoseongTmp, detailIdxDictTmp };
 }
 
 conTreeInit().then(res => {
@@ -281,7 +253,7 @@ conTreeInit().then(res => {
     if (message.type === 'GET_INIT_DATA') {
       sendResponse({
         detailIdxDict: tmpRes?.detailIdxDictTmp,
-        // emojiSearch: tmpRes?.emojiSearchTmp.serialize(),
+        // conSearch: tmpRes?.conSearchTmp.serialize(),
       }); // JSON으로 변환하여 보냄
       return true;
     } else if (message.type === 'CHANGED_DATA') {
@@ -290,7 +262,7 @@ conTreeInit().then(res => {
 
         sendResponse({
           detailIdxDict: res2?.detailIdxDictTmp,
-          // emojiSearch: res2?.emojiSearchTmp.serialize(),
+          // conSearch: res2?.conSearchTmp.serialize(),
         });
       }
 
@@ -367,22 +339,22 @@ conTreeInit().then(res => {
 
           // console.log(additionalCategoryList);
 
-          const result = tmpRes?.emojiSearchTmp.searchTrie(query);
+          const result = tmpRes?.conSearchTmp.searchTrie(query);
 
           let result2 = new Set();
           for (let additionalCategory of additionalCategoryList) {
             result2 = new Set([
               ...Array.from(result2),
-              ...Array.from(tmpRes?.emojiSearchTmp.searchTrie(additionalCategory)),
+              ...Array.from(tmpRes?.conSearchTmp.searchTrie(additionalCategory)),
             ]);
           }
-          // const result2 = tmpRes?.emojiSearchTmp.searchTrie(additionalCategory);
+          // const result2 = tmpRes?.conSearchTmp.searchTrie(additionalCategory);
 
           let result3 = new Set();
 
           // console.log(storageData['UserConfig'], '!!');
           if (storageData['UserConfig']?.isChoseongSearch) {
-            result3 = tmpRes?.emojiSearchChoseongTmp.searchTrie(convertDoubleConsonantToSingle(query));
+            result3 = tmpRes?.conSearchChoseongTmp.searchTrie(convertDoubleConsonantToSingle(query));
           } else {
           }
 

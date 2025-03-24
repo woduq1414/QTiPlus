@@ -126,10 +126,10 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                     setUserPackageData(response.data);
 
                     chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
-                      // const emojiSearchTmp = new EmojiSearch();
-                      // emojiSearchTmp.deserialize(response.emojiSearch);
+                      // const conSearchTmp = new ConSearch();
+                      // conSearchTmp.deserialize(response.conSearch);
 
-                      // setEmojiSearch(emojiSearchTmp);
+                      // setConSearch(conSearchTmp);
                       setDetailIdxDict(response.detailIdxDict);
 
                       makeToast('저장 완료!');
@@ -467,10 +467,10 @@ const ConListPage: React.FC<SearchPageProps> = props => {
               setCustomConList(customConList);
               chrome.storage.local.set({ ['CustomConList']: customConList }, async function () {
                 chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
-                  // const emojiSearchTmp = new EmojiSearch();
-                  // emojiSearchTmp.deserialize(response.emojiSearch);
+                  // const conSearchTmp = new ConSearch();
+                  // conSearchTmp.deserialize(response.conSearch);
 
-                  // setEmojiSearch(emojiSearchTmp);
+                  // setConSearch(conSearchTmp);
                   setDetailIdxDict(response.detailIdxDict);
 
                   makeToast('저장 완료!');

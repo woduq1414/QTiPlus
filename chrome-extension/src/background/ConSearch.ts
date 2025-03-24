@@ -1,14 +1,14 @@
 class SuffixTrieNode {
   children: Record<string, SuffixTrieNode>;
-  emojis: Set<string>;
+  cons: Set<string>;
 
   constructor() {
     this.children = {};
-    this.emojis = new Set();
+    this.cons = new Set();
   }
 }
 
-class EmojiSearch {
+class ConSearch {
   private root: SuffixTrieNode;
   private invertedIndex: Record<string, Set<string>>;
 
@@ -18,7 +18,7 @@ class EmojiSearch {
   }
 
   // 📌 접미사 트라이에 단어 삽입
-  private insertSuffixes(word: string, emoji: string): void {
+  private insertSuffixes(word: string, con: string): void {
     for (let i = 0; i < word.length; i++) {
       let node = this.root;
       for (const char of word.slice(i)) {
@@ -27,26 +27,26 @@ class EmojiSearch {
           node.children[char] = new SuffixTrieNode();
         }
         node = node.children[char];
-        node.emojis.add(emoji);
+        node.cons.add(con);
       }
     }
   }
 
   // 📌 이모티콘 추가 (접미사 트라이 + 역색인)
-  addEmoji(emoji: string, name: string, tags: string[]): void {
-    this.insertSuffixes(name, emoji);
+  addCon(con: string, name: string, tags: string[]): void {
+    this.insertSuffixes(name, con);
 
-    tags.forEach(tag => this.insertSuffixes(tag, emoji));
+    tags.forEach(tag => this.insertSuffixes(tag, con));
 
-    // tags.forEach(tag => this.insertSuffixes(tag, emoji));
+    // tags.forEach(tag => this.insertSuffixes(tag, con));
 
     // 역색인 저장
     // if (!this.invertedIndex[name]) this.invertedIndex[name] = new Set();
-    // this.invertedIndex[name].add(emoji);
+    // this.invertedIndex[name].add(con);
 
     // tags.forEach(tag => {
     //   if (!this.invertedIndex[tag]) this.invertedIndex[tag] = new Set();
-    //   this.invertedIndex[tag].add(emoji);
+    //   this.invertedIndex[tag].add(con);
     // });
   }
 
@@ -57,7 +57,7 @@ class EmojiSearch {
       if (!node.children[char]) return new Set();
       node = node.children[char];
     }
-    return node.emojis;
+    return node.cons;
   }
 
   // 📌 역색인 검색
@@ -69,7 +69,7 @@ class EmojiSearch {
   private serializeTrie(node: SuffixTrieNode): any {
     return {
       c: Object.fromEntries(Object.entries(node.children).map(([char, child]) => [char, this.serializeTrie(child)])),
-      e: Array.from(node.emojis),
+      e: Array.from(node.cons),
     };
   }
 
@@ -79,7 +79,7 @@ class EmojiSearch {
     node.children = Object.fromEntries(
       Object.entries(data.c).map(([char, child]) => [char, this.deserializeTrie(child)]),
     );
-    node.emojis = new Set(data.e);
+    node.cons = new Set(data.e);
     return node;
   }
 
@@ -88,7 +88,7 @@ class EmojiSearch {
     return JSON.stringify({
       trieRoot: this.serializeTrie(this.root),
       // invertedIndex: Object.fromEntries(
-      //   Object.entries(this.invertedIndex).map(([key, emojis]) => [key, Array.from(emojis)]),
+      //   Object.entries(this.invertedIndex).map(([key, cons]) => [key, Array.from(cons)]),
       // ),
     });
   }
@@ -98,9 +98,9 @@ class EmojiSearch {
     const data = JSON.parse(json);
     this.root = this.deserializeTrie(data.trieRoot);
     // this.invertedIndex = Object.fromEntries(
-    //   Object.entries(data.invertedIndex).map(([key, emojis]) => [key, new Set(emojis as any)]),
+    //   Object.entries(data.invertedIndex).map(([key, cons]) => [key, new Set(cons as any)]),
     // );
   }
 }
 
-export default EmojiSearch;
+export default ConSearch;

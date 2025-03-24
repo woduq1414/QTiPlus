@@ -26,10 +26,10 @@ function Router() {
     // alert('content ui loaded');
     chrome.runtime.sendMessage({ type: 'GET_INIT_DATA' }, response => {
       // console.log(response, 'get_init_data');
-      // const emojiSearchTmp = new EmojiSearch();
-      // emojiSearchTmp.deserialize(response.emojiSearch);
+      // const conSearchTmp = new ConSearch();
+      // conSearchTmp.deserialize(response.conSearch);
 
-      // setEmojiSearch(emojiSearchTmp);
+      // setConSearch(conSearchTmp);
       setDetailIdxDict(response.detailIdxDict);
     });
   }, []);
@@ -41,8 +41,8 @@ function Router() {
     currentPackageIdx,
     setCurrentPage,
     setCurrentPackageIdx,
-    emojiSearch,
-    setEmojiSearch,
+    conSearch,
+    setConSearch,
     detailIdxDict,
     setDetailIdxDict,
     isModalOpen,

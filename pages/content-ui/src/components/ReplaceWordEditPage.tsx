@@ -3,7 +3,7 @@ import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef, use } from 'react';
 
 import readLocalStorage from '@src/functions/storage';
-import EmojiSearch from '@src/class/Trie';
+import ConSearch from '@src/class/Trie';
 import { WithContext as ReactTags, SEPARATORS } from 'react-tag-input';
 
 import { Tag } from 'react-tag-input';
@@ -21,8 +21,8 @@ const ReplaceWordEditPage: React.FC = props => {
     unicroId,
     setUserPackageData,
     setCurrentPage,
-    emojiSearch,
-    setEmojiSearch,
+    conSearch,
+    setConSearch,
     setDetailIdxDict,
     setIsEditMode,
   } = useGlobalStore();
@@ -178,10 +178,10 @@ const ReplaceWordEditPage: React.FC = props => {
             });
 
             chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
-              // const emojiSearchTmp = new EmojiSearch();
-              // emojiSearchTmp.deserialize(response.emojiSearch);
+              // const conSearchTmp = new ConSearch();
+              // conSearchTmp.deserialize(response.conSearch);
 
-              // setEmojiSearch(emojiSearchTmp);
+              // setConSearch(conSearchTmp);
               setDetailIdxDict(response.detailIdxDict);
 
               makeToast('저장 완료!');

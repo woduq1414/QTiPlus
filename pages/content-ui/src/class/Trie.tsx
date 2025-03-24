@@ -8,7 +8,7 @@ class SuffixTrieNode {
   }
 }
 
-class EmojiSearch {
+class ConSearch {
   private root: SuffixTrieNode;
   private invertedIndex: Record<string, Set<string>>;
 
@@ -101,4 +101,4 @@ class EmojiSearch {
 }
 // 사용 예시
 
-export default EmojiSearch;
+export default ConSearch;

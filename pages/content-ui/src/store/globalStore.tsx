@@ -13,8 +13,8 @@ interface GlobalStore {
   currentPackageIdx: number;
   setCurrentPackageIdx: (currentPackageIdx: number) => void;
 
-  emojiSearch: any;
-  setEmojiSearch: (emojiSearch: any) => void;
+  conSearch: any;
+  setConSearch: (conSearch: any) => void;
 
   detailIdxDict: any;
   setDetailIdxDict: (detailIdxDict: any) => void;
@@ -47,8 +47,8 @@ const useGlobalStore = create<GlobalStore>(set => ({
   currentPackageIdx: 0,
   setCurrentPackageIdx: currentPackageIdx => set({ currentPackageIdx }),
 
-  emojiSearch: null,
-  setEmojiSearch: emojiSearch => set({ emojiSearch }),
+  conSearch: null,
+  setConSearch: conSearch => set({ conSearch }),
 
   detailIdxDict: null,
   setDetailIdxDict: detailIdxDict => set({ detailIdxDict }),
