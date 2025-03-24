@@ -14,6 +14,7 @@ import { Toaster } from 'react-hot-toast';
 import { ChatBubbleBottomCenterIcon, XMarkIcon } from '@heroicons/react/16/solid';
 import SettingPage from './components/SettingPage';
 import ReplaceWordEditPage from './components/ReplaceWordEditPage';
+import { hash } from 'crypto';
 
 // import "../public/style.css";
 
@@ -61,6 +62,23 @@ function Router() {
     readLocalStorage(storageKey).then(data => {
       setUserPackageData(data);
     });
+
+    if (unicroId) {
+      const hashSHA256 = async (message: string) => {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        return hashHex;
+      };
+
+      hashSHA256(unicroId).then(hashedUnicroId => {
+        chrome.storage.local.set({
+          UnicroId: hashedUnicroId,
+        });
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -93,7 +111,7 @@ function Router() {
       if (event.altKey && (event.key === 'q' || event.key === 'Q' || event.key === 'ㅂ')) {
         event.preventDefault(); // 기본 동작 방지
         setIsModalOpen((prev: any) => !prev);
-        setCurrentPage(3);
+        setCurrentPage(0);
 
         console.log('alt + q');
       }

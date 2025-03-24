@@ -1,5 +1,5 @@
 import useGlobalStore from '@src/store/globalStore';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, MouseEventHandler } from 'react';
 
 import parseCookies from '@src/functions/cookies';
 import readLocalStorage from '@src/functions/storage';
@@ -84,7 +84,13 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     // detect if ctrl key is pressed
 
     if (e.ctrlKey) {
-      return;
+      if (e.key === 'Enter') {
+        onConClick({ detailData, e });
+
+        return;
+      } else {
+        return;
+      }
     }
 
     if (e.key === 'ArrowRight' && index < targetResultSize - 1) {
@@ -101,7 +107,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       e.preventDefault();
       setFocusedIndex(prev => (prev !== null ? Math.max(prev - 4, 0) : 0));
     } else if (e.key === 'Enter') {
-      imageRefs.current[index]?.click();
+      onConClick({ detailData, e });
+      // imageRefs.current[index]?.click();
     } else if (e.key === 'Tab') {
       if (index === targetResultSize - 1) {
         e.preventDefault();
@@ -315,8 +322,10 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     setFavoriteConList(prevfavoriteConList);
   }
 
-  async function onConClick({ detailData }: { detailData: any }) {
+  async function onConClick({ detailData, e }: { detailData: any; e?: React.KeyboardEvent<HTMLDivElement> | any }) {
     {
+      // console.log(e);
+
       const recentUsedConListKey = `RecentUsedConList_${unicroId}`;
 
       let recentUsedConList = (await readLocalStorage(recentUsedConListKey)) as any[];
@@ -356,10 +365,12 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
           setRecentUsedConList(recentUsedConList);
 
-          setQueryResult(undefined);
-          setSearchInput('');
+          if (!e.ctrlKey) {
+            setQueryResult(undefined);
+            setSearchInput('');
 
-          searchInputRef.current?.focus();
+            searchInputRef.current?.focus();
+          }
 
           return;
         } else {
@@ -534,9 +545,17 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         ) {
           setIsModalOpen(false);
 
-          let gifUrl = `https:${detailData.imgPath}`;
+          if (isDoubleCon) {
+            let gifUrl = `https:${firstDoubleCon.imgPath}`;
+            window.open(gifUrl, '_blank');
 
-          window.open(gifUrl, '_blank');
+            gifUrl = `https:${detailData.imgPath}`;
+            window.open(gifUrl, '_blank');
+          } else {
+            let gifUrl = `https:${detailData.imgPath}`;
+
+            window.open(gifUrl, '_blank');
+          }
 
           makeToast(`다운로드 성공!`);
           return;
@@ -606,8 +625,49 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           const responseText = await response.text();
           if (responseText === 'ok') {
             makeToast('등록 성공!');
+
+            if (isDoubleCon) {
+              chrome.runtime.sendMessage({
+                type: 'TRIGGER_EVENT',
+                action: 'DCCON_INSERT',
+                data: {
+                  packageIdx: firstDoubleCon.packageIdx,
+                  sort: firstDoubleCon.sort,
+                  doubleCon: 1,
+                },
+              });
+              chrome.runtime.sendMessage({
+                type: 'TRIGGER_EVENT',
+                action: 'DCCON_INSERT',
+                data: {
+                  packageIdx: packageIdx.split(', ')[1],
+                  sort: detailData.sort,
+                  doubleCon: 2,
+                },
+              });
+            } else {
+              chrome.runtime.sendMessage({
+                type: 'TRIGGER_EVENT',
+                action: 'DCCON_INSERT',
+                data: {
+                  packageIdx: packageIdx,
+                  sort: detailData.sort,
+                  doubleCon: -1,
+                },
+              });
+            }
           } else {
             makeToast('등록 실패..(로그인 되었는지 확인 OR 재동기화 필요)');
+
+            chrome.runtime.sendMessage({
+              type: 'TRIGGER_EVENT',
+              action: 'DCCON_INSERT',
+              data: {
+                packageIdx: packageIdx,
+                sort: detailData.sort,
+                error: responseText,
+              },
+            });
           }
         });
       }
@@ -746,8 +806,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                       }
                     }}
                     tabIndex={0}
-                    onClick={() => {
-                      onConClick({ detailData });
+                    onClick={e => {
+                      onConClick({ detailData, e });
                     }}
                     onContextMenu={e => {
                       onConRightClick({ detailData, e });
@@ -808,8 +868,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                         }
                       }}
                       tabIndex={0}
-                      onClick={() => {
-                        onConClick({ detailData });
+                      onClick={e => {
+                        onConClick({ detailData, e });
                       }}
                       onContextMenu={e => {
                         onConRightClick({ detailData, e });

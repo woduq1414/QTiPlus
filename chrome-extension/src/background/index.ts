@@ -1,15 +1,73 @@
 import 'webextension-polyfill';
 import { exampleThemeStorage } from '@extension/storage';
 
+import EmojiSearch from './EmojiSearch';
+import { Analytics } from '@extension/shared';
+
+import * as amplitude from '@amplitude/analytics-browser';
+// console.log(process.env['CEB_EXAMPLE'], 'ceb_example');
+// console.log(process.env["CEB_GA_MEASUREMENT_ID"], "ceb_ga_measurement_id");
+
+let storageData: any = {};
+const readLocalStorage = async (key: any) => {
+  return new Promise((resolve, reject) => {
+    if (storageData[key] !== undefined) {
+      // console.log("cached")
+      resolve(storageData[key]);
+      return;
+    }
+
+    chrome.storage.local.get([key], function (result) {
+      if (result[key] === undefined) {
+        // reject();
+        resolve(null);
+      } else {
+        resolve(result[key]);
+      }
+    });
+  });
+};
+
+amplitude.init(process.env['CEB_AMPLITUDE_KEY'] as string, { autocapture: true });
+
+amplitude.setGroup('version', '1.0.0');
+
+readLocalStorage('UnicroId').then((data: any) => {
+  if (data) {
+    amplitude.setUserId(data);
+  }
+});
+
+// register user id
+
+// get cookie
+
+// const cookies = parseCookies();
+
+// amplitude.setUserId('test-user-id');
+
+// let GA = new Analytics();
+
+// addEventListener('unhandledrejection', async (event) => {
+//   GA.fireErrorEvent(event.reason);
+// });
+
+// chrome.runtime.onInstalled.addListener(() => {
+//   GA.fireEvent('install');
+// });
+
+// // Throw an exception after a timeout to trigger an exception analytics event
+// setTimeout(throwAnException, 2000);
+
+// async function throwAnException() {
+//   throw new Error("👋 I'm an error");
+// }
+
 // import JSZip from 'jszip';
 // import saveAs from 'file-saver';
 
-exampleThemeStorage.get().then(theme => {
-  console.log('theme', theme);
-});
-
-console.log('Background loaded11');
-console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
+console.log('Background loaded');
+// console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
 
 let tabId = 0;
 function removeSpecialChar(str: string) {
@@ -103,114 +161,7 @@ function convertKoreanCharToChoseong(str: string) {
   return result.join('');
 }
 
-class SuffixTrieNode {
-  children: Record<string, SuffixTrieNode>;
-  emojis: Set<string>;
-
-  constructor() {
-    this.children = {};
-    this.emojis = new Set();
-  }
-}
-
-class EmojiSearch {
-  private root: SuffixTrieNode;
-  private invertedIndex: Record<string, Set<string>>;
-
-  constructor() {
-    this.root = new SuffixTrieNode();
-    this.invertedIndex = {};
-  }
-
-  // 📌 접미사 트라이에 단어 삽입
-  private insertSuffixes(word: string, emoji: string): void {
-    for (let i = 0; i < word.length; i++) {
-      let node = this.root;
-      for (const char of word.slice(i)) {
-        // 모든 접미사 저장
-        if (!node.children[char]) {
-          node.children[char] = new SuffixTrieNode();
-        }
-        node = node.children[char];
-        node.emojis.add(emoji);
-      }
-    }
-  }
-
-  // 📌 이모티콘 추가 (접미사 트라이 + 역색인)
-  addEmoji(emoji: string, name: string, tags: string[]): void {
-    this.insertSuffixes(removeSpecialChar(name), emoji);
-
-    tags.forEach(tag => this.insertSuffixes(removeSpecialChar(tag), emoji));
-
-    // tags.forEach(tag => this.insertSuffixes(tag, emoji));
-
-    // 역색인 저장
-    // if (!this.invertedIndex[name]) this.invertedIndex[name] = new Set();
-    // this.invertedIndex[name].add(emoji);
-
-    // tags.forEach(tag => {
-    //   if (!this.invertedIndex[tag]) this.invertedIndex[tag] = new Set();
-    //   this.invertedIndex[tag].add(emoji);
-    // });
-  }
-
-  // 📌 접미사 트라이 검색 (부분 문자열 검색 가능)
-  searchTrie(substring: string): Set<string> {
-    let node = this.root;
-    for (const char of substring) {
-      if (!node.children[char]) return new Set();
-      node = node.children[char];
-    }
-    return node.emojis;
-  }
-
-  // 📌 역색인 검색
-  searchIndex(keyword: string): Set<string> {
-    return this.invertedIndex[keyword] || new Set();
-  }
-
-  // 📌 TrieNode를 JSON으로 변환하는 함수
-  private serializeTrie(node: SuffixTrieNode): any {
-    return {
-      c: Object.fromEntries(Object.entries(node.children).map(([char, child]) => [char, this.serializeTrie(child)])),
-      e: Array.from(node.emojis),
-    };
-  }
-
-  // 📌 JSON을 TrieNode로 변환하는 함수
-  private deserializeTrie(data: any): SuffixTrieNode {
-    const node = new SuffixTrieNode();
-    node.children = Object.fromEntries(
-      Object.entries(data.c).map(([char, child]) => [char, this.deserializeTrie(child)]),
-    );
-    node.emojis = new Set(data.e);
-    return node;
-  }
-
-  // 📌 전체 SuffixTrie 클래스를 JSON으로 직렬화
-  serialize(): string {
-    return JSON.stringify({
-      trieRoot: this.serializeTrie(this.root),
-      // invertedIndex: Object.fromEntries(
-      //   Object.entries(this.invertedIndex).map(([key, emojis]) => [key, Array.from(emojis)]),
-      // ),
-    });
-  }
-
-  // 📌 JSON을 SuffixTrie 객체로 역직렬화
-  deserialize(json: string): void {
-    const data = JSON.parse(json);
-    this.root = this.deserializeTrie(data.trieRoot);
-    // this.invertedIndex = Object.fromEntries(
-    //   Object.entries(data.invertedIndex).map(([key, emojis]) => [key, new Set(emojis as any)]),
-    // );
-  }
-}
-
 let tmpRes: any = undefined;
-
-let storageData: any = {};
 
 // init storageData from local storage
 
@@ -236,6 +187,10 @@ chrome.storage.onChanged.addListener(function (changes, areaName) {
         cachedSearchResult = {};
       }
 
+      if (key === 'UnicroId') {
+        amplitude.setUserId(storageChange.newValue);
+      }
+
       storageData[key] = JSON.parse(JSON.stringify(storageChange.newValue));
 
       // console.log(storageChange);
@@ -243,24 +198,6 @@ chrome.storage.onChanged.addListener(function (changes, areaName) {
   }
 });
 
-const readLocalStorage = async (key: any) => {
-  return new Promise((resolve, reject) => {
-    if (storageData[key] !== undefined) {
-      // console.log("cached")
-      resolve(storageData[key]);
-      return;
-    }
-
-    chrome.storage.local.get([key], function (result) {
-      if (result[key] === undefined) {
-        // reject();
-        resolve(null);
-      } else {
-        resolve(result[key]);
-      }
-    });
-  });
-};
 async function loadJSON() {
   try {
     const response = await fetch(chrome.runtime.getURL('data.json'));
@@ -443,7 +380,7 @@ conTreeInit().then(res => {
 
           let result3 = new Set();
 
-          console.log(storageData['UserConfig'], '!!');
+          // console.log(storageData['UserConfig'], '!!');
           if (storageData['UserConfig']?.isChoseongSearch) {
             result3 = tmpRes?.emojiSearchChoseongTmp.searchTrie(convertDoubleConsonantToSingle(query));
           } else {
@@ -638,6 +575,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           result[packageIdx] = packageResult;
         });
 
+        // readLocalStorage('CustomConList').then((customConList: any) => {
+        //   if (customConList) {
+        //     for(let packageIdx in result){
+        //       console.log(packageIdx);
+        //       // if (customConList[packageIdx] === undefined) {
+        //       //   customConList[packageIdx] = {
+        //       //     conList: result[packageIdx]["conList"].reduce((acc: any, cur: any) => {
+        //       //       acc[cur.sort] = {
+
+        //       //         title: cur.title,
+        //       //         imgPath: cur.list_img,
+        //       //         who: [],
+        //       //         tag: "",
+
+        //       //       };
+        //       //       return acc;
+        //       //     }, {}),
+        //       //     title: item.title,
+        //       //     packageIdx: packageIdx,
+        //       //   };
+
+        //       //   console.log(customConList);
+        //       // };
+        //     }
+
+        //   }
+        // });
+
         return result;
       }
 
@@ -645,10 +610,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       for (let i = 0; i < maxPage; i++) {
         if (i === 0) {
-          Object.assign(allResult, processData(data));
+          Object.assign(allResult, await processData(data));
         } else {
           data = await fetchList(i);
-          Object.assign(allResult, processData(data));
+          Object.assign(allResult, await processData(data));
         }
       }
 
@@ -701,6 +666,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     func();
+  } else if (message.type == 'TRIGGER_EVENT') {
+    const action = message.action;
+    const data = message.data;
+    // GA.fireEvent(action, data);
+
+    amplitude.logEvent(action, data);
+
+    sendResponse({ data: 'success' });
   }
 
   return true;
@@ -730,9 +703,9 @@ readLocalStorage(storageKey2).then((data: any) => {
     chrome.storage.local.set({
       ReplaceWordData: {
         웃음: ['ㅋㅋ'],
-        슬픔: ['ㅠ'],
+        슬픔: ['ㅠ', '슬퍼', '슬프', '울었'],
         하이: ['ㅎㅇ', '안녕'],
-        바이: ['잘가'],
+        바이: ['잘가', '빠이'],
         미안: ['ㅈㅅ', '죄송'],
         놀람: ['ㄴㅇㄱ', '헉'],
         감사: ['ㄳ', 'ㄱㅅ'],

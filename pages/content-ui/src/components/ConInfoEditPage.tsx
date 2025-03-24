@@ -256,6 +256,14 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                 setDetailIdxDict(response.detailIdxDict);
 
                 makeToast('저장 완료!');
+
+                chrome.runtime.sendMessage({
+                  type: 'TRIGGER_EVENT',
+                  action: 'CON_INFO_EDIT',
+                  data: {
+                    packageIdx: packageIdx,
+                  },
+                });
               });
             });
 

@@ -33,8 +33,6 @@ const ReplaceWordEditPage: React.FC = props => {
     })),
   );
 
-  const [replaceWordData, setReplaceWordData] = useState<any>(null);
-
   useEffect(() => {
     async function func() {
       const data = (await readLocalStorage('ReplaceWordData')) as { [key: string]: string[] } | null;
@@ -173,7 +171,7 @@ const ReplaceWordEditPage: React.FC = props => {
               }
             });
 
-            console.log(newItems);
+            // console.log(newItems);
 
             chrome.storage.local.set({
               ReplaceWordData: newItems,

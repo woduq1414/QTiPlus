@@ -362,11 +362,20 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                   if (response.error) {
                     makeToast(response.error);
                     setIsSyncing(false);
+
                     return;
                   }
 
                   setUserPackageData(response.data);
                   makeToast('동기화 성공!');
+
+                  chrome.runtime.sendMessage({
+                    type: 'TRIGGER_EVENT',
+                    action: 'SYNC_CON_LIST',
+                    data: {
+                      length: Object.keys(response.data).length,
+                    },
+                  });
 
                   setIsSyncing(false);
                 },

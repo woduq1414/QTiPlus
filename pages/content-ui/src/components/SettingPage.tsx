@@ -30,12 +30,6 @@ const SettingPage: React.FC<SearchPageProps> = props => {
   const [replaceWordData, setReplaceWordData] = useState<any>(null);
 
   useEffect(() => {
-    const cookies = parseCookies();
-    const unicroId = cookies['unicro_id'];
-    console.log(unicroId);
-  }, []);
-
-  useEffect(() => {
     chrome.storage.local.set({
       UserConfig: setting,
     });
