@@ -5,13 +5,14 @@ import ConSearch from './ConSearch';
 import { Analytics } from '@extension/shared';
 
 import * as amplitude from '@amplitude/analytics-browser';
+import { get } from 'http';
 // console.log(process.env['CEB_EXAMPLE'], 'ceb_example');
 // console.log(process.env["CEB_GA_MEASUREMENT_ID"], "ceb_ga_measurement_id");
 
 let storageData: any = {};
-const readLocalStorage = async (key: any) => {
+const readLocalStorage = async (key: any, isUseCache: boolean = true) => {
   return new Promise((resolve, reject) => {
-    if (storageData[key] !== undefined) {
+    if (isUseCache && storageData[key] !== undefined) {
       // console.log("cached")
       resolve(storageData[key]);
       return;
@@ -35,7 +36,7 @@ amplitude.init(process.env['CEB_AMPLITUDE_KEY'] as string, {
 
 amplitude.setGroup('version', '1.0.0');
 
-readLocalStorage('UnicroId').then((data: any) => {
+readLocalStorage('UserId').then((data: any) => {
   if (data) {
     amplitude.setUserId(data);
   }
@@ -162,11 +163,17 @@ chrome.storage.onChanged.addListener(function (changes, areaName) {
         cachedSearchResult = {};
       }
 
-      if (key === 'UnicroId') {
+      if (key === 'UserId') {
         amplitude.setUserId(storageChange.newValue);
       }
 
-      storageData[key] = JSON.parse(JSON.stringify(storageChange.newValue));
+      console.log(key, storageChange.newValue, changes, areaName);
+
+      try {
+        storageData[key] = JSON.parse(JSON.stringify(storageChange.newValue));
+      } catch (e) {
+        // storageData[key] = storageChange.newValue;
+      }
 
       // console.log(storageChange);
     }
@@ -186,6 +193,24 @@ async function loadJSON() {
   }
 }
 
+async function getConInfoData() {
+  const prevCustomConList: any = await readLocalStorage('CustomConList', false);
+  if (prevCustomConList === null || prevCustomConList === undefined) {
+    const conInfoData = await loadJSON();
+
+    const storageKey = 'CustomConList';
+    chrome.storage.local.set({ [storageKey]: conInfoData }, async function () {
+      console.log('Value is set to ', conInfoData);
+    });
+
+    return conInfoData;
+  } else {
+    const conInfoData = prevCustomConList;
+
+    return conInfoData;
+  }
+}
+
 async function conTreeInit() {
   const startT = performance.now();
   // const userPackageData = await readLocalStorage('UserPackageData');
@@ -199,18 +224,7 @@ async function conTreeInit() {
 
   let detailIdxDictTmp = {} as any;
 
-  let conInfoData: { [x: string]: { conList: any } };
-  const prevCustomConList: any = await readLocalStorage('CustomConList');
-  if (prevCustomConList === null || prevCustomConList === undefined) {
-    conInfoData = await loadJSON();
-
-    const storageKey = 'CustomConList';
-    chrome.storage.local.set({ [storageKey]: conInfoData }, async function () {
-      console.log('Value is set to ', conInfoData);
-    });
-  } else {
-    conInfoData = prevCustomConList;
-  }
+  const conInfoData = await getConInfoData();
 
   console.log(conInfoData);
 
@@ -254,6 +268,10 @@ conTreeInit().then(res => {
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'GET_INIT_DATA') {
+      getConInfoData();
+      initUserConfigStorage();
+      initReplaceWordDataStorage();
+
       sendResponse({
         detailIdxDict: tmpRes?.detailIdxDictTmp,
         // conSearch: tmpRes?.conSearchTmp.serialize(),
@@ -275,14 +293,14 @@ conTreeInit().then(res => {
     } else if (message.type === 'SEARCH_CON') {
       async function func() {
         let query = message.query as string;
-        const unicroId = message.unicroId as string;
+        const userId = message.userId as string;
 
         query = query.replaceAll(' ', '');
 
         let finalResult = new Set();
         const detailIdxDict = tmpRes?.detailIdxDictTmp;
 
-        const userPackageData = (await readLocalStorage(`UserPackageData_${unicroId}`)) as any;
+        const userPackageData = (await readLocalStorage(`UserPackageData_${userId}`)) as any;
 
         if (userPackageData === null) {
           sendResponse({
@@ -380,7 +398,7 @@ conTreeInit().then(res => {
         // }
         cachedSearchResult[query] = Array.from(finalResult);
 
-        const favoriteConList = (await readLocalStorage(`FavoriteConList_${unicroId}`)) as any;
+        const favoriteConList = (await readLocalStorage(`FavoriteConList_${userId}`)) as any;
 
         // move favorite to top
 
@@ -416,12 +434,38 @@ conTreeInit().then(res => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type == 'SYNC_CON_LIST') {
+  if (message.type === 'GET_ID_COOKIE') {
+    chrome.cookies.get({ url: 'https://gall.dcinside.com', name: 'mc_enc' }, function (cookie) {
+      if (cookie) {
+        const userId = cookie.value;
+        const hashSHA256 = async (message: string) => {
+          const encoder = new TextEncoder();
+          const data = encoder.encode(message);
+          const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+          return hashHex;
+        };
+
+        hashSHA256(userId).then(hashedUserId => {
+          chrome.storage.local.set({
+            UserId: hashedUserId,
+          });
+
+          sendResponse({ userId: hashedUserId });
+        });
+      } else {
+        sendResponse({ userId: null });
+      }
+    });
+
+    return true;
+  } else if (message.type == 'SYNC_CON_LIST') {
     async function func() {
-      const unicroId = message.data.unicroId;
+      const userId = message.data.userId;
       const ci_t = message.data.ci_t;
 
-      const storageKey = `UserPackageData_${unicroId}`;
+      const storageKey = `UserPackageData_${userId}`;
 
       const oldUserPackageData = (await chrome.storage.local.get([storageKey]))[storageKey];
 
@@ -477,7 +521,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       if (data.bigcon.status == 'enabled') {
         const bigConExpire = data.bigcon.expire;
-        chrome.storage.local.set({ ['BigConExpire_' + unicroId]: bigConExpire }, async function () {
+        chrome.storage.local.set({ ['BigConExpire_' + userId]: bigConExpire }, async function () {
           // console.log('Value is set to ', {});
         });
       }
@@ -608,10 +652,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // );
   } else if (message.type == 'UPDATE_HIDE_STATE') {
     async function func() {
-      const unicroId = message.data.unicroId;
+      const userId = message.data.userId;
       const hideState = message.data.hideState;
 
-      const storageKey = `UserPackageData_${unicroId}`;
+      const storageKey = `UserPackageData_${userId}`;
 
       let oldUserPackageData = (await chrome.storage.local.get([storageKey]))[storageKey];
 
@@ -638,51 +682,58 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
-const storageKey = `UserConfig`;
-readLocalStorage(storageKey).then((data: any) => {
-  // console.log(data);
-  if (data) {
-  } else {
-    chrome.storage.local.set({
-      UserConfig: {
-        isDarkMode: false,
-        isShowRightBottomButton: true,
-        isDefaultBigCon: true,
-        isChoseongSearch: true,
-      },
-    });
-  }
-});
+function initUserConfigStorage() {
+  const storageKey = `UserConfig`;
+  readLocalStorage(storageKey, false).then((data: any) => {
+    // console.log(data);
+    if (data) {
+    } else {
+      chrome.storage.local.set({
+        UserConfig: {
+          isDarkMode: false,
+          isShowRightBottomButton: true,
+          isDefaultBigCon: true,
+          isChoseongSearch: true,
+        },
+      });
+    }
+  });
+}
 
-const storageKey2 = `ReplaceWordData`;
-readLocalStorage(storageKey2).then((data: any) => {
-  // console.log(data);
-  if (data) {
-  } else {
-    chrome.storage.local.set({
-      ReplaceWordData: {
-        웃음: ['ㅋㅋ', '웃겨', '낄낄'],
-        슬픔: ['ㅠ', '슬퍼', '슬프', '울었'],
-        하이: ['ㅎㅇ', '안녕'],
-        바이: ['잘가', '빠이'],
-        미안: ['ㅈㅅ', '죄송'],
-        놀람: ['ㄴㅇㄱ', '헉'],
-        감사: ['ㄳ', 'ㄱㅅ'],
-        덜덜: ['ㄷㄷ', 'ㅎㄷㄷ', '후덜덜', '두렵', '무섭', '무서', '두려'],
-        신남: ['행복', '신나', '기뻐', '신났'],
-        화남: ['화났', '화나', '분노'],
-        커: ['커여', '커엽', '귀여', '귀엽'],
-        떽: ['섹시', '떽띠'],
-        굿: ['따봉', '좋'],
-        크아악: ['크아', '완장'],
-        댄스: ['춤'],
-        개추: ['추천', '게추', '따봉'],
-        비추: ['붐따'],
-        짝짝: ['박수'],
-      },
-    });
-  }
-});
+function initReplaceWordDataStorage() {
+  const storageKey2 = `ReplaceWordData`;
+  readLocalStorage(storageKey2, false).then((data: any) => {
+    // console.log(data);
+    if (data) {
+    } else {
+      chrome.storage.local.set({
+        ReplaceWordData: {
+          웃음: ['ㅋㅋ', '웃겨', '낄낄'],
+          슬픔: ['ㅠ', '슬퍼', '슬프', '울었'],
+          하이: ['ㅎㅇ', '안녕'],
+          바이: ['잘가', '빠이'],
+          미안: ['ㅈㅅ', '죄송'],
+          놀람: ['ㄴㅇㄱ', '헉'],
+          감사: ['ㄳ', 'ㄱㅅ'],
+          덜덜: ['ㄷㄷ', 'ㅎㄷㄷ', '후덜덜', '두렵', '무섭', '무서', '두려'],
+          신남: ['행복', '신나', '기뻐', '신났'],
+          화남: ['화났', '화나', '분노'],
+          커: ['커여', '커엽', '귀여', '귀엽'],
+          떽: ['섹시', '떽띠'],
+          굿: ['따봉', '좋'],
+          크아악: ['크아', '완장'],
+          댄스: ['춤'],
+          개추: ['추천', '게추', '따봉'],
+          비추: ['붐따'],
+          짝짝: ['박수'],
+        },
+      });
+    }
+  });
+}
+
+initUserConfigStorage();
+initReplaceWordDataStorage();
 
 // chrome.downloads.onChanged.addListener((downloadDelta) => {
 //   if (downloadDelta.state && downloadDelta.state.current === "complete") {

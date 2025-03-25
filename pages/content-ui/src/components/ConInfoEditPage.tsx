@@ -23,7 +23,7 @@ interface Item {
 const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
   const {
     userPackageData,
-    unicroId,
+    userId,
     setUserPackageData,
     setCurrentPage,
     conSearch,
@@ -157,6 +157,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                     bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white
                     w-[220px] sm:w-[70vw]
                     "
+                    spellCheck="false"
                   />
                   <input
                     type="text"
@@ -168,6 +169,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
                     bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white
                      w-[220px] sm:w-[70vw]
                     "
+                    spellCheck="false"
                   />
 
                   <div className="flex flex-row gap-0.5">
@@ -275,7 +277,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
           }}>
           저장
         </div>
-        {/* <div>unicro_id : {unicroId}</div> */}
+        {/* <div>unicro_id : {userId}</div> */}
       </div>
     </div>
   );

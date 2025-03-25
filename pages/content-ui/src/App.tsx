@@ -36,7 +36,7 @@ function Router() {
 
   const {
     currentPage,
-    setUnicroId,
+    setUserId,
     setUserPackageData,
     currentPackageIdx,
     setCurrentPage,
@@ -53,32 +53,19 @@ function Router() {
   } = useGlobalStore();
 
   useEffect(() => {
-    const cookies = parseCookies();
+    chrome.runtime.sendMessage({ type: 'GET_ID_COOKIE' }, response => {
+      // console.log(response, 'get_id_cookie');
 
-    const unicroId = cookies['unicro_id'];
+      const userId = response.userId;
+      setUserId(userId);
 
-    setUnicroId(unicroId);
-    const storageKey = `UserPackageData_${unicroId}`;
-    readLocalStorage(storageKey).then(data => {
-      setUserPackageData(data);
+      const storageKey = `UserPackageData_${userId}`;
+      readLocalStorage(storageKey).then(data => {
+        setUserPackageData(data);
+      });
     });
 
-    if (unicroId) {
-      const hashSHA256 = async (message: string) => {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(message);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        return hashHex;
-      };
-
-      hashSHA256(unicroId).then(hashedUnicroId => {
-        chrome.storage.local.set({
-          UnicroId: hashedUnicroId,
-        });
-      });
-    }
+    chrome.runtime.sendMessage;
   }, []);
 
   useEffect(() => {
@@ -163,7 +150,7 @@ function Router() {
       {!setting.isShowRightBottomButton ? null : (
         <div
           className=" bg-gradient-to-b from-blue-400 to-blue-600 fixed right-[20px] bottom-[20px] flex px-3 py-3 rounded-[19px] cursor-pointer shadow-xl
-            dark:from-gray-800 dark:to-gray-900 dark:border-2 dark:border-blue-600/50
+            dark:from-gray-800 dark:to-gray-900 dark:border-2 dark:border-blue-600/50 dark:px-[0.58rem] dark:py-[0.58rem] 
             "
           onClick={() => {
             setIsModalOpen((prev: any) => !prev);

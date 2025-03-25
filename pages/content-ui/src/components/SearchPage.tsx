@@ -26,16 +26,8 @@ interface SearchPageProps {
 
 const SearchPage: React.FC<SearchPageProps> = props => {
   const pageSize = 16;
-  const {
-    currentPage,
-    setCurrentPage,
-    userPackageData,
-    setIsModalOpen,
-    isModalOpen,
-    unicroId,
-    setIsEditMode,
-    setting,
-  } = useGlobalStore();
+  const { currentPage, setCurrentPage, userPackageData, setIsModalOpen, isModalOpen, userId, setIsEditMode, setting } =
+    useGlobalStore();
 
   const detailIdxDict = props.detailIdxDict;
 
@@ -126,7 +118,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
   useEffect(() => {
     if (debouncedSearchText) {
       let t = new Date();
-      chrome.runtime.sendMessage({ type: 'SEARCH_CON', query: debouncedSearchText, unicroId: unicroId }, response => {
+      chrome.runtime.sendMessage({ type: 'SEARCH_CON', query: debouncedSearchText, userId: userId }, response => {
         const res = JSON.parse(response.res);
 
         //
@@ -164,7 +156,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       setIsDoubleCon(false);
 
       setFirstDoubleCon(null);
-      const recentUsedConListKey = `RecentUsedConList_${unicroId}`;
+      const recentUsedConListKey = `RecentUsedConList_${userId}`;
       readLocalStorage(recentUsedConListKey).then(data => {
         if (data === null) {
           setRecentUsedConList([]);
@@ -177,7 +169,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         }
       });
 
-      const favoriteConListKey = `FavoriteConList_${unicroId}`;
+      const favoriteConListKey = `FavoriteConList_${userId}`;
       readLocalStorage(favoriteConListKey).then(data => {
         if (data === null) {
           setFavoriteConList({});
@@ -194,7 +186,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         }
       });
 
-      const bigConExpireKey = `BigConExpire_${unicroId}`;
+      const bigConExpireKey = `BigConExpire_${userId}`;
       readLocalStorage(bigConExpireKey).then(data => {
         if (data === null) {
           setBigConExpire(0);
@@ -301,7 +293,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
     const detailIdx = userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx;
 
-    const favoriteConListKey = `FavoriteConList_${unicroId}`;
+    const favoriteConListKey = `FavoriteConList_${userId}`;
 
     let prevfavoriteConList = (await readLocalStorage(favoriteConListKey)) as any;
 
@@ -328,7 +320,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
       const isMobileVersion = window.location.host === 'm.dcinside.com';
 
-      const recentUsedConListKey = `RecentUsedConList_${unicroId}`;
+      const recentUsedConListKey = `RecentUsedConList_${userId}`;
 
       let recentUsedConList = (await readLocalStorage(recentUsedConListKey)) as any[];
       if (recentUsedConList === null) {
@@ -340,6 +332,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       let packageIdx = detailData.packageIdx;
 
       let detailIdx = userPackageData[packageIdx].conList[detailData.sort].detailIdx;
+      let originalDetailIdx = detailIdx;
 
       if (isDoubleCon) {
         if (firstDoubleCon === null) {
@@ -501,7 +494,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                 alt="1" detail="${firstDoubleCon.detailIdx}"></span><span class="cont-inr"><span class="pos"><span
                     class="order-handle"></span></span><img class="written_dccon dccon-img ${isBigCon ? 'bigdccon' : ''}"
                 src="https:${detailData.imgPath}"
-                alt="2" detail="${detailData.detailIdx}"></span></span></div>
+                alt="2" detail="${originalDetailIdx}"></span></span></div>
                    <p><br></p>
               `,
             );
@@ -513,7 +506,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                 <div class="block dccon" contenteditable="false"><span class="cont dccon"><span class="cont-inr"><button type="button"
                 class="sp-imgclose con-close"><span class="blind">삭제</span></button><img class="written_dccon dccon-img ${isBigCon ? 'bigdccon' : ''}"
                 src="https:${detailData.imgPath}"
-                alt="0" detail="${detailData.detailIdx}"></span></span></div>
+                alt="0" detail="${originalDetailIdx}"></span></span></div>
 
                 <p><br></p>
               `,
@@ -534,7 +527,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           document.execCommand(
             'insertHTML',
             false,
-            `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${detailData.imgPath}" conalt="0" alt="0" con_alt="0" title=0" detail="${detailData.detailIdx}">`,
+            `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${detailData.imgPath}" conalt="0" alt="0" con_alt="0" title=0" detail="${originalDetailIdx}">`,
           );
         }
 
@@ -569,7 +562,21 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           const hiddenValueInput = document.getElementsByClassName('hide-robot')[0] as HTMLInputElement;
 
           const hiddenValue = hiddenValueInput ? hiddenValueInput.getAttribute('name') : undefined;
-          if (packageIdx === undefined || detailIdx === undefined || ci_t === undefined || hiddenValue === undefined) {
+
+          const pathname = window.location.pathname;
+
+          let galleryId = undefined;
+          if (pathname.includes('board')) {
+            galleryId = pathname.split('/')[2];
+          }
+
+          if (
+            packageIdx === undefined ||
+            detailIdx === undefined ||
+            ci_t === undefined ||
+            hiddenValue === undefined ||
+            galleryId === undefined
+          ) {
             console.log(packageIdx, detailIdx, ci_t, check6Value, check7Value, check8Value);
 
             setIsModalOpen(false);
@@ -589,6 +596,15 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             makeToast(`다운로드 성공!`);
             return;
           }
+
+          const isReply = document.getElementById('comment_memo_reple') ? true : false;
+
+          const no = document.getElementById('no')?.getAttribute('value');
+          const subject = document.getElementById('subject')?.getAttribute('value');
+
+          const comment_no = document.getElementById('comment_no')?.getAttribute('value');
+
+          const csrfToken = document.getElementsByName('csrf-token')[0]?.getAttribute('content') as string;
           const accessResponse = await fetch('https://m.dcinside.com/ajax/access', {
             headers: {
               accept: '*/*',
@@ -597,10 +613,10 @@ const SearchPage: React.FC<SearchPageProps> = props => {
               'sec-fetch-dest': 'empty',
               'sec-fetch-mode': 'cors',
               'sec-fetch-site': 'same-origin',
-              'x-csrf-token': '582d8e4b515ca5b04e7c9bcd9ec7b3ee',
+              'x-csrf-token': csrfToken,
               'x-requested-with': 'XMLHttpRequest',
             },
-            referrer: 'https://m.dcinside.com/board/freewrite/4906',
+            referrer: `https://m.dcinside.com/board/${galleryId}/${no}`,
             referrerPolicy: 'unsafe-url',
             body: 'token_verify=com_submit',
             method: 'POST',
@@ -612,14 +628,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           console.log(accessResponseJson);
           const blockKey = accessResponseJson.Block_key;
 
-          const isReply = document.getElementById('comment_memo_reple') ? true : false;
-
-          const no = document.getElementById('no')?.getAttribute('value');
-          const subject = document.getElementById('subject')?.getAttribute('value');
-
-          const comment_no = document.getElementById('comment_no')?.getAttribute('value');
-
-          let commentMemo = `<img src='https:${detailData.imgPath}' class='written_dccon' alt='8' conalt='8' title='8' detail='${detailIdx}'>`;
+          let commentMemo = `<img src='https:${detailData.imgPath}' class='written_dccon' alt='8' conalt='8' title='8' detail='${originalDetailIdx}'>`;
           if (isDoubleCon) {
             commentMemo =
               `<img src='https:${firstDoubleCon.imgPath}' class='written_dccon' alt='8' conalt='8' title='8' detail='${firstDoubleCon.detailIdx}'>` +
@@ -629,9 +638,9 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           let newDetailIdx = detailIdx;
 
           if (isDoubleCon) {
-            newDetailIdx = `${firstDoubleCon.detailIdx}|dccon|${detailIdx}`;
+            newDetailIdx = `${firstDoubleCon.detailIdx}|dccon|${originalDetailIdx}`;
           }
-
+          setIsModalOpen(false);
           const writeCommentResponse = await fetch('https://m.dcinside.com/ajax/comment-write', {
             headers: {
               accept: '*/*',
@@ -640,14 +649,14 @@ const SearchPage: React.FC<SearchPageProps> = props => {
               'sec-fetch-dest': 'empty',
               'sec-fetch-mode': 'cors',
               'sec-fetch-site': 'same-origin',
-              'x-csrf-token': '582d8e4b515ca5b04e7c9bcd9ec7b3ee',
+              'x-csrf-token': csrfToken,
               'x-requested-with': 'XMLHttpRequest',
             },
-            referrer: `https://m.dcinside.com/board/freewrite/${no}`,
+            referrer: `https://m.dcinside.com/board/${galleryId}/${no}`,
             referrerPolicy: 'unsafe-url',
             body: `comment_memo=${encodeURIComponent(commentMemo)}&comment_nick=&comment_pw=&mode=${
               isReply ? 'com_reple' : 'com_write'
-            }&comment_no=${comment_no}&detail_idx=${newDetailIdx}&id=freewrite&no=${no}&best_chk=&subject=${subject}&board_id=1&reple_id=&con_key=${blockKey}&${hiddenValue}=1&use_gall_nickname=&${
+            }&comment_no=${comment_no}&detail_idx=${newDetailIdx}&id=${galleryId}&no=${no}&best_chk=&subject=${subject}&board_id=1&reple_id=&con_key=${blockKey}&${hiddenValue}=1&use_gall_nickname=&${
               isBigCon ? 'use_bigdccon=1' : ''
             }`,
             method: 'POST',
@@ -657,7 +666,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
           const writeCommentResponseJson = await writeCommentResponse.json();
 
-          console.log(writeCommentResponseJson);
+          // console.log(writeCommentResponseJson);
 
           if (writeCommentResponseJson.result === true) {
             // alert("SDFD");
@@ -667,8 +676,6 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             el.setAttribute('href', '');
             el.setAttribute('onclick', 'comment_list(0)');
             el.click();
-
-            setIsModalOpen(false);
 
             if (isDoubleCon) {
               chrome.runtime.sendMessage({
@@ -703,6 +710,18 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                 },
               });
             }
+          } else {
+            chrome.runtime.sendMessage({
+              type: 'TRIGGER_EVENT',
+              action: 'DCCON_INSERT',
+              data: {
+                packageIdx: packageIdx,
+                sort: detailData.sort,
+                doubleCon: -1,
+                env: 'mobile',
+                error: JSON.stringify(writeCommentResponseJson),
+              },
+            });
           }
         } else {
           if (
@@ -784,7 +803,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
               'sec-fetch-site': 'same-origin',
               'x-requested-with': 'XMLHttpRequest',
             },
-            referrer: `https://gall.dcinside.com/mgallery/board/view/?id=qwer_fan&no=${postNumber}&page=1`,
+            referrer: `https://gall.dcinside.com/mgallery/board/view/?id=${galleryId}&no=${postNumber}&page=1`,
             referrerPolicy: 'unsafe-url',
             body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=${isDoubleCon ? '1' : ''}&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=${galleryId}&c_gall_no=${postNumber}&g-recaptcha-response=&check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M&${replyTarget ? 'c_no=' + replyTarget : ''}&${isBigCon ? 'bigdccon=1' : ''}`,
             method: 'POST',
@@ -927,6 +946,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           placeholder="검색어를 입력하세요"
           className="border border-gray-300 rounded-md p-2 bg-white/20 mb-2"
           value={searchInput}
+          spellCheck="false"
           onKeyDown={e => {
             // if (e.key === 'Enter') {
             //   if (searchInput === debouncedSearchText) {

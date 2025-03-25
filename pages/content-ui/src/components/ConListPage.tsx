@@ -15,7 +15,7 @@ interface SearchPageProps {
 const ConListPage: React.FC<SearchPageProps> = props => {
   const {
     userPackageData,
-    unicroId,
+    userId,
     setUserPackageData,
     setCurrentPage,
     setCurrentPackageIdx,
@@ -118,7 +118,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                   {
                     type: 'UPDATE_HIDE_STATE',
                     data: {
-                      unicroId: unicroId,
+                      userId: userId,
                       hideState: isHideState,
                     },
                   },
@@ -356,7 +356,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                   type: 'SYNC_CON_LIST',
                   data: {
                     ci_t: ci_t,
-                    unicroId: unicroId,
+                    userId: userId,
                   },
                 },
                 function (response) {
@@ -385,7 +385,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
             {isSyncing ? `동기화 중...${syncProgress}` : '동기화 하기'}
           </div>
         )}
-        {/* <div>unicro_id : {unicroId}</div> */}
+        {/* <div>unicro_id : {userId}</div> */}
         <Modal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)}>
           <div className="flex flex-col gap-2 items-start">
             <div className="flex flex-row justify-between items-center w-full mb-3">
@@ -563,7 +563,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                 const file = new Blob([JSON.stringify(customConList)], { type: 'text/plain' });
                 element.href = URL.createObjectURL(file);
 
-                element.download = `CustomConList_${unicroId.slice(0, 3)}_${new Date().getTime()}.json`;
+                element.download = `CustomConList_${userId.slice(0, 3)}_${new Date().getTime()}.json`;
                 document.body.appendChild(element); // Required for this to work in FireFox
                 element.click();
 

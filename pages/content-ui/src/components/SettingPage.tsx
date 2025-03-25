@@ -16,7 +16,7 @@ interface SearchPageProps {
 const SettingPage: React.FC<SearchPageProps> = props => {
   const {
     userPackageData,
-    unicroId,
+    userId,
     setUserPackageData,
     setCurrentPage,
     setCurrentPackageIdx,

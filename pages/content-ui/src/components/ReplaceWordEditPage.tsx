@@ -18,7 +18,7 @@ interface Item {
 const ReplaceWordEditPage: React.FC = props => {
   const {
     userPackageData,
-    unicroId,
+    userId,
     setUserPackageData,
     setCurrentPage,
     conSearch,
@@ -121,6 +121,7 @@ const ReplaceWordEditPage: React.FC = props => {
                       newItems[idx].key = e.target.value;
                       setItems(newItems);
                     }}
+                    spellCheck="false"
                   />
                   <input
                     type="text"
@@ -134,6 +135,7 @@ const ReplaceWordEditPage: React.FC = props => {
                       newItems[idx].value = e.target.value;
                       setItems(newItems);
                     }}
+                    spellCheck="false"
                   />
                 </div>
               );
@@ -192,7 +194,7 @@ const ReplaceWordEditPage: React.FC = props => {
           저장
         </div>
 
-        {/* <div>unicro_id : {unicroId}</div> */}
+        {/* <div>unicro_id : {userId}</div> */}
       </div>
     </div>
   );
