@@ -534,28 +534,51 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         setIsModalOpen(false);
 
         if (isBigCon) {
-          fetch('https://gall.dcinside.com/dccon/lists', {
-            headers: {
-              accept: '*/*',
-              'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
-              'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-              'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
-              'sec-ch-ua-mobile': '?0',
-              'sec-ch-ua-platform': '"Windows"',
-              'sec-fetch-dest': 'empty',
-              'sec-fetch-mode': 'cors',
-              'sec-fetch-site': 'same-origin',
-              'x-requested-with': 'XMLHttpRequest',
-            },
+          if (isMobileVersion) {
+            fetch('https://m.dcinside.com/ajax/chk_bigdccon', {
+              headers: {
+                accept: 'application/json, text/javascript, */*; q=0.01',
+                'accept-language': 'ko',
+                'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+                'sec-ch-ua-mobile': '?1',
+                'sec-ch-ua-platform': '"Android"',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-origin',
+                'x-csrf-token': document.getElementsByName('csrf-token')[0]?.getAttribute('content') as string,
+                'x-requested-with': 'XMLHttpRequest',
+              },
+              referrer: `https://m.dcinside.com/board/${galleryId}/${document.getElementById('no')?.getAttribute('value')}`,
+              referrerPolicy: 'unsafe-url',
+              body: null,
+              method: 'GET',
+              mode: 'cors',
+              credentials: 'include',
+            });
+          } else {
+            fetch('https://gall.dcinside.com/dccon/lists', {
+              headers: {
+                accept: '*/*',
+                'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+                'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-origin',
+                'x-requested-with': 'XMLHttpRequest',
+              },
 
-            referrer: 'https://gall.dcinside.com/mgallery/board/view',
-            referrerPolicy: 'unsafe-url',
-            body: `ci_t=${ci_t}&target=icon&page=${0}`,
-            method: 'POST',
-            mode: 'cors',
-            credentials: 'same-origin',
-            // credentials: 'include',
-          });
+              referrer: 'https://gall.dcinside.com/mgallery/board/view',
+              referrerPolicy: 'unsafe-url',
+              body: `ci_t=${ci_t}&target=icon&page=${0}`,
+              method: 'POST',
+              mode: 'cors',
+              credentials: 'same-origin',
+              // credentials: 'include',
+            });
+          }
         }
       } else {
         if (isMobileVersion) {
@@ -573,11 +596,10 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           if (
             packageIdx === undefined ||
             detailIdx === undefined ||
-            ci_t === undefined ||
             hiddenValue === undefined ||
             galleryId === undefined
           ) {
-            console.log(packageIdx, detailIdx, ci_t, check6Value, check7Value, check8Value);
+            // console.log(packageIdx, detailIdx, ci_t, hiddenValue, galleryId);
 
             setIsModalOpen(false);
 

@@ -471,29 +471,57 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       async function fetchList(page: number) {
         // document.cookie = cookies;
-        const response = await fetch('https://gall.dcinside.com/dccon/lists', {
-          headers: {
-            accept: '*/*',
-            'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
-            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Windows"',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'x-requested-with': 'XMLHttpRequest',
-          },
+        async function fetchWithRetry(ci_t: string, page: number, maxRetries = 5) {
+          let attempts = 0;
 
-          referrer: 'https://gall.dcinside.com/mgallery/board/view',
-          referrerPolicy: 'unsafe-url',
-          body: `ci_t=${ci_t}&target=icon&page=${page}`,
-          method: 'POST',
-          mode: 'cors',
-          credentials: 'same-origin',
-          // credentials: 'include',
-        });
-        const data = await response.json();
+          while (attempts < maxRetries) {
+            const response = await fetch('https://gall.dcinside.com/dccon/lists', {
+              headers: {
+                accept: '*/*',
+                'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+                'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-origin',
+                'x-requested-with': 'XMLHttpRequest',
+              },
+              referrer: 'https://gall.dcinside.com/mgallery/board/view',
+              referrerPolicy: 'unsafe-url',
+              body: `&target=icon&page=${page}`,
+              method: 'POST',
+              mode: 'cors',
+              credentials: 'same-origin',
+            });
+
+            const responseText = await response.text();
+
+            function IsJsonString(str: string) {
+              try {
+                var json = JSON.parse(str);
+                return typeof json === 'object';
+              } catch (e) {
+                return false;
+              }
+            }
+
+            if (response.status === 302 || IsJsonString(responseText) === false) {
+              console.warn(`Request redirected (302), retrying... (${attempts + 1}/${maxRetries})`);
+              attempts++;
+              await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기 후 재시도
+              continue;
+            }
+
+            return responseText; // 정상 응답 반환
+          }
+
+          throw new Error('Max retries reached for fetching data.');
+        }
+
+        const response = await fetchWithRetry(ci_t, page);
+        const data = JSON.parse(response);
 
         if (sender.tab) {
           if (sender.tab?.id !== undefined) {

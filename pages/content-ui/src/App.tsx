@@ -151,6 +151,7 @@ function Router() {
         <div
           className=" bg-gradient-to-b from-blue-400 to-blue-600 fixed right-[20px] bottom-[20px] flex px-3 py-3 rounded-[19px] cursor-pointer shadow-xl
             dark:from-gray-800 dark:to-gray-900 dark:border-2 dark:border-blue-600/50 dark:px-[0.58rem] dark:py-[0.58rem] 
+            z-[1999999990] sm:right-[13px] sm:bottom-[13px] 
             "
           onClick={() => {
             setIsModalOpen((prev: any) => !prev);

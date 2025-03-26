@@ -36,7 +36,7 @@ const ReplaceWordEditPage: React.FC = props => {
   useEffect(() => {
     async function func() {
       const data = (await readLocalStorage('ReplaceWordData')) as { [key: string]: string[] } | null;
-      console.log(data);
+      //   console.log(data);
 
       if (!data) {
         return;
