@@ -2,7 +2,6 @@ import 'webextension-polyfill';
 import { exampleThemeStorage } from '@extension/storage';
 
 import ConSearch from './ConSearch';
-import { Analytics } from '@extension/shared';
 
 import * as amplitude from '@amplitude/analytics-browser';
 import { get } from 'http';

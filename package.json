@@ -1,6 +1,6 @@
 {
   "name": "chrome-extension-boilerplate-react-vite",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "chrome extension boilerplate",
   "license": "MIT",
   "private": true,
@@ -35,7 +35,7 @@
     "module-manager": "pnpm -F module-manager start"
   },
   "dependencies": {
-    "@amplitude/analytics-browser": "^2.12.1",
+    "@amplitude/analytics-browser": "2.9.2",
     "@heroicons/react": "^2.2.0",
     "crypto-js": "^4.2.0",
     "file-saver": "^2.0.5",
