@@ -20,7 +20,7 @@ const Popup = () => {
       <div className="flex flex-col items-center justify-center h-full">
         <img src={chrome.runtime.getURL('iconOriginal.png')} alt="logo" className="w-24 h-24 mb-4" />
         <span>큐티플 - QWER(큐떱이알)콘 검색기</span>
-        <span>v1.0.2</span>
+        <span>v1.0.3</span>
         <span>By 깔깔새우(qwer.shrimp@gmail.com)</span>
 
         <span

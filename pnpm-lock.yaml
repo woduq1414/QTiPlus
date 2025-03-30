@@ -17,6 +17,9 @@ importers:
       crypto-js:
         specifier: ^4.2.0
         version: 4.2.0
+      es-hangul:
+        specifier: ^2.3.2
+        version: 2.3.2
       file-saver:
         specifier: ^2.0.5
         version: 2.0.5
@@ -2897,6 +2900,9 @@ packages:
   es-errors@1.3.0:
     resolution: {integrity: sha512-Zf5H2Kxt2xjTvbJvP2ZWLEICxA6j+hAmMzIlypy4xcBg1vKVnx89Wy0GbS+kf5cwCVFFzdCFh2XSCFNULS6csw==}
     engines: {node: '>= 0.4'}
+
+  es-hangul@2.3.2:
+    resolution: {integrity: sha512-NHLgutwE1SqeDFtGdZENJDyJ71zFjVNffMIh6YwGHLmOe9UlWJK/y592hWVMC1ZVAOypyiLdMACmZ0RiL11O1g==}
 
   es-iterator-helpers@1.2.1:
     resolution: {integrity: sha512-uDn+FE1yrDzyC0pCo961B2IHbdM8y/ACZsKD4dG6WqrjV53BADjwa7D+1aom2rsNVfLyDgU/eigvlJGJ08OQ4w==}
@@ -8158,6 +8164,8 @@ snapshots:
   es-define-property@1.0.1: {}
 
   es-errors@1.3.0: {}
+
+  es-hangul@2.3.2: {}
 
   es-iterator-helpers@1.2.1:
     dependencies:

@@ -8,6 +8,8 @@ import { get } from 'http';
 // console.log(process.env['CEB_EXAMPLE'], 'ceb_example');
 // console.log(process.env["CEB_GA_MEASUREMENT_ID"], "ceb_ga_measurement_id");
 
+import { convertQwertyToHangul } from 'es-hangul';
+
 let storageData: any = {};
 const readLocalStorage = async (key: any, isUseCache: boolean = true) => {
   return new Promise((resolve, reject) => {
@@ -44,7 +46,6 @@ readLocalStorage('UserId').then((data: any) => {
 console.log('Background loaded');
 // console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
 
-let tabId = 0;
 function removeSpecialChar(str: string) {
   return str;
   // return str.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎ]/g, '').toUpperCase();
@@ -321,7 +322,21 @@ conTreeInit().then(res => {
 
             query = query.split('#')[0];
           }
-          query = removeSpecialChar(query);
+
+          // 만약 query가 영어로만 구성되어 있다면
+          let queryList = [];
+
+          // console.log(/^[a-zA-Z]+$/.test(query), query ,)
+          console.log(/^[a-zA-Z]+$/.test(query), query);
+          let koQuery = convertQwertyToHangul(query);
+
+          console.log(koQuery, '!!');
+
+          if (query === koQuery) {
+            queryList = [query];
+          } else {
+            queryList = [query, koQuery];
+          }
 
           function includesAny(query: string, list: string[]): boolean {
             return list.some(q => query.includes(q));
@@ -335,59 +350,67 @@ conTreeInit().then(res => {
           }
           // console.log(replaceWordData);
 
-          for (let key in replaceWordData) {
-            if (includesAny(query, [key, ...replaceWordData[key]])) {
-              additionalCategoryList.push(key);
+          for (let i = 0; i < queryList.length; i++) {
+            const query = queryList[i] as string;
+
+            console.log(query, '!!!');
+
+            for (let key in replaceWordData) {
+              if (includesAny(query, [key, ...replaceWordData[key]])) {
+                additionalCategoryList.push(key);
+              }
             }
-          }
 
-          // console.log(additionalCategoryList);
+            // console.log(additionalCategoryList);
 
-          const result = tmpRes?.conSearchTmp.searchTrie(query);
+            const result = tmpRes?.conSearchTmp.searchTrie(query);
 
-          let result2 = new Set();
-          for (let additionalCategory of additionalCategoryList) {
-            result2 = new Set([
-              ...Array.from(result2),
-              ...Array.from(tmpRes?.conSearchTmp.searchTrie(additionalCategory)),
-            ]);
-          }
-          // const result2 = tmpRes?.conSearchTmp.searchTrie(additionalCategory);
+            let result2 = new Set();
+            for (let additionalCategory of additionalCategoryList) {
+              result2 = new Set([
+                ...Array.from(result2),
+                ...Array.from(tmpRes?.conSearchTmp.searchTrie(additionalCategory)),
+              ]);
+            }
+            // const result2 = tmpRes?.conSearchTmp.searchTrie(additionalCategory);
 
-          let result3 = new Set();
+            let result3 = new Set();
 
-          // console.log(storageData['UserConfig'], '!!');
-          if (storageData['UserConfig']?.isChoseongSearch) {
-            result3 = tmpRes?.conSearchChoseongTmp.searchTrie(convertDoubleConsonantToSingle(query));
-          } else {
-          }
+            // console.log(storageData['UserConfig'], '!!');
+            if (storageData['UserConfig']?.isChoseongSearch) {
+              result3 = tmpRes?.conSearchChoseongTmp.searchTrie(convertDoubleConsonantToSingle(query));
+            } else {
+            }
 
-          finalResult = new Set([...Array.from(result), ...Array.from(result2), ...Array.from(result3)]);
+            let queryResult = new Set([...Array.from(result), ...Array.from(result2), ...Array.from(result3)]);
 
-          if (who !== '') {
-            for (let key of Array.from(finalResult)) {
-              let f = false;
-              for (let i = 0; i < who.length; i++) {
-                if (detailIdxDict[key as string].who.includes(who[i])) {
-                  f = true;
-                  break;
+            if (who !== '') {
+              for (let key of Array.from(queryResult)) {
+                let f = false;
+                for (let i = 0; i < who.length; i++) {
+                  if (detailIdxDict[key as string].who.includes(who[i])) {
+                    f = true;
+                    break;
+                  }
+                }
+                if (!f) {
+                  queryResult.delete(key);
                 }
               }
-              if (!f) {
-                finalResult.delete(key);
-              }
             }
-          }
-          for (let key of Array.from(finalResult)) {
-            const packageIdx = detailIdxDict[key as string].packageIdx;
+            for (let key of Array.from(queryResult)) {
+              const packageIdx = detailIdxDict[key as string].packageIdx;
 
-            if (userPackageData[packageIdx] === undefined) {
-              finalResult.delete(key);
-            } else {
-              if (userPackageData[packageIdx].isHide) {
-                finalResult.delete(key);
+              if (userPackageData[packageIdx] === undefined) {
+                queryResult.delete(key);
+              } else {
+                if (userPackageData[packageIdx].isHide) {
+                  queryResult.delete(key);
+                }
               }
             }
+
+            finalResult = new Set([...Array.from(finalResult), ...Array.from(queryResult)]);
           }
         }
 
