@@ -29,7 +29,7 @@ const manifest = {
   },
   version: packageJson.version,
   description: '__MSG_extensionDescription__',
-  host_permissions: ['*://*.dcinside.com/*', 'https://api.mixpanel.com/*'],
+  host_permissions: ['*://*.dcinside.com/*'],
   permissions: ['storage', 'cookies'],
   options_page: 'options/index.html',
   background: {
@@ -72,7 +72,7 @@ const manifest = {
   //   extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self' ",
   // },
   content_security_policy: {
-    extension_pages: "default-src 'self'; connect-src https://* data: blob: filesystem:;",
+    extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self' ",
   },
   // side_panel: {
   //   default_path: 'side-panel/index.html',

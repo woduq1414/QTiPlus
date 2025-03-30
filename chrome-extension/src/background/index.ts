@@ -3,7 +3,7 @@ import { exampleThemeStorage } from '@extension/storage';
 
 import ConSearch from './ConSearch';
 
-// import * as amplitude from '@amplitude/analytics-browser';
+import * as amplitude from '@amplitude/analytics-browser';
 
 // console.log(process.env['CEB_EXAMPLE'], 'ceb_example');
 // console.log(process.env["CEB_GA_MEASUREMENT_ID"], "ceb_ga_measurement_id");
@@ -16,17 +16,45 @@ import { hash } from 'crypto';
 
 const userAgent = navigator.userAgent as any;
 
+const os = (() => {
+  if (userAgent.indexOf('Windows') !== -1) return 'Windows';
+  if (userAgent.indexOf('Mac OS X') !== -1) return 'macOS';
+  if (userAgent.indexOf('Linux') !== -1) return 'Linux';
+  if (userAgent.indexOf('X11') !== -1) return 'Unix';
+  if (userAgent.indexOf('Android') !== -1) return 'Android';
+  if (userAgent.indexOf('iPhone') !== -1) return 'iPhone';
+  if (userAgent.indexOf('iPad') !== -1) return 'iPad';
+  return 'Unknown OS';
+})();
+
+const browser = (() => {
+  if (userAgent.indexOf('Chrome') !== -1) return 'Chrome';
+  if (userAgent.indexOf('Firefox') !== -1) return 'Firefox';
+  if (userAgent.indexOf('Safari') !== -1) return 'Safari';
+  if (userAgent.indexOf('Opera') !== -1) return 'Opera';
+  if (userAgent.indexOf('Edg') !== -1) return 'Edge';
+  return 'Unknown Browser';
+})();
+
+const browserVersion = (() => {
+  const match = userAgent.match(/(Chrome|Firefox|Safari|Opera|Edg)[\/\s](\d+)/);
+  return match ? match[2] : 'Unknown Version';
+})();
+
 // 브라우저 정보와 OS 정보 추출
 const browserInfo = {
   userAgent,
+  os,
+  browser,
+  browserVersion,
 };
 
 console.log(browserInfo, 'info');
 console.log(process.env['CEB_EXTENSION_VERSION'], 'version');
 
-const deviceId = uuidv4();
+// const MIXPANEL_KEY = process.env['CEB_MIXPANEL_KEY'] as string;
 
-const MIXPANEL_KEY = process.env['CEB_MIXPANEL_KEY'] as string;
+const AMPLITUDE_KEY = process.env['CEB_AMPLITUDE_KEY'] as string;
 
 let storageData: any = {};
 const readLocalStorage = async (key: any, isUseCache: boolean = true) => {
@@ -754,53 +782,112 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (userId) {
         const hashedInsertId = (await hashSHA256(`${JSON.stringify(data)}${action}${userId}`)).slice(0, 10);
 
-        let trackData = [
-          {
-            event: action,
-            properties: {
-              ...data,
-              $browser_version: browserInfo.userAgent,
+        readLocalStorage('DeviceId').then(async (deviceId: any) => {
+          if (deviceId === null || deviceId === undefined) {
+            // set new deviceId
 
-              extensionVersion: process.env['CEB_EXTENSION_VERSION'] as string,
-              $screen_height: 0,
-              $screen_width: 0,
-              mp_lib: 'web',
-              $lib_version: '2.62.0',
-              $insert_id: hashedInsertId,
-              time: new Date().getTime() / 1000,
-              distinct_id: userId,
-              $device_id: deviceId,
-              $initial_referrer: '$direct',
-              $initial_referring_domain: '$direct',
-              $user_id: userId,
-              token: MIXPANEL_KEY,
+            const newDeviceId = uuidv4();
+            chrome.storage.local.set({ DeviceId: newDeviceId }, async function () {
+              console.log('Value is set to ', newDeviceId);
+            });
+
+            deviceId = newDeviceId;
+          }
+
+          let now = Date.now();
+          let trackData = {
+            api_key: AMPLITUDE_KEY,
+            events: [
+              {
+                user_id: userId,
+                device_id: `${deviceId}`,
+                session_id: now,
+                time: now,
+                platform: 'Web',
+                language: 'ko',
+                insert_id: hashedInsertId,
+                event_type: action,
+                event_properties: {
+                  ...data,
+                  extensionVersion: process.env['CEB_EXTENSION_VERSION'] as string,
+                },
+
+                library: 'amplitude-ts/2.9.2',
+                user_agent: browserInfo.userAgent,
+              },
+            ],
+            options: {},
+            // "client_upload_time": now.toString(),
+          };
+
+          fetch('https://api2.amplitude.com/2/httpapi', {
+            method: 'POST',
+            body: JSON.stringify(trackData),
+            headers: {
+              accept: '*/*',
+              'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+              'content-type': 'application/json',
+              priority: 'u=1, i',
+              'sec-fetch-dest': 'empty',
+              'sec-fetch-mode': 'cors',
+              'sec-fetch-site': 'cross-site',
             },
-          },
-        ];
+            mode: 'cors',
+            credentials: 'omit',
+            referrerPolicy: 'strict-origin-when-cross-origin',
+          })
+            .then(response => response.json())
+            .then(data => console.log('Success:', data))
+            .catch(error => console.error('Error:', error));
+        });
 
-        fetch('https://api.mixpanel.com/import', {
-          method: 'POST',
-          // mode: "no-cors",
-          body: JSON.stringify(trackData),
+        // let trackData = [
+        //   {
+        //     event: action,
+        //     properties: {
+        //       ...data,
+        //       $browser_version: browserInfo.userAgent,
 
-          // 인증 정보는 Authorization 헤더를 통해 전달
-          headers: {
-            Authorization: 'Basic ' + btoa(MIXPANEL_KEY + ':'),
-            'Content-Type': 'application/json',
-            priority: 'u=1, i',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'none',
-            'sec-fetch-storage-access': 'active',
-            accept: '*/*',
-          },
-          mode: 'cors',
-          credentials: 'include',
-          referrerPolicy: 'strict-origin-when-cross-origin',
-        })
-          .then(response => response.json())
-          .then(data => console.log('Success:', data))
-          .catch(error => console.error('Error:', error));
+        //       extensionVersion: process.env['CEB_EXTENSION_VERSION'] as string,
+        //       $screen_height: 0,
+        //       $screen_width: 0,
+        //       mp_lib: 'web',
+        //       $lib_version: '2.62.0',
+        //       $insert_id: hashedInsertId,
+        //       time: new Date().getTime() / 1000,
+        //       distinct_id: userId,
+        //       $device_id: deviceId,
+        //       $initial_referrer: '$direct',
+        //       $initial_referring_domain: '$direct',
+        //       $user_id: userId,
+        //       token: MIXPANEL_KEY,
+        //     },
+        //   },
+        // ];
+
+        // fetch('https://api.mixpanel.com/import', {
+        //   method: 'POST',
+        //   // mode: "no-cors",
+        //   body: JSON.stringify(trackData),
+
+        //   // 인증 정보는 Authorization 헤더를 통해 전달
+        //   headers: {
+        //     Authorization: 'Basic ' + btoa(MIXPANEL_KEY + ':'),
+        //     'Content-Type': 'application/json',
+        //     priority: 'u=1, i',
+        //     'sec-fetch-dest': 'empty',
+        //     'sec-fetch-mode': 'cors',
+        //     'sec-fetch-site': 'none',
+        //     'sec-fetch-storage-access': 'active',
+        //     accept: '*/*',
+        //   },
+        //   mode: 'cors',
+        //   credentials: 'include',
+        //   referrerPolicy: 'strict-origin-when-cross-origin',
+        // })
+        //   .then(response => response.json())
+        //   .then(data => console.log('Success:', data))
+        //   .catch(error => console.error('Error:', error));
 
         sendResponse({ data: 'success' });
       }
