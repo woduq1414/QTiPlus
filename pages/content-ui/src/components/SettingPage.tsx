@@ -218,7 +218,7 @@ const SettingPage: React.FC<SearchPageProps> = props => {
             className="rounded-lg w-[50px] h-[50px] opacity-80"
           />
           <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-            큐티플 - QWER(큐떱이알)콘 검색기 v1.0.2 <br />
+            큐티플 - QWER(큐떱이알)콘 검색기 v{process.env['CEB_EXTENSION_VERSION']} <br />
             By 깔깔새우 (qwer.shrimp@gmail.com)
           </div>
         </div>

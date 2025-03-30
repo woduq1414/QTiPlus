@@ -29,7 +29,7 @@ const manifest = {
   },
   version: packageJson.version,
   description: '__MSG_extensionDescription__',
-  host_permissions: ['*://*.dcinside.com/*'],
+  host_permissions: ['*://*.dcinside.com/*', 'https://api.mixpanel.com/*'],
   permissions: ['storage', 'cookies'],
   options_page: 'options/index.html',
   background: {
@@ -68,8 +68,11 @@ const manifest = {
       matches: ['*://*.dcinside.com/*'],
     },
   ],
+  // content_security_policy: {
+  //   extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self' ",
+  // },
   content_security_policy: {
-    extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",
+    extension_pages: "default-src 'self'; connect-src https://* data: blob: filesystem:;",
   },
   // side_panel: {
   //   default_path: 'side-panel/index.html',

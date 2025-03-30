@@ -3,12 +3,30 @@ import { exampleThemeStorage } from '@extension/storage';
 
 import ConSearch from './ConSearch';
 
-import * as amplitude from '@amplitude/analytics-browser';
-import { get } from 'http';
+// import * as amplitude from '@amplitude/analytics-browser';
+
 // console.log(process.env['CEB_EXAMPLE'], 'ceb_example');
 // console.log(process.env["CEB_GA_MEASUREMENT_ID"], "ceb_ga_measurement_id");
 
 import { convertQwertyToHangul } from 'es-hangul';
+// import mixpanel from "mixpanel-browser";
+// import { track } from 'mixpanel-browser';
+import { v4 as uuidv4 } from 'uuid';
+import { hash } from 'crypto';
+
+const userAgent = navigator.userAgent as any;
+
+// 브라우저 정보와 OS 정보 추출
+const browserInfo = {
+  userAgent,
+};
+
+console.log(browserInfo, 'info');
+console.log(process.env['CEB_EXTENSION_VERSION'], 'version');
+
+const deviceId = uuidv4();
+
+const MIXPANEL_KEY = process.env['CEB_MIXPANEL_KEY'] as string;
 
 let storageData: any = {};
 const readLocalStorage = async (key: any, isUseCache: boolean = true) => {
@@ -30,16 +48,16 @@ const readLocalStorage = async (key: any, isUseCache: boolean = true) => {
   });
 };
 
-amplitude.init(process.env['CEB_AMPLITUDE_KEY'] as string, {
-  autocapture: false,
-  trackingOptions: { ipAddress: false },
-});
-
-amplitude.setGroup('version', '1.0.0');
-
 readLocalStorage('UserId').then((data: any) => {
   if (data) {
-    amplitude.setUserId(data);
+    // amplitude.setUserId(data);
+    // amplitude.setGroup('version', '1.0.3');
+    // amplitude.init("" as string, {
+    //   autocapture: false,
+    //   trackingOptions: { ipAddress: false },
+    //   userId: data,
+    // });
+    // amplitude.setUserId(data);
   }
 });
 
@@ -75,7 +93,7 @@ function convertDoubleConsonantToSingle(str: string) {
       result += char;
     }
   }
-  console.log(result);
+  // console.log(result);
   return result;
 }
 
@@ -161,10 +179,6 @@ chrome.storage.onChanged.addListener(function (changes, areaName) {
         key === 'ReplaceWordData'
       ) {
         cachedSearchResult = {};
-      }
-
-      if (key === 'UserId') {
-        amplitude.setUserId(storageChange.newValue);
       }
 
       console.log(key, storageChange.newValue, changes, areaName);
@@ -330,7 +344,7 @@ conTreeInit().then(res => {
           console.log(/^[a-zA-Z]+$/.test(query), query);
           let koQuery = convertQwertyToHangul(query);
 
-          console.log(koQuery, '!!');
+          // console.log(koQuery, '!!');
 
           if (query === koQuery) {
             queryList = [query];
@@ -353,7 +367,7 @@ conTreeInit().then(res => {
           for (let i = 0; i < queryList.length; i++) {
             const query = queryList[i] as string;
 
-            console.log(query, '!!!');
+            // console.log(query, '!!!');
 
             for (let key in replaceWordData) {
               if (includesAny(query, [key, ...replaceWordData[key]])) {
@@ -722,11 +736,75 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type == 'TRIGGER_EVENT') {
     const action = message.action;
     const data = message.data;
-    // GA.fireEvent(action, data);
 
-    amplitude.logEvent(action, data);
+    // amplitude.logEvent(action, data);
 
-    sendResponse({ data: 'success' });
+    // console.log('trigger event', action, data);
+
+    const hashSHA256 = async (message: string) => {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      return hashHex;
+    };
+
+    readLocalStorage('UserId').then(async (userId: any) => {
+      if (userId) {
+        const hashedInsertId = (await hashSHA256(`${JSON.stringify(data)}${action}${userId}`)).slice(0, 10);
+
+        let trackData = [
+          {
+            event: action,
+            properties: {
+              ...data,
+              $browser_version: browserInfo.userAgent,
+
+              extensionVersion: process.env['CEB_EXTENSION_VERSION'] as string,
+              $screen_height: 0,
+              $screen_width: 0,
+              mp_lib: 'web',
+              $lib_version: '2.62.0',
+              $insert_id: hashedInsertId,
+              time: new Date().getTime() / 1000,
+              distinct_id: userId,
+              $device_id: deviceId,
+              $initial_referrer: '$direct',
+              $initial_referring_domain: '$direct',
+              $user_id: userId,
+              token: MIXPANEL_KEY,
+            },
+          },
+        ];
+
+        fetch('https://api.mixpanel.com/import', {
+          method: 'POST',
+          // mode: "no-cors",
+          body: JSON.stringify(trackData),
+
+          // 인증 정보는 Authorization 헤더를 통해 전달
+          headers: {
+            Authorization: 'Basic ' + btoa(MIXPANEL_KEY + ':'),
+            'Content-Type': 'application/json',
+            priority: 'u=1, i',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'none',
+            'sec-fetch-storage-access': 'active',
+            accept: '*/*',
+          },
+          mode: 'cors',
+          credentials: 'include',
+          referrerPolicy: 'strict-origin-when-cross-origin',
+        })
+          .then(response => response.json())
+          .then(data => console.log('Success:', data))
+          .catch(error => console.error('Error:', error));
+
+        sendResponse({ data: 'success' });
+      }
+    });
   }
 
   return true;

@@ -265,7 +265,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
         {customConList &&
         userPackageData &&
         Object.keys(customConList).filter(key => !userPackageData[key]).length > 0 ? (
-          <div className="flex w-full text-sm gap-x-2 gap-y-1 flex-wrap overflow-y-auto items-center  text-gray-700 dark:text-gray-300 max-h-[100px] sm:max-h-[50px] ">
+          <div className="flex w-full text-sm gap-x-2 gap-y-1 flex-wrap overflow-y-auto overflow-auto items-center  text-gray-700 dark:text-gray-300 max-h-[100px] sm:max-h-[50px] ">
             <span>보유하지 않은 콘 :</span>
             {Object.keys(customConList)
               .filter(key => !userPackageData[key])
@@ -374,7 +374,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                     type: 'TRIGGER_EVENT',
                     action: 'SYNC_CON_LIST',
                     data: {
-                      length: Object.keys(response.data).length,
+                      dataLength: Object.keys(response.data).length,
                     },
                   });
 
