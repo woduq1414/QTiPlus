@@ -19,6 +19,7 @@ import {
 import { CheckCircleIcon as CheckCircleIconOutline } from '@heroicons/react/24/outline';
 import { title } from 'process';
 import makeToast from '@src/functions/toast';
+import { on } from 'events';
 
 interface SearchPageProps {
   detailIdxDict: Record<string, any>;
@@ -49,6 +50,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
   const [recentUsedConList, setRecentUsedConList] = useState<any[]>([]);
 
+  const [recentUsedDoubleConList, setRecentUsedDoubleConList] = useState<any[]>([]);
+
   const [queryPage, setQueryPage] = useState<number>(1);
   const [queryMaxPage, setQueryMaxPage] = useState<number>(1);
 
@@ -65,19 +68,39 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     }
   };
 
-  const handleImageKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, index: number, detailData: any) => {
+  const handleImageKeyDown = (
+    e: React.KeyboardEvent<HTMLDivElement>,
+    index: number,
+    detailData: any,
+    horizontalItemCount?: number,
+  ) => {
+    if (!horizontalItemCount) horizontalItemCount = 4;
     let targetResultSize = undefined;
     if (queryResult === undefined) {
-      targetResultSize = recentUsedConList.length;
+      if (isDoubleCon && !firstDoubleCon) {
+        targetResultSize = recentUsedDoubleConList.length;
+      } else {
+        targetResultSize = recentUsedConList.length;
+      }
     } else {
       targetResultSize = queryResult.size;
     }
+
+    targetResultSize = Math.min(targetResultSize, horizontalItemCount * 4);
 
     // detect if ctrl key is pressed
 
     if (e.ctrlKey) {
       if (e.key === 'Enter') {
-        onConClick({ detailData, e });
+        if (isDoubleCon && !firstDoubleCon && detailData.firstDoubleCon) {
+          onConClick({
+            detailData: detailData.secondDoubleCon,
+            e,
+            manualFirstDoubleCon: detailData.firstDoubleCon,
+          });
+        } else {
+          onConClick({ detailData, e });
+        }
 
         return;
       } else {
@@ -94,12 +117,20 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       setFocusedIndex(index - 1);
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setFocusedIndex(prev => (prev !== null ? Math.min(prev + 4, targetResultSize - 1) : 0));
+      setFocusedIndex(prev => (prev !== null ? Math.min(prev + horizontalItemCount, targetResultSize - 1) : 0));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setFocusedIndex(prev => (prev !== null ? Math.max(prev - 4, 0) : 0));
+      setFocusedIndex(prev => (prev !== null ? Math.max(prev - horizontalItemCount, 0) : 0));
     } else if (e.key === 'Enter') {
-      onConClick({ detailData, e });
+      if (isDoubleCon && !firstDoubleCon && detailData.firstDoubleCon) {
+        onConClick({
+          detailData: detailData.secondDoubleCon,
+          e,
+          manualFirstDoubleCon: detailData.firstDoubleCon,
+        });
+      } else {
+        onConClick({ detailData, e });
+      }
       // imageRefs.current[index]?.click();
     } else if (e.key === 'Tab') {
       if (index === targetResultSize - 1) {
@@ -169,6 +200,19 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         }
       });
 
+      const recentUsedDoubleConListKey = `RecentUsedDoubleConList_${userId}`;
+      readLocalStorage(recentUsedDoubleConListKey).then(data => {
+        if (data === null) {
+          setRecentUsedDoubleConList([]);
+        } else {
+          if (data === undefined) {
+            setRecentUsedDoubleConList([]);
+          } else {
+            setRecentUsedDoubleConList(data as any);
+          }
+        }
+      });
+
       const favoriteConListKey = `FavoriteConList_${userId}`;
       readLocalStorage(favoriteConListKey).then(data => {
         if (data === null) {
@@ -232,6 +276,13 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         imageRefs.current[focusedIndex]?.focus();
       }
   }, [focusedIndex, imageRefs.current[focusedIndex as number], queryPageRef.current]);
+
+  useEffect(() => {
+    if (debouncedSearchText === '') {
+      setFocusedIndex(null);
+      searchInputRef.current?.focus();
+    }
+  }, [isDoubleCon]);
 
   useEffect(() => {
     queryPageRef.current = queryPage;
@@ -314,9 +365,23 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     setFavoriteConList(prevfavoriteConList);
   }
 
-  async function onConClick({ detailData, e }: { detailData: any; e?: React.KeyboardEvent<HTMLDivElement> | any }) {
+  async function onConClick({
+    detailData,
+    e,
+    manualFirstDoubleCon,
+  }: {
+    detailData: any;
+    e?: React.KeyboardEvent<HTMLDivElement> | any;
+    manualFirstDoubleCon?: any;
+  }) {
     {
       // console.log(e);
+      let firstDoubleCon2 = null;
+      if (manualFirstDoubleCon) {
+        firstDoubleCon2 = manualFirstDoubleCon;
+      } else {
+        firstDoubleCon2 = firstDoubleCon;
+      }
 
       const isMobileVersion = window.location.host === 'm.dcinside.com';
 
@@ -327,6 +392,12 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         recentUsedConList = [];
       }
 
+      const recentUsedDoubleConListKey = `RecentUsedDoubleConList_${userId}`;
+      let recentUsedDoubleConList = (await readLocalStorage(recentUsedDoubleConListKey)) as any[];
+      if (recentUsedDoubleConList === null) {
+        recentUsedDoubleConList = [];
+      }
+
       // return;
 
       let packageIdx = detailData.packageIdx;
@@ -335,7 +406,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       let originalDetailIdx = detailIdx;
 
       if (isDoubleCon) {
-        if (firstDoubleCon === null) {
+        if (firstDoubleCon2 === null) {
           setFirstDoubleCon({
             packageIdx: packageIdx,
             detailIdx: detailIdx,
@@ -369,8 +440,36 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
           return;
         } else {
-          packageIdx = `${firstDoubleCon.packageIdx}, ${packageIdx}`;
-          detailIdx = `${firstDoubleCon.detailIdx}, ${detailIdx}`;
+          packageIdx = `${firstDoubleCon2.packageIdx}, ${packageIdx}`;
+          detailIdx = `${firstDoubleCon2.detailIdx}, ${detailIdx}`;
+
+          recentUsedDoubleConList = recentUsedDoubleConList.filter((con: any) => {
+            return con.detailIdx !== detailIdx;
+          });
+
+          recentUsedDoubleConList.push({
+            detailIdx: detailIdx,
+            firstDoubleCon: {
+              packageIdx: firstDoubleCon2.packageIdx,
+              detailIdx: firstDoubleCon2.detailIdx,
+              imgPath: firstDoubleCon2.imgPath,
+              title: firstDoubleCon2.title,
+              sort: firstDoubleCon2.sort,
+            },
+            secondDoubleCon: {
+              packageIdx: packageIdx.split(', ')[1],
+              detailIdx: detailIdx.split(', ')[1],
+              imgPath: detailData.imgPath,
+              title: detailData.title,
+              sort: detailData.sort,
+            },
+          });
+
+          recentUsedDoubleConList = recentUsedDoubleConList.slice(-10);
+
+          chrome.storage.local.set({ [recentUsedDoubleConListKey]: recentUsedDoubleConList }, async function () {
+            // console.log('Value is set to ', recentUsedDoubleConList);
+          });
         }
       }
 
@@ -412,16 +511,16 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           title: detailData.title,
         });
 
-        if (firstDoubleCon) {
+        if (firstDoubleCon2) {
           recentUsedConList = recentUsedConList.filter((con: any) => {
-            return con.detailIdx !== firstDoubleCon.detailIdx;
+            return con.detailIdx !== firstDoubleCon2.detailIdx;
           });
           recentUsedConList.push({
-            packageIdx: firstDoubleCon.packageIdx,
-            detailIdx: firstDoubleCon.detailIdx,
-            imgPath: firstDoubleCon.imgPath,
-            sort: firstDoubleCon.sort,
-            title: firstDoubleCon.title,
+            packageIdx: firstDoubleCon2.packageIdx,
+            detailIdx: firstDoubleCon2.detailIdx,
+            imgPath: firstDoubleCon2.imgPath,
+            sort: firstDoubleCon2.sort,
+            title: firstDoubleCon2.title,
           });
         }
       } else {
@@ -437,7 +536,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         });
       }
 
-      recentUsedConList = recentUsedConList.slice(-12);
+      recentUsedConList = recentUsedConList.slice(-20);
 
       chrome.storage.local.set({ [recentUsedConListKey]: recentUsedConList }, async function () {
         // console.log('Value is set to ', recentUsedConList);
@@ -490,8 +589,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
               `
                 <div class="block dccon" contenteditable="false"><span class="cont dccon"><span class="cont-inr"><button type="button"
                 class="sp-imgclose con-close"><span class="blind">삭제</span></button><img class="written_dccon dccon-img ${isBigCon ? 'bigdccon' : ''}"
-                src="https:${firstDoubleCon.imgPath}"
-                alt="1" detail="${firstDoubleCon.detailIdx}"></span><span class="cont-inr"><span class="pos"><span
+                src="https:${firstDoubleCon2.imgPath}"
+                alt="1" detail="${firstDoubleCon2.detailIdx}"></span><span class="cont-inr"><span class="pos"><span
                     class="order-handle"></span></span><img class="written_dccon dccon-img ${isBigCon ? 'bigdccon' : ''}"
                 src="https:${detailData.imgPath}"
                 alt="2" detail="${originalDetailIdx}"></span></span></div>
@@ -519,7 +618,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             document.execCommand(
               'insertHTML',
               false,
-              `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${firstDoubleCon.imgPath}" conalt="0" alt="0" con_alt="0" title="0" detail="${firstDoubleCon.detailIdx}">
+              `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${firstDoubleCon2.imgPath}" conalt="0" alt="0" con_alt="0" title="0" detail="${firstDoubleCon2.detailIdx}">
              
               `,
             );
@@ -604,7 +703,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             setIsModalOpen(false);
 
             if (isDoubleCon) {
-              let gifUrl = `https:${firstDoubleCon.imgPath}`;
+              let gifUrl = `https:${firstDoubleCon2.imgPath}`;
               window.open(gifUrl, '_blank');
 
               gifUrl = `https:${detailData.imgPath}`;
@@ -653,14 +752,14 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           let commentMemo = `<img src='https:${detailData.imgPath}' class='written_dccon' alt='8' conalt='8' title='8' detail='${originalDetailIdx}'>`;
           if (isDoubleCon) {
             commentMemo =
-              `<img src='https:${firstDoubleCon.imgPath}' class='written_dccon' alt='8' conalt='8' title='8' detail='${firstDoubleCon.detailIdx}'>` +
+              `<img src='https:${firstDoubleCon2.imgPath}' class='written_dccon' alt='8' conalt='8' title='8' detail='${firstDoubleCon2.detailIdx}'>` +
               commentMemo;
           }
 
           let newDetailIdx = detailIdx;
 
           if (isDoubleCon) {
-            newDetailIdx = `${firstDoubleCon.detailIdx}|dccon|${originalDetailIdx}`;
+            newDetailIdx = `${firstDoubleCon2.detailIdx}|dccon|${originalDetailIdx}`;
           }
           setIsModalOpen(false);
           const writeCommentResponse = await fetch('https://m.dcinside.com/ajax/comment-write', {
@@ -704,8 +803,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                 type: 'TRIGGER_EVENT',
                 action: 'DCCON_INSERT',
                 data: {
-                  packageIdx: firstDoubleCon.packageIdx,
-                  sort: firstDoubleCon.sort,
+                  packageIdx: firstDoubleCon2.packageIdx,
+                  sort: firstDoubleCon2.sort,
                   doubleCon: 1,
                   env: 'mobile',
                 },
@@ -754,12 +853,12 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             check7Value === undefined ||
             check8Value === undefined
           ) {
-            console.log(packageIdx, detailIdx, ci_t, check6Value, check7Value, check8Value);
+            // console.log(packageIdx, detailIdx, ci_t, check6Value, check7Value, check8Value);
 
             setIsModalOpen(false);
 
             if (isDoubleCon) {
-              let gifUrl = `https:${firstDoubleCon.imgPath}`;
+              let gifUrl = `https:${firstDoubleCon2.imgPath}`;
               window.open(gifUrl, '_blank');
 
               gifUrl = `https:${detailData.imgPath}`;
@@ -844,8 +943,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                   type: 'TRIGGER_EVENT',
                   action: 'DCCON_INSERT',
                   data: {
-                    packageIdx: firstDoubleCon.packageIdx,
-                    sort: firstDoubleCon.sort,
+                    packageIdx: firstDoubleCon2.packageIdx,
+                    sort: firstDoubleCon2.sort,
                     doubleCon: 1,
                     env: 'pc',
                   },
@@ -923,7 +1022,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                 onClick={() => {
                   setIsBigCon(prev => !prev);
 
-                  makeToast('대왕콘 설정이 변경되었습니다.');
+                  // makeToast('대왕콘 설정이 변경되었습니다.');
                 }}>
                 {isBigCon ? (
                   <CheckCircleIcon className="h-4 w-4 text-gray-600 dark:text-gray-300" />
@@ -993,9 +1092,17 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
         {!userPackageData && <div>아래 [콘 목록]에서 동기화를 먼저 해주세요!</div>}
 
-        {debouncedSearchText === '' && !queryResult && recentUsedConList && recentUsedConList.length > 0 && (
-          <span className="text-md font-semibold mb-1 text-gray-800 dark:text-gray-200">최근 사용한 콘</span>
-        )}
+        {debouncedSearchText === '' &&
+          !queryResult &&
+          (isDoubleCon && !firstDoubleCon
+            ? recentUsedDoubleConList && recentUsedDoubleConList.length > 0
+              ? true
+              : false
+            : recentUsedConList && recentUsedConList.length > 0
+              ? true
+              : false) && (
+            <span className="text-md font-semibold mb-1 text-gray-800 dark:text-gray-200">최근 사용한 콘</span>
+          )}
 
         {
           <div className="flex flex-wrap w-[350px] gap-1">
@@ -1005,13 +1112,15 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
                 // console.log(detailData, detailIdxDict, detailIdx, "detailData");
 
+                const horizontalItemCount = 4;
                 return (
                   <div
                     key={detailIdx}
                     className={`flex cursor-pointer w-[calc(25%-0.2em)] rounded-md
+                      transition-all duration-200
                                             ${
                                               focusedIndex === index
-                                                ? ' border-4 scale-125 transition-all duration-200 z-[9999999999] '
+                                                ? ' border-0 scale-125  z-[9999999999]'
                                                 : 'scale-100 z-[9999999]'
                                             }
                                             `}
@@ -1034,7 +1143,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                     onContextMenu={e => {
                       onConRightClick({ detailData, e });
                     }}>
-                    <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} />
+                    <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} doubleConType={-1} />
                     {favoriteConList &&
                       favoriteConList[userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx] && (
                         <div className="absolute top-0 right-0">
@@ -1062,65 +1171,147 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
             {debouncedSearchText === '' &&
               !queryResult &&
-              Array.from(recentUsedConList)
-                .reverse()
-                .map((detailData, index) => {
-                  const detailIdx = detailData.detailIdx;
+              (!(isDoubleCon && !firstDoubleCon)
+                ? Array.from(recentUsedConList)
+                    .reverse()
+                    .slice(0, 16)
+                    .map((detailData, index) => {
+                      const detailIdx = detailData.detailIdx;
 
-                  return (
-                    <div
-                      key={detailIdx}
-                      className={`flex cursor-pointer w-[calc(25%-0.2em)] rounded-md
+                      return (
+                        <div
+                          key={detailIdx}
+                          className={`flex cursor-pointer w-[calc(25%-0.2em)] rounded-md
+                           transition-all duration-200
                                             ${
                                               focusedIndex === index
-                                                ? ' border-4 scale-125 transition-all duration-200 z-[9999999999] '
+                                                ? ' border-0 scale-125  z-[9999999999] '
                                                 : 'scale-100 z-[9999999]'
                                             }
                                             `}
-                      ref={el => {
-                        imageRefs.current[index] = el;
-                      }}
-                      onKeyDown={e => handleImageKeyDown(e, index, detailData)}
-                      onFocus={() => {
-                        setFocusedIndex(index);
-                      }}
-                      onBlur={() => {
-                        if (focusedIndex === index) {
-                          setFocusedIndex(null);
-                        }
-                      }}
-                      tabIndex={0}
-                      onClick={e => {
-                        onConClick({ detailData, e });
-                      }}
-                      onContextMenu={e => {
-                        onConRightClick({ detailData, e });
-                      }}>
-                      <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} />
+                          ref={el => {
+                            imageRefs.current[index] = el;
+                          }}
+                          onKeyDown={e => handleImageKeyDown(e, index, detailData)}
+                          onFocus={() => {
+                            setFocusedIndex(index);
+                          }}
+                          onBlur={() => {
+                            if (focusedIndex === index) {
+                              setFocusedIndex(null);
+                            }
+                          }}
+                          tabIndex={0}
+                          onClick={e => {
+                            onConClick({ detailData, e });
+                          }}
+                          onContextMenu={e => {
+                            onConRightClick({ detailData, e });
+                          }}>
+                          <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} doubleConType={-1} />
 
-                      {favoriteConList && favoriteConList[detailData.detailIdx] && (
-                        <div className="absolute top-0 right-0">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="rgb(240,177,0)"
-                            className="w-5 h-5"
-                            stroke="white"
-                            strokeWidth={1.3}
-                            strokeLinecap="round"
-                            strokeLinejoin="round">
-                            <path
-                              fillRule="evenodd"
-                              d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                          {favoriteConList && favoriteConList[detailData.detailIdx] && (
+                            <div className="absolute top-0 right-0">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="rgb(240,177,0)"
+                                className="w-5 h-5"
+                                stroke="white"
+                                strokeWidth={1.3}
+                                strokeLinecap="round"
+                                strokeLinejoin="round">
+                                <path
+                                  fillRule="evenodd"
+                                  d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </div>
+                          )}
+                          {/* <span>{detailData.title}</span> */}
                         </div>
-                      )}
-                      {/* <span>{detailData.title}</span> */}
-                    </div>
-                  );
-                })}
+                      );
+                    })
+                : Array.from(recentUsedDoubleConList)
+                    .reverse()
+                    .slice(0, 8)
+                    .map((detailData, index) => {
+                      const detailIdx = detailData.detailIdx;
+
+                      const firstDoubleCon = detailData.firstDoubleCon;
+                      const secondDoubleCon = detailData.secondDoubleCon as any;
+
+                      return (
+                        <div
+                          key={detailIdx}
+                          className={`flex cursor-pointer w-[calc(50%-0.2em)] rounded-md
+                          transition-all duration-200
+                                            ${
+                                              focusedIndex === index
+                                                ? ' border-0 scale-[125%]  z-[9999999999] '
+                                                : 'scale-100 z-[9999999]'
+                                            }
+                                            `}
+                          ref={el => {
+                            imageRefs.current[index] = el;
+                          }}
+                          onKeyDown={e => handleImageKeyDown(e, index, detailData, 2)}
+                          onFocus={() => {
+                            setFocusedIndex(index);
+                          }}
+                          onBlur={() => {
+                            if (focusedIndex === index) {
+                              setFocusedIndex(null);
+                            }
+                          }}
+                          tabIndex={0}
+                          onClick={e => {
+                            onConClick({
+                              detailData: secondDoubleCon,
+                              e: e,
+                              manualFirstDoubleCon: firstDoubleCon,
+                            });
+                          }}
+                          onContextMenu={e => {
+                            // onConRightClick({ detailData, e });
+                          }}>
+                          <div className="flex flex-row gap-[0em]">
+                            <ImageWithSkeleton
+                              src={firstDoubleCon.imgPath}
+                              alt={firstDoubleCon.title}
+                              doubleConType={0}
+                            />
+                            <ImageWithSkeleton
+                              src={secondDoubleCon.imgPath}
+                              alt={secondDoubleCon.title}
+                              doubleConType={1}
+                            />
+                          </div>
+
+                          {favoriteConList && favoriteConList[detailData.detailIdx] && (
+                            <div className="absolute top-0 right-0">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="rgb(240,177,0)"
+                                className="w-5 h-5"
+                                stroke="white"
+                                strokeWidth={1.3}
+                                strokeLinecap="round"
+                                strokeLinejoin="round">
+                                <path
+                                  fillRule="evenodd"
+                                  d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </div>
+                          )}
+                          {/* <span>{detailData.title}</span> */}
+                        </div>
+                      );
+                    }))}
           </div>
         }
         {queryResult && queryMaxPageRef.current > 1 && (

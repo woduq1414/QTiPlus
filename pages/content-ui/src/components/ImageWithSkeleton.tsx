@@ -1,6 +1,14 @@
 import { useState } from 'react';
 
-const ImageWithSkeleton = ({ src, alt }: { src: string; alt: string }) => {
+const ImageWithSkeleton = ({
+  src,
+  alt,
+  doubleConType = -1,
+}: {
+  src: string;
+  alt: string;
+  doubleConType: number | undefined;
+}) => {
   const [isLoading, setIsLoading] = useState(true);
 
   return (
@@ -12,7 +20,12 @@ const ImageWithSkeleton = ({ src, alt }: { src: string; alt: string }) => {
       <img
         src={src}
         alt={alt}
-        className={`w-full h-full object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'} rounded-md`}
+        className={`w-full h-full object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'} 
+        ${doubleConType === 0 ? 'rounded-tl-md rounded-bl-md' : ''}
+        ${doubleConType === 1 ? 'rounded-tr-md rounded-br-md' : ''}
+        ${doubleConType === -1 ? 'rounded-md' : ''}
+        
+        `}
         onLoad={() => setIsLoading(false)}
       />
     </div>
