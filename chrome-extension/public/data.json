@@ -7960,5 +7960,127 @@
     },
     "packageIdx": "152038",
     "title": "잔망시연"
-  }
+  },
+  "doubleConPreset": [
+    {
+      "presetKey": "146720-91/146720-92",
+      "firstDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "91"
+      },
+      "secondDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "92"
+      },
+      "tag": "깔깔새우"
+    },
+    {
+      "presetKey": "146720-90/146720-91",
+      "firstDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "90"
+      },
+      "secondDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "91"
+      },
+      "tag": "깔깔새우"
+    },
+    {
+      "presetKey": "146720-89/146720-90",
+      "firstDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "89"
+      },
+      "secondDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "90"
+      },
+      "tag": "깔깔새우"
+    },
+    {
+      "presetKey": "146720-88/146720-89",
+      "firstDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "88"
+      },
+      "secondDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "89"
+      },
+      "tag": "깔깔새우"
+    },
+    {
+      "presetKey": "146720-87/146720-88",
+      "firstDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "87"
+      },
+      "secondDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "88"
+      },
+      "tag": "깔깔새우"
+    },
+    {
+      "presetKey": "146720-86/146720-87",
+      "firstDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "86"
+      },
+      "secondDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "87"
+      },
+      "tag": "깔깔새우"
+    },
+    {
+      "presetKey": "146720-85/146720-86",
+      "firstDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "85"
+      },
+      "secondDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "86"
+      },
+      "tag": "깔깔새우"
+    },
+    {
+      "presetKey": "146720-84/146720-85",
+      "firstDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "84"
+      },
+      "secondDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "85"
+      },
+      "tag": "깔깔새우"
+    },
+    {
+      "presetKey": "146720-83/146720-84",
+      "firstDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "83"
+      },
+      "secondDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "84"
+      },
+      "tag": "깔깔새우"
+    },
+    {
+      "presetKey": "146720-82/146720-83",
+      "firstDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "82"
+      },
+      "secondDoubleCon": {
+        "packageIdx": "146720",
+        "sort": "83"
+      },
+      "tag": "깔깔새우"
+    }
+  ]
 }

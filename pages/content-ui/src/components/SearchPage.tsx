@@ -57,6 +57,8 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
   const [originalQueryResult, setOriginalQueryResult] = useState<any>();
 
+  const [queryDoubleConCount, setQueryDoubleConCount] = useState<number>(0);
+
   const [favoriteConList, setFavoriteConList] = useState<any>({});
 
   const [bigConExpire, setBigConExpire] = useState<number>(0);
@@ -157,7 +159,20 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
         // one page is 16
 
-        setQueryMaxPage(Math.ceil(res.length / pageSize));
+        let length = 0;
+        let tmpDoubleConCount = 0;
+        for (let i = 0; i < res.length; i++) {
+          if (res[i].includes('/')) {
+            length += 2;
+            tmpDoubleConCount += 1;
+          } else {
+            length += 1;
+          }
+        }
+
+        setQueryDoubleConCount(tmpDoubleConCount);
+
+        setQueryMaxPage(Math.ceil(length / pageSize));
         setQueryPage(1);
 
         setOriginalQueryResult(res);
@@ -172,13 +187,22 @@ const SearchPage: React.FC<SearchPageProps> = props => {
   }, [debouncedSearchText]);
 
   useEffect(() => {
-    const startIdx = (queryPage - 1) * pageSize;
-    const endIdx = queryPage * pageSize;
+    // double con 은 2만큼 길이 차지
+
+    const doubleConMaxPerPage = Math.floor(pageSize / 2);
+
+    const startIdx = (queryPage - 1) * pageSize - Math.min(queryDoubleConCount, (queryPage - 1) * doubleConMaxPerPage);
+    const endIdx = queryPage * pageSize - Math.min(queryDoubleConCount, queryPage * doubleConMaxPerPage);
+
+    console.log(startIdx, endIdx);
+
+    // const startIdx = (queryPage - 1) * pageSize;
+    // const endIdx = queryPage * pageSize;
     if (originalQueryResult === undefined) return;
     const slicedRes = originalQueryResult.slice(startIdx, endIdx);
 
     setQueryResult(new Set(slicedRes));
-  }, [queryPage, originalQueryResult]);
+  }, [queryPage, originalQueryResult, queryDoubleConCount]);
 
   useEffect(() => {
     if (isModalOpen) {
@@ -375,7 +399,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     manualFirstDoubleCon?: any;
   }) {
     {
-      // console.log(e);
+      console.log(detailData, manualFirstDoubleCon, 'sdfadf');
       let firstDoubleCon2 = null;
       if (manualFirstDoubleCon) {
         firstDoubleCon2 = manualFirstDoubleCon;
@@ -1112,40 +1136,66 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
                 // console.log(detailData, detailIdxDict, detailIdx, "detailData");
 
-                const horizontalItemCount = 4;
-                return (
-                  <div
-                    key={detailIdx}
-                    className={`flex cursor-pointer w-[calc(25%-0.2em)] rounded-md
-                      transition-all duration-200
-                                            ${
-                                              focusedIndex === index
-                                                ? ' border-0 scale-125  z-[9999999999]'
-                                                : 'scale-100 z-[9999999]'
-                                            }
-                                            `}
-                    ref={el => {
-                      imageRefs.current[index] = el;
-                    }}
-                    onKeyDown={e => handleImageKeyDown(e, index, detailData)}
-                    onFocus={() => {
-                      setFocusedIndex(index);
-                    }}
-                    onBlur={() => {
-                      if (focusedIndex === index) {
-                        setFocusedIndex(null);
-                      }
-                    }}
-                    tabIndex={0}
-                    onClick={e => {
-                      onConClick({ detailData, e });
-                    }}
-                    onContextMenu={e => {
-                      onConRightClick({ detailData, e });
-                    }}>
-                    <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} doubleConType={-1} />
-                    {favoriteConList &&
-                      favoriteConList[userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx] && (
+                if (detailData.isDoubleCon === true) {
+                  const firstDoubleCon = detailData.firstDoubleCon;
+                  const secondDoubleCon = detailData.secondDoubleCon;
+
+                  // console.log(firstDoubleCon, secondDoubleCon, detailData, "!!!!!");
+
+                  // const horizontalItemCount = detailData[]
+
+                  let horizontalItemCount = 3;
+
+                  const nextItem = Array.from(queryResult)[index + 1];
+                  console.log(nextItem);
+                  if (nextItem && nextItem.includes('/') === true) {
+                    horizontalItemCount = 2;
+                  }
+
+                  return (
+                    <div
+                      key={detailIdx}
+                      className={`flex cursor-pointer w-[calc(50%-0.2em)] rounded-md
+                        transition-all duration-200
+                                          ${
+                                            focusedIndex === index
+                                              ? ' border-0 scale-[125%]  z-[9999999999] '
+                                              : 'scale-100 z-[9999999]'
+                                          }
+                                          `}
+                      ref={el => {
+                        imageRefs.current[index] = el;
+                      }}
+                      onKeyDown={e => handleImageKeyDown(e, index, detailData, horizontalItemCount)}
+                      onFocus={() => {
+                        setFocusedIndex(index);
+                      }}
+                      onBlur={() => {
+                        if (focusedIndex === index) {
+                          setFocusedIndex(null);
+                        }
+                      }}
+                      tabIndex={0}
+                      onClick={e => {
+                        onConClick({
+                          detailData: secondDoubleCon,
+                          e: e,
+                          manualFirstDoubleCon: firstDoubleCon,
+                        });
+                      }}
+                      onContextMenu={e => {
+                        // onConRightClick({ detailData, e });
+                      }}>
+                      <div className="flex flex-row gap-[0em]">
+                        <ImageWithSkeleton src={firstDoubleCon.imgPath} alt={firstDoubleCon.title} doubleConType={0} />
+                        <ImageWithSkeleton
+                          src={secondDoubleCon.imgPath}
+                          alt={secondDoubleCon.title}
+                          doubleConType={1}
+                        />
+                      </div>
+
+                      {favoriteConList && favoriteConList[detailData.detailIdx] && (
                         <div className="absolute top-0 right-0">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -1164,9 +1214,67 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                           </svg>
                         </div>
                       )}
-                    {/* <span>{detailData.title}</span> */}
-                  </div>
-                );
+                      {/* <span>{detailData.title}</span> */}
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div
+                      key={detailIdx}
+                      className={`flex cursor-pointer w-[calc(25%-0.2em)] rounded-md
+                        transition-all duration-200
+                                              ${
+                                                focusedIndex === index
+                                                  ? ' border-0 scale-125  z-[9999999999]'
+                                                  : 'scale-100 z-[9999999]'
+                                              }
+                                              `}
+                      ref={el => {
+                        imageRefs.current[index] = el;
+                      }}
+                      onKeyDown={e => handleImageKeyDown(e, index, detailData)}
+                      onFocus={() => {
+                        setFocusedIndex(index);
+                      }}
+                      onBlur={() => {
+                        if (focusedIndex === index) {
+                          setFocusedIndex(null);
+                        }
+                      }}
+                      tabIndex={0}
+                      onClick={e => {
+                        onConClick({ detailData, e });
+                      }}
+                      onContextMenu={e => {
+                        onConRightClick({ detailData, e });
+                      }}>
+                      <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} doubleConType={-1} />
+                      {favoriteConList &&
+                        favoriteConList[
+                          userPackageData[detailData.packageIdx]?.conList?.[detailData.sort]?.detailIdx
+                        ] && (
+                          <div className="absolute top-0 right-0">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="rgb(240,177,0)"
+                              className="w-5 h-5"
+                              stroke="white"
+                              strokeWidth={1.3}
+                              strokeLinecap="round"
+                              strokeLinejoin="round">
+                              <path
+                                fillRule="evenodd"
+                                d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </div>
+                        )}
+                      {/* <span>{detailData.title}</span> */}
+                    </div>
+                  );
+                }
               })}
 
             {debouncedSearchText === '' &&

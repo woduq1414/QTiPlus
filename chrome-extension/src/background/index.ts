@@ -271,31 +271,79 @@ async function conTreeInit() {
   console.log(conInfoData);
 
   for (let packageIdx in conInfoData) {
-    const conList = conInfoData[packageIdx as keyof typeof conInfoData].conList;
-    for (let sort in conList) {
-      const con = conList[sort as keyof typeof conList];
-      // console.log(con.title);
+    if (packageIdx === 'doubleConPreset') {
+      continue;
+    } else {
+      const conList = conInfoData[packageIdx as keyof typeof conInfoData].conList;
+      for (let sort in conList) {
+        const con = conList[sort as keyof typeof conList];
+        // console.log(con.title);
 
-      const key = packageIdx + '-' + sort;
+        const key = packageIdx + '-' + sort;
 
-      conSearchTmp.addCon(key, con.title, con.tag.split(' '));
+        conSearchTmp.addCon(key, con.title, con.tag.split(' '));
+
+        conSearchChoseongTmp.addCon(
+          key,
+          convertKoreanCharToChoseong(con.title),
+          con.tag.split(' ').map((tag: string) => convertKoreanCharToChoseong(tag)),
+        );
+
+        detailIdxDictTmp[key] = {
+          // detailIdx: con.detailIdx,
+          title: con.title,
+          packageIdx: packageIdx,
+          sort: sort,
+          imgPath: con.imgPath,
+          who: con.who,
+        };
+      }
+    }
+  }
+
+  if (conInfoData['doubleConPreset'] !== undefined) {
+    const doubleConPresetList = conInfoData['doubleConPreset'];
+
+    for (let i = 0; i < doubleConPresetList.length; i++) {
+      let firstConInfo = doubleConPresetList[i].firstDoubleCon;
+      let secondConInfo = doubleConPresetList[i].secondDoubleCon;
+
+      let firstConKey = firstConInfo.packageIdx + '-' + firstConInfo.sort;
+      let secondConKey = secondConInfo.packageIdx + '-' + secondConInfo.sort;
+
+      const firstCon = conInfoData[firstConInfo.packageIdx]?.conList?.[firstConInfo.sort];
+      const secondCon = conInfoData[secondConInfo.packageIdx]?.conList?.[secondConInfo.sort];
+
+      if (firstCon === undefined || secondCon === undefined) {
+        // console.log('firstCon or secondCon is undefined');
+        continue;
+      }
+
+      conSearchTmp.addCon(doubleConPresetList[i].presetKey, '', doubleConPresetList[i].tag.split(' '));
 
       conSearchChoseongTmp.addCon(
-        key,
-        convertKoreanCharToChoseong(con.title),
-        con.tag.split(' ').map((tag: string) => convertKoreanCharToChoseong(tag)),
+        doubleConPresetList[i].presetKey,
+        '',
+        doubleConPresetList[i].tag.split(' ').map((tag: string) => convertKoreanCharToChoseong(tag)),
       );
 
-      detailIdxDictTmp[key] = {
-        // detailIdx: con.detailIdx,
-        title: con.title,
-        packageIdx: packageIdx,
-        sort: sort,
-        imgPath: con.imgPath,
-        who: con.who,
+      detailIdxDictTmp[doubleConPresetList[i].presetKey] = {
+        isDoubleCon: true,
+        firstDoubleCon: {
+          packageIdx: firstConInfo.packageIdx,
+          sort: firstConInfo.sort,
+          ...firstCon,
+        },
+        secondDoubleCon: {
+          packageIdx: secondConInfo.packageIdx,
+          sort: secondConInfo.sort,
+          ...secondCon,
+        },
+        who: firstCon.who.concat(secondCon.who),
       };
     }
   }
+
   tmpRes = { conSearchTmp, conSearchChoseongTmp, detailIdxDictTmp };
 
   const endT = performance.now();
@@ -407,6 +455,8 @@ conTreeInit().then(res => {
 
             const result = tmpRes?.conSearchTmp.searchTrie(query);
 
+            console.log(result);
+
             let result2 = new Set();
             for (let additionalCategory of additionalCategoryList) {
               result2 = new Set([
@@ -440,14 +490,48 @@ conTreeInit().then(res => {
                 }
               }
             }
+
             for (let key of Array.from(queryResult)) {
               const packageIdx = detailIdxDict[key as string].packageIdx;
+              const detailData = detailIdxDict[key as string];
 
-              if (userPackageData[packageIdx] === undefined) {
-                queryResult.delete(key);
-              } else {
-                if (userPackageData[packageIdx].isHide) {
+              if (detailData.isDoubleCon == true) {
+                const firstCon = detailData.firstDoubleCon;
+                const secondCon = detailData.secondDoubleCon;
+
+                const firstConPackageIdx = firstCon.packageIdx;
+                const secondConPackageIdx = secondCon.packageIdx;
+
+                console.log(firstCon, secondCon, '!!');
+
+                if (userPackageData[firstConPackageIdx] === undefined) {
                   queryResult.delete(key);
+                  continue;
+                } else {
+                  if (userPackageData[firstConPackageIdx].isHide) {
+                    queryResult.delete(key);
+                    continue;
+                  }
+                }
+
+                if (userPackageData[secondConPackageIdx] === undefined) {
+                  queryResult.delete(key);
+                  continue;
+                } else {
+                  if (userPackageData[secondConPackageIdx].isHide) {
+                    queryResult.delete(key);
+                    continue;
+                  }
+                }
+              } else {
+                if (userPackageData[packageIdx] === undefined) {
+                  queryResult.delete(key);
+                  continue;
+                } else {
+                  if (userPackageData[packageIdx].isHide) {
+                    queryResult.delete(key);
+                    continue;
+                  }
                 }
               }
             }
@@ -466,24 +550,31 @@ conTreeInit().then(res => {
 
         // move favorite to top
 
+        let doubleConList = new Set();
         let favoriteList = new Set();
         let otherList = new Set();
 
         for (let key of Array.from(finalResult)) {
           const detailData = detailIdxDict[key as string];
 
-          const detailIdx = userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx;
-
-          if (favoriteConList !== null && favoriteConList[detailIdx] !== undefined) {
-            favoriteList.add(key);
+          if (detailData.isDoubleCon == true) {
+            doubleConList.add(key);
           } else {
-            otherList.add(key);
+            const detailIdx = userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx;
+
+            if (favoriteConList !== null && favoriteConList[detailIdx] !== undefined) {
+              favoriteList.add(key);
+            } else {
+              otherList.add(key);
+            }
           }
         }
 
         finalResult.clear();
 
-        finalResult = new Set([...Array.from(favoriteList), ...Array.from(otherList)]);
+        finalResult = new Set([...Array.from(doubleConList), ...Array.from(favoriteList), ...Array.from(otherList)]);
+
+        console.log(finalResult, 'finalResult');
 
         sendResponse({
           res: JSON.stringify(Array.from(finalResult)),
