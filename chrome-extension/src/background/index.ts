@@ -339,6 +339,7 @@ async function conTreeInit() {
           sort: secondConInfo.sort,
           ...secondCon,
         },
+        tag: doubleConPresetList[i].tag,
         who: firstCon.who.concat(secondCon.who),
       };
     }
@@ -395,6 +396,7 @@ conTreeInit().then(res => {
         if (userPackageData === null) {
           sendResponse({
             res: JSON.stringify([]),
+            detailRes: JSON.stringify([]),
           });
           return true;
         }
@@ -578,6 +580,14 @@ conTreeInit().then(res => {
 
         sendResponse({
           res: JSON.stringify(Array.from(finalResult)),
+          detailRes: JSON.stringify(
+            Array.from(finalResult).map((key: any) => {
+              return {
+                key: key,
+                ...detailIdxDict[key],
+              };
+            }),
+          ),
         });
         return true;
       }

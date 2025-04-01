@@ -205,10 +205,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
               );
             })}
         </div>
-        <datalist id="tagList">
-          <option value="안녕" />
-          <option value="슬픔" />
-        </datalist>
+
         <div
           className="cursor-pointer
           text-center

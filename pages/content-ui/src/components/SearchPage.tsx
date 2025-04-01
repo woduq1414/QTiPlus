@@ -13,13 +13,16 @@ import {
   ChevronRightIcon,
   Cog6ToothIcon,
   ListBulletIcon,
+  Square2StackIcon,
   StarIcon,
   TrashIcon,
+  XMarkIcon,
 } from '@heroicons/react/16/solid';
 import { CheckCircleIcon as CheckCircleIconOutline } from '@heroicons/react/24/outline';
 import { title } from 'process';
 import makeToast from '@src/functions/toast';
 import { on } from 'events';
+import Modal from './Modal';
 
 interface SearchPageProps {
   detailIdxDict: Record<string, any>;
@@ -35,7 +38,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
   const [searchInput, setSearchInput] = useState<string>('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const [queryResult, setQueryResult] = useState<Set<string>>();
+  const [queryResult, setQueryResult] = useState<Set<any>>();
 
   const debouncedSearchText = useDebounce(searchInput, 250);
 
@@ -63,6 +66,15 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
   const [bigConExpire, setBigConExpire] = useState<number>(0);
 
+  const [isDoubleConPresetEditModalOpen, setIsDoubleConPresetEditModalOpen] = useState(false);
+
+  const [doubleConPresetEditData, setDoubleConPresetEditData] = useState<any>({
+    firstDoubleCon: null,
+    secondDoubleCon: null,
+    tag: '',
+    presetKey: '',
+  });
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Tab' && queryResult !== undefined && queryResult.size > 0) {
       e.preventDefault(); // 기본 Tab 동작 방지
@@ -76,6 +88,11 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     detailData: any,
     horizontalItemCount?: number,
   ) => {
+    // e.preventDefault();
+    // e.stopPropagation();
+    console.log(e.key, index, detailData, isDoubleConPresetEditModalOpen);
+    if (isDoubleConPresetEditModalOpen) return;
+
     if (!horizontalItemCount) horizontalItemCount = 4;
     let targetResultSize = undefined;
     if (queryResult === undefined) {
@@ -138,11 +155,21 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       if (index === targetResultSize - 1) {
         e.preventDefault();
         searchInputRef.current?.focus();
+      } else {
+        // setFocusedIndex(index + 1);
       }
     } else if (e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'ㄴ')) {
       e.preventDefault(); // 기본 동작 방지
 
-      onConRightClick({ detailData: detailData, e });
+      if (isDoubleCon && !firstDoubleCon && detailData.firstDoubleCon) {
+        onConRightClick({
+          detailData: detailData,
+          e,
+          // firstDoubleCon: detailData.firstDoubleCon,
+        });
+      } else {
+        onConRightClick({ detailData, e });
+      }
 
       console.log('alt + s');
     }
@@ -152,7 +179,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     if (debouncedSearchText) {
       let t = new Date();
       chrome.runtime.sendMessage({ type: 'SEARCH_CON', query: debouncedSearchText, userId: userId }, response => {
-        const res = JSON.parse(response.res);
+        const res = JSON.parse(response.detailRes);
 
         //
         // setQueryResult(new Set(res));
@@ -162,7 +189,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         let length = 0;
         let tmpDoubleConCount = 0;
         for (let i = 0; i < res.length; i++) {
-          if (res[i].includes('/')) {
+          if (res[i].key.includes('/')) {
             length += 2;
             tmpDoubleConCount += 1;
           } else {
@@ -175,7 +202,15 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         setQueryMaxPage(Math.ceil(length / pageSize));
         setQueryPage(1);
 
-        setOriginalQueryResult(res);
+        if (isDoubleCon) {
+          setOriginalQueryResult(res);
+        } else {
+          setOriginalQueryResult(
+            res.filter((con: any) => {
+              return !con.key.includes('/');
+            }),
+          );
+        }
 
         setFocusedIndex(-1);
 
@@ -184,7 +219,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     } else {
       setQueryResult(undefined);
     }
-  }, [debouncedSearchText]);
+  }, [debouncedSearchText, isDoubleCon]);
 
   useEffect(() => {
     // double con 은 2만큼 길이 차지
@@ -305,6 +340,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     if (debouncedSearchText === '') {
       setFocusedIndex(null);
       searchInputRef.current?.focus();
+    } else {
     }
   }, [isDoubleCon]);
 
@@ -366,27 +402,78 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     e.stopPropagation();
     console.log('right click', detailData);
 
-    const detailIdx = userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx;
+    if (detailData.isDoubleCon) {
+      const firstDoubleCon = detailData.firstDoubleCon;
+      const secondDoubleCon = detailData.secondDoubleCon;
 
-    const favoriteConListKey = `FavoriteConList_${userId}`;
+      const presetKey =
+        firstDoubleCon.packageIdx +
+        '-' +
+        firstDoubleCon.sort +
+        '/' +
+        secondDoubleCon.packageIdx +
+        '-' +
+        secondDoubleCon.sort;
 
-    let prevfavoriteConList = (await readLocalStorage(favoriteConListKey)) as any;
+      if (focusedIndex !== null) {
+        imageRefs.current[focusedIndex]?.blur();
+      }
 
-    if (prevfavoriteConList === null) {
-      prevfavoriteConList = {};
-    }
+      console.log(detailData, '!!!!!!!!!!!!');
 
-    if (prevfavoriteConList[detailIdx] === undefined) {
-      prevfavoriteConList[detailIdx] = true;
+      const prevCustomConList = (await readLocalStorage('CustomConList')) as any;
+
+      if (prevCustomConList === null || prevCustomConList === undefined) {
+        return;
+      }
+
+      if (prevCustomConList?.['doubleConPreset'] === undefined) {
+        prevCustomConList['doubleConPreset'] = [];
+      }
+
+      let prevTag = '';
+
+      for (let i = 0; i < prevCustomConList['doubleConPreset'].length; i++) {
+        if (prevCustomConList['doubleConPreset'][i].presetKey === presetKey) {
+          prevTag = prevCustomConList['doubleConPreset'][i].tag;
+          break;
+        }
+      }
+
+      console.log(prevTag, 'prevTag', prevCustomConList['doubleConPreset']);
+
+      setDoubleConPresetEditData({
+        firstDoubleCon: firstDoubleCon,
+        secondDoubleCon: secondDoubleCon,
+        tag: prevTag,
+
+        presetKey: presetKey,
+      });
+
+      setIsDoubleConPresetEditModalOpen(true);
     } else {
-      delete prevfavoriteConList[detailIdx];
+      const detailIdx = userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx;
+
+      const favoriteConListKey = `FavoriteConList_${userId}`;
+
+      let prevfavoriteConList = (await readLocalStorage(favoriteConListKey)) as any;
+
+      if (prevfavoriteConList === null) {
+        prevfavoriteConList = {};
+      }
+
+      if (prevfavoriteConList[detailIdx] === undefined) {
+        prevfavoriteConList[detailIdx] = true;
+      } else {
+        delete prevfavoriteConList[detailIdx];
+      }
+
+      chrome.storage.local.set({ [favoriteConListKey]: prevfavoriteConList }, async function () {
+        // console.log('Value is set to ', prevfavoriteConList);
+      });
+
+      setFavoriteConList(prevfavoriteConList);
     }
-
-    chrome.storage.local.set({ [favoriteConListKey]: prevfavoriteConList }, async function () {
-      // console.log('Value is set to ', prevfavoriteConList);
-    });
-
-    setFavoriteConList(prevfavoriteConList);
   }
 
   async function onConClick({
@@ -428,6 +515,14 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
       let detailIdx = userPackageData[packageIdx].conList[detailData.sort].detailIdx;
       let originalDetailIdx = detailIdx;
+
+      let firstConDetailIdx;
+
+      if (firstDoubleCon2) {
+        firstConDetailIdx = userPackageData[firstDoubleCon2.packageIdx].conList[firstDoubleCon2.sort].detailIdx;
+
+        firstDoubleCon2.detailIdx = firstConDetailIdx;
+      }
 
       if (isDoubleCon) {
         if (firstDoubleCon2 === null) {
@@ -1131,8 +1226,11 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         {
           <div className="flex flex-wrap w-[350px] gap-1">
             {queryResult &&
-              Array.from(queryResult).map((detailIdx, index) => {
-                const detailData = detailIdxDict[detailIdx];
+              Array.from(queryResult).map((detailData, index) => {
+                // console.log(queryResult, detailIdxDict, "!@#!@2213#")
+                const detailIdx = detailData.detailIdx;
+
+                // const detailData =
 
                 // console.log(detailData, detailIdxDict, detailIdx, "detailData");
 
@@ -1140,7 +1238,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                   const firstDoubleCon = detailData.firstDoubleCon;
                   const secondDoubleCon = detailData.secondDoubleCon;
 
-                  // console.log(firstDoubleCon, secondDoubleCon, detailData, "!!!!!");
+                  console.log(firstDoubleCon, secondDoubleCon, detailData, '!!!!!');
 
                   // const horizontalItemCount = detailData[]
 
@@ -1148,13 +1246,13 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
                   const nextItem = Array.from(queryResult)[index + 1];
                   console.log(nextItem);
-                  if (nextItem && nextItem.includes('/') === true) {
+                  if (nextItem && nextItem.key.includes('/') === true) {
                     horizontalItemCount = 2;
                   }
 
                   return (
                     <div
-                      key={detailIdx}
+                      key={detailIdx + '_' + index}
                       className={`flex cursor-pointer w-[calc(50%-0.2em)] rounded-md
                         transition-all duration-200
                                           ${
@@ -1184,7 +1282,10 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                         });
                       }}
                       onContextMenu={e => {
-                        // onConRightClick({ detailData, e });
+                        onConRightClick({
+                          detailData: detailData,
+                          e: e,
+                        });
                       }}>
                       <div className="flex flex-row gap-[0em]">
                         <ImageWithSkeleton src={firstDoubleCon.imgPath} alt={firstDoubleCon.title} doubleConType={0} />
@@ -1195,23 +1296,9 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                         />
                       </div>
 
-                      {favoriteConList && favoriteConList[detailData.detailIdx] && (
+                      {true && (
                         <div className="absolute top-0 right-0">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="rgb(240,177,0)"
-                            className="w-5 h-5"
-                            stroke="white"
-                            strokeWidth={1.3}
-                            strokeLinecap="round"
-                            strokeLinejoin="round">
-                            <path
-                              fillRule="evenodd"
-                              d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                          <Square2StackIcon className="w-5 h-5 text-white stroke-[0.9] stroke-gray-300" />
                         </div>
                       )}
                       {/* <span>{detailData.title}</span> */}
@@ -1345,13 +1432,18 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                     .reverse()
                     .slice(0, 8)
                     .map((detailData, index) => {
+                      console.log(detailData, 'detailData212');
+
                       const detailIdx = detailData.detailIdx;
 
                       const firstDoubleCon = detailData.firstDoubleCon;
                       const secondDoubleCon = detailData.secondDoubleCon as any;
 
+                      detailData.isDoubleCon = true;
+
                       return (
                         <div
+                          tabIndex={isDoubleConPresetEditModalOpen ? -1 : 0}
                           key={detailIdx}
                           className={`flex cursor-pointer w-[calc(50%-0.2em)] rounded-md
                           transition-all duration-200
@@ -1373,7 +1465,6 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                               setFocusedIndex(null);
                             }
                           }}
-                          tabIndex={0}
                           onClick={e => {
                             onConClick({
                               detailData: secondDoubleCon,
@@ -1383,6 +1474,11 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                           }}
                           onContextMenu={e => {
                             // onConRightClick({ detailData, e });
+                            onConRightClick({
+                              detailData: detailData,
+                              e: e,
+                              // firstDoubleCon: firstDoubleCon,
+                            });
                           }}>
                           <div className="flex flex-row gap-[0em]">
                             <ImageWithSkeleton
@@ -1397,23 +1493,9 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                             />
                           </div>
 
-                          {favoriteConList && favoriteConList[detailData.detailIdx] && (
+                          {true && (
                             <div className="absolute top-0 right-0">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="rgb(240,177,0)"
-                                className="w-5 h-5"
-                                stroke="white"
-                                strokeWidth={1.3}
-                                strokeLinecap="round"
-                                strokeLinejoin="round">
-                                <path
-                                  fillRule="evenodd"
-                                  d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
+                              <Square2StackIcon className="w-5 h-5 text-white stroke-[0.9] stroke-gray-300" />
                             </div>
                           )}
                           {/* <span>{detailData.title}</span> */}
@@ -1516,6 +1598,139 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           />
           콘 목록
         </div>
+
+        <Modal isOpen={isDoubleConPresetEditModalOpen} onClose={() => setIsDoubleConPresetEditModalOpen(false)}>
+          <div className="flex flex-col gap-2 items-center">
+            <div className="flex flex-row justify-between items-center w-full mb-3">
+              <div className="w-[50px]"></div>
+              <div className="font-bold text-center w-full ">더블콘 프리셋 수정</div>
+              <div className="w-[50px] flex justify-end">
+                <XMarkIcon
+                  className="w-6 h-6 cursor-pointer"
+                  onClick={() => setIsDoubleConPresetEditModalOpen(false)}
+                  // tabIndex={2}
+                />
+              </div>
+            </div>
+
+            {/* {
+              doubleConPresetEditData.presetKey
+            } */}
+
+            {doubleConPresetEditData.firstDoubleCon && (
+              <div className="flex flex-row w-[200px]">
+                <ImageWithSkeleton
+                  src={doubleConPresetEditData.firstDoubleCon.imgPath}
+                  alt={doubleConPresetEditData.firstDoubleCon.title}
+                  doubleConType={0}
+                />
+                <ImageWithSkeleton
+                  src={doubleConPresetEditData.secondDoubleCon.imgPath}
+                  alt={doubleConPresetEditData.secondDoubleCon.title}
+                  doubleConType={1}
+                />
+              </div>
+            )}
+
+            <div className="flex flex-row gap-2 items-center">
+              <div className="flex-grow font-semibold text-lg sm:text-sm">태그</div>
+              <input
+                type="text"
+                className="border px-2 py-2 rounded-lg
+                bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white
+                w-[220px] sm:max-w-[80%]
+                "
+                spellCheck="false"
+                tabIndex={0}
+                value={doubleConPresetEditData.tag}
+                onChange={e => {
+                  setDoubleConPresetEditData({
+                    ...doubleConPresetEditData,
+                    tag: e.target.value,
+                  });
+                }}></input>
+            </div>
+
+            <div
+              className="
+                                mt-4
+                                cursor-pointer flex-grow    text-center
+          text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
+                            w-full"
+              tabIndex={1}
+              onClick={async () => {
+                doubleConPresetEditData.tag = doubleConPresetEditData.tag
+                  .split(' ')
+                  .filter((word: string) => word.length > 0)
+                  .join(' ');
+
+                if (doubleConPresetEditData.tag === '') {
+                  makeToast('태그를 입력해주세요!');
+                  return;
+                }
+
+                const prevCustomConList = (await readLocalStorage('CustomConList')) as any;
+
+                if (prevCustomConList === null || prevCustomConList === undefined) {
+                  return;
+                }
+
+                if (prevCustomConList?.['doubleConPreset'] === undefined) {
+                  prevCustomConList['doubleConPreset'] = [];
+                }
+
+                let prevTag = '';
+
+                let f = false;
+                for (let i = 0; i < prevCustomConList['doubleConPreset'].length; i++) {
+                  if (prevCustomConList['doubleConPreset'][i].presetKey === doubleConPresetEditData.presetKey) {
+                    prevCustomConList['doubleConPreset'][i].tag = doubleConPresetEditData.tag;
+                    f = true;
+                    break;
+                  }
+                }
+
+                if (f === false) {
+                  prevCustomConList['doubleConPreset'].push({
+                    presetKey: doubleConPresetEditData.presetKey,
+                    tag: doubleConPresetEditData.tag,
+                    firstDoubleCon: {
+                      packageIdx: doubleConPresetEditData.firstDoubleCon.packageIdx,
+                      sort: doubleConPresetEditData.firstDoubleCon.sort,
+                    },
+                    secondDoubleCon: {
+                      packageIdx: doubleConPresetEditData.secondDoubleCon.packageIdx,
+                      sort: doubleConPresetEditData.secondDoubleCon.sort,
+                    },
+                  });
+                }
+
+                console.log(prevCustomConList, 'prevCustomConList');
+
+                chrome.storage.local.set({ ['CustomConList']: prevCustomConList }, async function () {
+                  console.log('CustomConList saved');
+
+                  chrome.runtime.sendMessage(
+                    {
+                      type: 'CHANGED_DATA',
+                    },
+                    response => {
+                      // console.log(response);
+                      // const conSearchTmp = new ConSearch();
+                      // conSearchTmp.deserialize(response.conSearch);
+
+                      // setConSearch(conSearchTmp);
+                      makeToast('더블콘 프리셋 수정 완료!');
+                    },
+                  );
+                });
+
+                setIsDoubleConPresetEditModalOpen(false);
+              }}>
+              확인
+            </div>
+          </div>
+        </Modal>
       </div>
     </div>
   );
