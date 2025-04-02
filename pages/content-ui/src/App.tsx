@@ -21,7 +21,7 @@ import DoubleConPresetEditPage from './components/DoubleConPresetEditPage';
 
 function Router() {
   useEffect(() => {
-    console.log('content ui loaded');
+    // console.log('content ui loaded');
 
     // conTreeInit();
     // alert('content ui loaded');
@@ -101,7 +101,7 @@ function Router() {
         setIsModalOpen((prev: any) => !prev);
         setCurrentPage(0);
 
-        console.log('alt + q');
+        // console.log('alt + q');
       }
 
       // detect alt + shift + d
@@ -197,7 +197,7 @@ function Router() {
 }
 
 export default function App() {
-  console.log('App');
+  // console.log('App');
   return (
     <div
       className={`App

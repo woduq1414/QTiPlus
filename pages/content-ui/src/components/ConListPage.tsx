@@ -32,6 +32,10 @@ const ConListPage: React.FC<SearchPageProps> = props => {
   const [isExportHidePackageInclude, setIsExportHidePackageInclude] = useState(true);
   const [isExportNotHavePackageInclude, setIsExportNotHavePackageInclude] = useState(true);
 
+  const [isExportIncludeDoubleConPreset, setIsExportIncludeDoubleConPreset] = useState(true);
+
+  const [isImportIncludeDoubleConPreset, setIsImportIncludeDoubleConPreset] = useState(true);
+
   const [importedFileData, setImportedFileData] = useState<any>(null);
 
   const [isImportOverwrite, setIsImportOverwrite] = useState(true);
@@ -168,7 +172,9 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                 }
 
                 // isHide 값이 같으면 title을 기준으로 정렬
-                return userPackageData[a].title.localeCompare(userPackageData[b].title, 'ko');
+                return userPackageData[a].title
+                  .replaceAll(' ', '')
+                  .localeCompare(userPackageData[b].title.replaceAll(' ', ''), 'ko');
               })
               .map(key => {
                 if (userPackageData[key].isHide && !isEditMode) {
@@ -312,6 +318,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                       setIsImportModalOpen(true);
 
                       setIsImportOverwrite(true);
+                      setIsImportIncludeDoubleConPreset(true);
                       // setCustomConList(data);
                     };
                     reader.readAsText(file);
@@ -330,6 +337,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
 
                 setIsExportHidePackageInclude(true);
                 setIsExportNotHavePackageInclude(true);
+                setIsExportIncludeDoubleConPreset(true);
               }}>
               내보내기
             </div>
@@ -419,6 +427,25 @@ const ConListPage: React.FC<SearchPageProps> = props => {
             </div>
           </div>
 
+          <div className="flex flex-row gap-2 justify-between w-full font-bold mt-3">
+            <span>더블콘 프리셋 포함</span>
+            <Switch
+              checked={isImportIncludeDoubleConPreset}
+              onChange={async () => {
+                setIsImportIncludeDoubleConPreset(!isImportIncludeDoubleConPreset);
+              }}
+              onColor="#a7b4db"
+              onHandleColor="#456bd8"
+              handleDiameter={20}
+              uncheckedIcon={false}
+              checkedIcon={false}
+              boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+              // activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+              height={15}
+              width={36}
+            />
+          </div>
+
           <div
             className="
                                 mt-8
@@ -434,6 +461,35 @@ const ConListPage: React.FC<SearchPageProps> = props => {
               // console.log(Object.keys(customConList).length);
 
               for (let key of Object.keys(importedFileData)) {
+                if (key === 'doubleConPreset') {
+                  if (!isImportIncludeDoubleConPreset) {
+                    continue;
+                  }
+
+                  let keyDict = {} as any;
+                  if (customConList['doubleConPreset']) {
+                    for (let i = 0; i < customConList['doubleConPreset'].length; i++) {
+                      keyDict[customConList['doubleConPreset'][i].presetKey] = i;
+                    }
+                  } else {
+                  }
+
+                  for (let i = 0; i < importedFileData[key].length; i++) {
+                    if (keyDict[importedFileData[key][i].presetKey] !== undefined) {
+                      if (isImportOverwrite) {
+                        customConList['doubleConPreset'][keyDict[importedFileData[key][i].presetKey]] =
+                          importedFileData[key][i];
+                      }
+                    } else {
+                      customConList['doubleConPreset'].push(importedFileData[key][i]);
+                    }
+                  }
+
+                  continue;
+                }
+
+                // console.log(key);
+
                 if (!customConList[key]) {
                   customConList[key] = JSON.parse(JSON.stringify(importedFileData[key]));
                   customConList[key].conList = {};
@@ -529,6 +585,24 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                 width={36}
               />
             </div>
+            <div className="flex flex-row gap-2 justify-between w-full font-bold">
+              <span>더블콘 프리셋 포함</span>
+              <Switch
+                checked={isExportIncludeDoubleConPreset}
+                onChange={async () => {
+                  setIsExportIncludeDoubleConPreset(!isExportIncludeDoubleConPreset);
+                }}
+                onColor="#a7b4db"
+                onHandleColor="#456bd8"
+                handleDiameter={20}
+                uncheckedIcon={false}
+                checkedIcon={false}
+                boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
+                // activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
+                height={15}
+                width={36}
+              />
+            </div>
 
             <div
               className="
@@ -542,7 +616,11 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                 const element = document.createElement('a');
 
                 for (let key of Object.keys(customConList)) {
-                  if (!isExportHidePackageInclude && userPackageData[key] && userPackageData[key].isHide) {
+                  if (key === 'doubleConPreset') {
+                    continue;
+                  }
+
+                  if (!isExportHidePackageInclude && userPackageData[key] && isHideState[key]) {
                     delete customConList[key];
                     continue;
                   }
@@ -559,6 +637,41 @@ const ConListPage: React.FC<SearchPageProps> = props => {
                       delete customConList[key].conList[conKey];
                     }
                   }
+                }
+
+                if (customConList['doubleConPreset'] !== undefined) {
+                  customConList['doubleConPreset'] = customConList['doubleConPreset']
+                    .map((item: any) => {
+                      if (
+                        !isExportHidePackageInclude &&
+                        ((userPackageData[item.firstDoubleCon?.packageIdx] &&
+                          isHideState[item.firstDoubleCon?.packageIdx]) ||
+                          (userPackageData[item.secondDoubleCon?.packageIdx] &&
+                            isHideState[item.secondDoubleCon?.packageIdx]))
+                      ) {
+                        return null;
+                      }
+
+                      if (
+                        !isExportNotHavePackageInclude &&
+                        (!userPackageData[item.firstDoubleCon?.packageIdx] ||
+                          !userPackageData[item.secondDoubleCon?.packageIdx])
+                      ) {
+                        return null;
+                      }
+
+                      return {
+                        presetKey: item.presetKey,
+                        tag: item.tag,
+                        firstDoubleCon: item.firstDoubleCon,
+                        secondDoubleCon: item.secondDoubleCon,
+                      };
+                    })
+                    .filter((item: any) => item !== null);
+                }
+
+                if (!isExportIncludeDoubleConPreset || customConList['doubleConPreset'] === undefined) {
+                  customConList['doubleConPreset'] = [];
                 }
 
                 const file = new Blob([JSON.stringify(customConList)], { type: 'text/plain' });

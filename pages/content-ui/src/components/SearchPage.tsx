@@ -90,7 +90,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
   ) => {
     // e.preventDefault();
     // e.stopPropagation();
-    console.log(e.key, index, detailData, isDoubleConPresetEditModalOpen);
+    // console.log(e.key, index, detailData, isDoubleConPresetEditModalOpen);
     if (isDoubleConPresetEditModalOpen) return;
 
     if (!horizontalItemCount) horizontalItemCount = 4;
@@ -171,7 +171,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         onConRightClick({ detailData, e });
       }
 
-      console.log('alt + s');
+      // console.log('alt + s');
     }
   };
 
@@ -214,7 +214,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
         setFocusedIndex(-1);
 
-        console.log(`Query : ${debouncedSearchText} took ${new Date().getTime() - t.getTime()}ms`);
+        // console.log(`Query : ${debouncedSearchText} took ${new Date().getTime() - t.getTime()}ms`);
       });
     } else {
       setQueryResult(undefined);
@@ -236,7 +236,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       endIdx = queryPage * pageSize - Math.min(queryDoubleConCount, queryPage * doubleConMaxPerPage);
     }
 
-    console.log(startIdx, endIdx);
+    // console.log(startIdx, endIdx);
 
     // const startIdx = (queryPage - 1) * pageSize;
     // const endIdx = queryPage * pageSize;
@@ -361,12 +361,12 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       if (event.altKey && event.key === '2') {
         event.preventDefault(); // 기본 동작 방지
         toggleDoubleCon();
-        console.log('alt + 2');
+        // console.log('alt + 2');
       } else if (event.altKey && (event.key === 'b' || event.key === 'B')) {
         event.preventDefault(); // 기본 동작 방지
 
         setIsBigCon(prev => !prev);
-        console.log('alt + B');
+        // console.log('alt + B');
       } else if (event.shiftKey && event.key === 'ArrowRight') {
         event.preventDefault(); // 기본 동작 방지
 
@@ -378,7 +378,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           setQueryPage(prev => prev + 1);
           setFocusedIndex(0);
         }
-        console.log('alt + ArrowRight');
+        // console.log('alt + ArrowRight');
       } else if (event.shiftKey && event.key === 'ArrowLeft') {
         event.preventDefault(); // 기본 동작 방지
 
@@ -389,7 +389,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           setQueryPage(prev => prev - 1);
           setFocusedIndex(0);
         }
-        console.log('alt + ArrowLeft');
+        // console.log('alt + ArrowLeft');
       }
     };
 
@@ -407,7 +407,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
   async function onConRightClick({ detailData, e }: { detailData: any; e: any }) {
     e.preventDefault();
     e.stopPropagation();
-    console.log('right click', detailData);
+    // console.log('right click', detailData);
 
     if (detailData.isDoubleCon) {
       const firstDoubleCon = detailData.firstDoubleCon;
@@ -426,7 +426,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         imageRefs.current[focusedIndex]?.blur();
       }
 
-      console.log(detailData, '!!!!!!!!!!!!');
+      // console.log(detailData, '!!!!!!!!!!!!');
 
       const prevCustomConList = (await readLocalStorage('CustomConList')) as any;
 
@@ -447,7 +447,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         }
       }
 
-      console.log(prevTag, 'prevTag', prevCustomConList['doubleConPreset']);
+      // console.log(prevTag, 'prevTag', prevCustomConList['doubleConPreset']);
 
       setDoubleConPresetEditData({
         firstDoubleCon: firstDoubleCon,
@@ -493,7 +493,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     manualFirstDoubleCon?: any;
   }) {
     {
-      console.log(detailData, manualFirstDoubleCon, 'sdfadf');
+      // console.log(detailData, manualFirstDoubleCon, 'sdfadf');
       let firstDoubleCon2 = null;
       if (manualFirstDoubleCon) {
         firstDoubleCon2 = manualFirstDoubleCon;
@@ -872,7 +872,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           });
 
           const accessResponseJson = await accessResponse.json();
-          console.log(accessResponseJson);
+          // console.log(accessResponseJson);
           const blockKey = accessResponseJson.Block_key;
 
           let commentMemo = `<img src='https:${detailData.imgPath}' class='written_dccon' alt='8' conalt='8' title='8' detail='${originalDetailIdx}'>`;
@@ -1241,6 +1241,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                 const detailIdx = detailData.detailIdx;
 
                 const divKey = detailData.key;
+
                 // const detailData =
 
                 // console.log(detailData, detailIdxDict, detailIdx, "detailData");
@@ -1249,14 +1250,14 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                   const firstDoubleCon = detailData.firstDoubleCon;
                   const secondDoubleCon = detailData.secondDoubleCon;
 
-                  console.log(firstDoubleCon, secondDoubleCon, detailData, '!!!!!');
+                  // console.log(firstDoubleCon, secondDoubleCon, detailData, '!!!!!');
 
                   // const horizontalItemCount = detailData[]
 
                   let horizontalItemCount = 3;
 
                   const nextItem = Array.from(queryResult)[index + 1];
-                  console.log(nextItem);
+                  // console.log(nextItem);
                   if (nextItem && nextItem.key.includes('/') === true) {
                     horizontalItemCount = 2;
                   }
@@ -1318,7 +1319,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                 } else {
                   return (
                     <div
-                      key={detailIdx}
+                      key={divKey}
                       className={`flex cursor-pointer w-[calc(25%-0.2em)] rounded-md
                         transition-all duration-200
                                               ${
@@ -1443,7 +1444,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                     .reverse()
                     .slice(0, 8)
                     .map((detailData, index) => {
-                      console.log(detailData, 'detailData212');
+                      // console.log(detailData, 'detailData212');
 
                       const detailIdx = detailData.detailIdx;
 
@@ -1609,139 +1610,149 @@ const SearchPage: React.FC<SearchPageProps> = props => {
           />
           콘 목록
         </div>
+        {(() => {
+          async function saveDoubleConPreset() {
+            doubleConPresetEditData.tag = doubleConPresetEditData.tag
+              .split(' ')
+              .filter((word: string) => word.length > 0)
+              .join(' ');
 
-        <Modal isOpen={isDoubleConPresetEditModalOpen} onClose={() => setIsDoubleConPresetEditModalOpen(false)}>
-          <div className="flex flex-col gap-2 items-center">
-            <div className="flex flex-row justify-between items-center w-full mb-3">
-              <div className="w-[50px]"></div>
-              <div className="font-bold text-center w-full ">더블콘 프리셋 수정</div>
-              <div className="w-[50px] flex justify-end">
-                <XMarkIcon
-                  className="w-6 h-6 cursor-pointer"
-                  onClick={() => setIsDoubleConPresetEditModalOpen(false)}
-                  // tabIndex={2}
-                />
+            if (doubleConPresetEditData.tag === '') {
+              makeToast('태그를 입력해주세요!');
+              return;
+            }
+
+            const prevCustomConList = (await readLocalStorage('CustomConList')) as any;
+
+            if (prevCustomConList === null || prevCustomConList === undefined) {
+              return;
+            }
+
+            if (prevCustomConList?.['doubleConPreset'] === undefined) {
+              prevCustomConList['doubleConPreset'] = [];
+            }
+
+            let prevTag = '';
+
+            let f = false;
+            for (let i = 0; i < prevCustomConList['doubleConPreset'].length; i++) {
+              if (prevCustomConList['doubleConPreset'][i].presetKey === doubleConPresetEditData.presetKey) {
+                prevCustomConList['doubleConPreset'][i].tag = doubleConPresetEditData.tag;
+                f = true;
+                break;
+              }
+            }
+
+            if (f === false) {
+              prevCustomConList['doubleConPreset'].push({
+                presetKey: doubleConPresetEditData.presetKey,
+                tag: doubleConPresetEditData.tag,
+                firstDoubleCon: {
+                  packageIdx: doubleConPresetEditData.firstDoubleCon.packageIdx,
+                  sort: doubleConPresetEditData.firstDoubleCon.sort,
+                },
+                secondDoubleCon: {
+                  packageIdx: doubleConPresetEditData.secondDoubleCon.packageIdx,
+                  sort: doubleConPresetEditData.secondDoubleCon.sort,
+                },
+              });
+            }
+
+            // console.log(prevCustomConList, 'prevCustomConList');
+
+            chrome.storage.local.set({ ['CustomConList']: prevCustomConList }, async function () {
+              // console.log('CustomConList saved');
+
+              chrome.runtime.sendMessage(
+                {
+                  type: 'CHANGED_DATA',
+                },
+                response => {
+                  // console.log(response);
+                  // const conSearchTmp = new ConSearch();
+                  // conSearchTmp.deserialize(response.conSearch);
+
+                  // setConSearch(conSearchTmp);
+                  makeToast('저장 완료!');
+                },
+              );
+            });
+
+            setIsDoubleConPresetEditModalOpen(false);
+          }
+
+          return (
+            <Modal isOpen={isDoubleConPresetEditModalOpen} onClose={() => setIsDoubleConPresetEditModalOpen(false)}>
+              <div className="flex flex-col gap-2 items-center">
+                <div className="flex flex-row justify-between items-center w-full mb-3">
+                  <div className="w-[50px]"></div>
+                  <div className="font-bold text-center w-full ">더블콘 프리셋 수정</div>
+                  <div className="w-[50px] flex justify-end">
+                    <XMarkIcon
+                      className="w-6 h-6 cursor-pointer"
+                      onClick={() => setIsDoubleConPresetEditModalOpen(false)}
+                      // tabIndex={2}
+                    />
+                  </div>
+                </div>
+
+                {/* {
+                    doubleConPresetEditData.presetKey
+                  } */}
+
+                {doubleConPresetEditData.firstDoubleCon && (
+                  <div className="flex flex-row w-[200px]">
+                    <ImageWithSkeleton
+                      src={doubleConPresetEditData.firstDoubleCon.imgPath}
+                      alt={doubleConPresetEditData.firstDoubleCon.title}
+                      doubleConType={0}
+                    />
+                    <ImageWithSkeleton
+                      src={doubleConPresetEditData.secondDoubleCon.imgPath}
+                      alt={doubleConPresetEditData.secondDoubleCon.title}
+                      doubleConType={1}
+                    />
+                  </div>
+                )}
+
+                <div className="flex flex-row gap-2 items-center">
+                  <div className="flex-grow font-semibold text-lg sm:text-sm">태그</div>
+                  <input
+                    type="text"
+                    className="border px-2 py-2 rounded-lg
+                      bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white
+                      w-[220px] sm:max-w-[80%]
+                      "
+                    spellCheck="false"
+                    tabIndex={0}
+                    value={doubleConPresetEditData.tag}
+                    onChange={e => {
+                      setDoubleConPresetEditData({
+                        ...doubleConPresetEditData,
+                        tag: e.target.value,
+                      });
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        saveDoubleConPreset();
+                      }
+                    }}></input>
+                </div>
+
+                <div
+                  className="
+                                      mt-4
+                                      cursor-pointer flex-grow    text-center
+                text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
+                                  w-full"
+                  tabIndex={1}
+                  onClick={saveDoubleConPreset}>
+                  확인
+                </div>
               </div>
-            </div>
-
-            {/* {
-              doubleConPresetEditData.presetKey
-            } */}
-
-            {doubleConPresetEditData.firstDoubleCon && (
-              <div className="flex flex-row w-[200px]">
-                <ImageWithSkeleton
-                  src={doubleConPresetEditData.firstDoubleCon.imgPath}
-                  alt={doubleConPresetEditData.firstDoubleCon.title}
-                  doubleConType={0}
-                />
-                <ImageWithSkeleton
-                  src={doubleConPresetEditData.secondDoubleCon.imgPath}
-                  alt={doubleConPresetEditData.secondDoubleCon.title}
-                  doubleConType={1}
-                />
-              </div>
-            )}
-
-            <div className="flex flex-row gap-2 items-center">
-              <div className="flex-grow font-semibold text-lg sm:text-sm">태그</div>
-              <input
-                type="text"
-                className="border px-2 py-2 rounded-lg
-                bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white
-                w-[220px] sm:max-w-[80%]
-                "
-                spellCheck="false"
-                tabIndex={0}
-                value={doubleConPresetEditData.tag}
-                onChange={e => {
-                  setDoubleConPresetEditData({
-                    ...doubleConPresetEditData,
-                    tag: e.target.value,
-                  });
-                }}></input>
-            </div>
-
-            <div
-              className="
-                                mt-4
-                                cursor-pointer flex-grow    text-center
-          text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
-                            w-full"
-              tabIndex={1}
-              onClick={async () => {
-                doubleConPresetEditData.tag = doubleConPresetEditData.tag
-                  .split(' ')
-                  .filter((word: string) => word.length > 0)
-                  .join(' ');
-
-                if (doubleConPresetEditData.tag === '') {
-                  makeToast('태그를 입력해주세요!');
-                  return;
-                }
-
-                const prevCustomConList = (await readLocalStorage('CustomConList')) as any;
-
-                if (prevCustomConList === null || prevCustomConList === undefined) {
-                  return;
-                }
-
-                if (prevCustomConList?.['doubleConPreset'] === undefined) {
-                  prevCustomConList['doubleConPreset'] = [];
-                }
-
-                let prevTag = '';
-
-                let f = false;
-                for (let i = 0; i < prevCustomConList['doubleConPreset'].length; i++) {
-                  if (prevCustomConList['doubleConPreset'][i].presetKey === doubleConPresetEditData.presetKey) {
-                    prevCustomConList['doubleConPreset'][i].tag = doubleConPresetEditData.tag;
-                    f = true;
-                    break;
-                  }
-                }
-
-                if (f === false) {
-                  prevCustomConList['doubleConPreset'].push({
-                    presetKey: doubleConPresetEditData.presetKey,
-                    tag: doubleConPresetEditData.tag,
-                    firstDoubleCon: {
-                      packageIdx: doubleConPresetEditData.firstDoubleCon.packageIdx,
-                      sort: doubleConPresetEditData.firstDoubleCon.sort,
-                    },
-                    secondDoubleCon: {
-                      packageIdx: doubleConPresetEditData.secondDoubleCon.packageIdx,
-                      sort: doubleConPresetEditData.secondDoubleCon.sort,
-                    },
-                  });
-                }
-
-                console.log(prevCustomConList, 'prevCustomConList');
-
-                chrome.storage.local.set({ ['CustomConList']: prevCustomConList }, async function () {
-                  console.log('CustomConList saved');
-
-                  chrome.runtime.sendMessage(
-                    {
-                      type: 'CHANGED_DATA',
-                    },
-                    response => {
-                      // console.log(response);
-                      // const conSearchTmp = new ConSearch();
-                      // conSearchTmp.deserialize(response.conSearch);
-
-                      // setConSearch(conSearchTmp);
-                      makeToast('더블콘 프리셋 수정 완료!');
-                    },
-                  );
-                });
-
-                setIsDoubleConPresetEditModalOpen(false);
-              }}>
-              확인
-            </div>
-          </div>
-        </Modal>
+            </Modal>
+          );
+        })()}
       </div>
     </div>
   );

@@ -101,7 +101,7 @@ const DoubleConPresetEditPage: React.FC = props => {
           return a[0].localeCompare(b[0]);
         }),
       );
-      console.log(newData);
+      // console.log(newData);
 
       setItems(
         Object.keys(newData).map(key => {
@@ -112,7 +112,7 @@ const DoubleConPresetEditPage: React.FC = props => {
         }),
       );
 
-      console.log(newData);
+      // console.log(newData);
 
       // let newData = {} as any;
       // for (let key in data) {
@@ -159,6 +159,11 @@ const DoubleConPresetEditPage: React.FC = props => {
           </div>
           <div className="w-[90px]"></div>
         </div>
+
+        <div className="text-sm w-full text-center">
+          새로운 프리셋 추가는 최근 사용한 더블콘 목록에서 해당 더블콘을 우클릭(Alt + S)하면 가능합니다.
+        </div>
+
         <div className="flex flex-col gap-1 max-h-[65vh] overflow-auto scrollbar">
           {items &&
             items.map((item: any, idx: number) => {
@@ -233,7 +238,7 @@ const DoubleConPresetEditPage: React.FC = props => {
 
             customConList['doubleConPreset'] = newItems;
 
-            console.log(newItems);
+            // console.log(newItems);
 
             chrome.storage.local.set({
               CustomConList: customConList,

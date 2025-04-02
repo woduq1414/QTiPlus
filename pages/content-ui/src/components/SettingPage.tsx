@@ -37,7 +37,7 @@ const SettingPage: React.FC<SearchPageProps> = props => {
 
   useEffect(() => {
     readLocalStorage('ReplaceWordData').then((data: any) => {
-      console.log(data);
+      // console.log(data);
       if (data === null) {
         // setReplaceWordData(data);
       } else {
@@ -200,14 +200,14 @@ const SettingPage: React.FC<SearchPageProps> = props => {
               onClick={() => {
                 setCurrentPage(4);
               }}>
-              수정
+              편집
             </div>
           </div>
 
           <div className="flex flex-row gap-4 items-center">
             <div className="flex-grow font-semibold text-lg">
               <div>더블콘 프리셋</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">자주 쓰는 더블콘의 태그 편집</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">자주 쓰는 더블콘의 태그 수정</div>
             </div>
             <div
               className="
@@ -225,7 +225,7 @@ const SettingPage: React.FC<SearchPageProps> = props => {
               onClick={() => {
                 setCurrentPage(5);
               }}>
-              수정
+              편집
             </div>
           </div>
         </div>
