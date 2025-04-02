@@ -202,7 +202,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         setQueryMaxPage(Math.ceil(length / pageSize));
         setQueryPage(1);
 
-        if (isDoubleCon) {
+        if (isDoubleCon && !firstDoubleCon) {
           setOriginalQueryResult(res);
         } else {
           setOriginalQueryResult(
@@ -219,7 +219,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     } else {
       setQueryResult(undefined);
     }
-  }, [debouncedSearchText, isDoubleCon]);
+  }, [debouncedSearchText, isDoubleCon, firstDoubleCon]);
 
   useEffect(() => {
     // double con 은 2만큼 길이 차지
@@ -228,12 +228,12 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
     let startIdx, endIdx;
 
-    if (!isDoubleCon) {
-      startIdx = (queryPage - 1) * pageSize;
-      endIdx = queryPage * pageSize;
-    } else {
+    if (isDoubleCon && !firstDoubleCon) {
       startIdx = (queryPage - 1) * pageSize - Math.min(queryDoubleConCount, (queryPage - 1) * doubleConMaxPerPage);
       endIdx = queryPage * pageSize - Math.min(queryDoubleConCount, queryPage * doubleConMaxPerPage);
+    } else {
+      startIdx = (queryPage - 1) * pageSize;
+      endIdx = queryPage * pageSize;
     }
 
     // console.log(startIdx, endIdx);
@@ -244,7 +244,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     const slicedRes = originalQueryResult.slice(startIdx, endIdx);
 
     setQueryResult(new Set(slicedRes));
-  }, [queryPage, originalQueryResult, queryDoubleConCount, isDoubleCon]);
+  }, [queryPage, originalQueryResult, queryDoubleConCount, isDoubleCon, firstDoubleCon]);
 
   useEffect(() => {
     if (isModalOpen) {
