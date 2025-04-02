@@ -87,6 +87,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
         `}>
       <div
         className="bg-[rgba(246,246,246,0.75)] pl-6 pr-6 pt-6 pb-3 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4 w-[480px]
+        text-black
       dark:bg-[rgba(46,46,46,0.75)] dark:text-white/90
       "
         style={{
@@ -154,7 +155,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
             <div className="w-[90px] "></div>
           )}
         </div>
-        <div className="flex flex-col gap-2 overflow-auto max-h-[50dvh] px-1">
+        <div className="flex flex-col gap-2 overflow-auto  scrollbar max-h-[50dvh] px-1">
           {userPackageData &&
             Object.keys(userPackageData)
               .sort((a, b) => {
@@ -264,8 +265,8 @@ const ConListPage: React.FC<SearchPageProps> = props => {
         </div>
         {customConList &&
         userPackageData &&
-        Object.keys(customConList).filter(key => !userPackageData[key]).length > 0 ? (
-          <div className="flex w-full text-sm gap-x-2 gap-y-1 flex-wrap overflow-y-auto overflow-auto items-center  text-gray-700 dark:text-gray-300 max-h-[100px] sm:max-h-[50px] ">
+        Object.keys(customConList).filter(key => key != 'doubleConPreset' && !userPackageData[key]).length > 0 ? (
+          <div className="flex w-full text-sm gap-x-2 gap-y-1 flex-wrap overflow-y-auto overflow-auto scrollbar items-center  text-gray-700 dark:text-gray-300 max-h-[100px] sm:max-h-[50px] ">
             <span>보유하지 않은 콘 :</span>
             {Object.keys(customConList)
               .filter(key => !userPackageData[key])

@@ -15,6 +15,7 @@ import { ChatBubbleBottomCenterIcon, XMarkIcon } from '@heroicons/react/16/solid
 import SettingPage from './components/SettingPage';
 import ReplaceWordEditPage from './components/ReplaceWordEditPage';
 import { hash } from 'crypto';
+import DoubleConPresetEditPage from './components/DoubleConPresetEditPage';
 
 // import "../public/style.css";
 
@@ -145,6 +146,8 @@ function Router() {
           <SettingPage detailIdxDict={detailIdxDict} />
         ) : currentPage === 4 ? (
           <ReplaceWordEditPage />
+        ) : currentPage === 5 ? (
+          <DoubleConPresetEditPage />
         ) : null}
       </div>
       {!setting.isShowRightBottomButton ? null : (

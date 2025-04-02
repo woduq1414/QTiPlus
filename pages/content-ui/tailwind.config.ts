@@ -74,22 +74,22 @@ export default withUI({
   plugins: [
     plugin(({ addBase, theme }) => {
       addBase({
-        '.overflow-auto': {
+        '.scrollbar': {
           overflowY: 'auto',
           scrollbarWidth: 'thin',
         },
-        '.overflow-auto::-webkit-scrollbar': {
+        '.scrollbar::-webkit-scrollbar': {
           height: '2px',
           width: '2px',
         },
-        '.overflow-auto::-webkit-scrollbar-thumb': {
+        '.scrollbar::-webkit-scrollbar-thumb': {
           backgroundColor: '#aaa',
           borderRadius: '4px',
         },
-        '.overflow-auto::-webkit-scrollbar-track': {
+        '.scrollbar::-webkit-scrollbar-track': {
           background: 'none',
         },
-        '.overflow-auto::-webkit-scrollbar-button': {
+        '.scrollbar::-webkit-scrollbar-button': {
           display: 'none',
         },
       });

@@ -54,6 +54,7 @@ const SettingPage: React.FC<SearchPageProps> = props => {
         `}>
       <div
         className="bg-[rgba(246,246,246,0.75)] pl-6 pr-6 pt-6 pb-3 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4 w-[480px]
+        text-black
       dark:bg-[rgba(46,46,46,0.75)] dark:text-white/90
       "
         style={{
@@ -198,6 +199,31 @@ const SettingPage: React.FC<SearchPageProps> = props => {
             "
               onClick={() => {
                 setCurrentPage(4);
+              }}>
+              수정
+            </div>
+          </div>
+
+          <div className="flex flex-row gap-4 items-center">
+            <div className="flex-grow font-semibold text-lg">
+              <div>더블콘 프리셋</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">자주 쓰는 더블콘의 태그 편집</div>
+            </div>
+            <div
+              className="
+              bg-blue-500
+              text-white
+              rounded-lg
+              px-3
+              py-2
+              text-md
+              font-semibold
+              cursor-pointer
+              hover:bg-blue-600
+              dark:hover:bg-blue-400
+            "
+              onClick={() => {
+                setCurrentPage(5);
               }}>
               수정
             </div>

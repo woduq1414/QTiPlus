@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const ImageWithSkeleton = ({
   src,
@@ -11,22 +11,37 @@ const ImageWithSkeleton = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    setIsLoading(true);
+    const img = new Image();
+    img.src = src;
+    img.onload = () => setIsLoading(false);
+
+    return () => {
+      img.onload = null; // 메모리 누수 방지
+    };
+  }, [src]);
   return (
-    <div className="relative  ">
+    <div className="relative  w-full h-full">
       {/* 스켈레톤 UI */}
       {isLoading && <div className="absolute inset-0 animate-pulse bg-gray-300"></div>}
 
       {/* 실제 이미지 */}
+
+      {/* <div className=' w-full h-full background-gray-300'>
+
+      </div> */}
+
       <img
         src={src}
         alt={alt}
-        className={`w-full h-full object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'} 
+        className={` object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'} 
         ${doubleConType === 0 ? 'rounded-tl-md rounded-bl-md' : ''}
         ${doubleConType === 1 ? 'rounded-tr-md rounded-br-md' : ''}
         ${doubleConType === -1 ? 'rounded-md' : ''}
         
         `}
-        onLoad={() => setIsLoading(false)}
+        // onLoad={() => setIsLoading(false)}
       />
     </div>
   );

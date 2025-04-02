@@ -65,6 +65,7 @@ const ReplaceWordEditPage: React.FC = props => {
         `}>
       <div
         className="bg-[rgba(246,246,246,0.75)] p-6 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4   w-[600px] max-w-[100vw]
+      text-black
       dark:bg-[rgba(46,46,46,0.75)] dark:text-white 
       "
         style={{
@@ -77,7 +78,7 @@ const ReplaceWordEditPage: React.FC = props => {
               // setUserPackageData(null);
               setCurrentPage(3);
 
-              setIsEditMode(true);
+              // setIsEditMode(true);
             }}>
             이전
           </div>

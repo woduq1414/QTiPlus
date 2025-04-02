@@ -119,6 +119,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
         `}>
       <div
         className="bg-[rgba(246,246,246,0.75)] p-6 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4 
+        text-black
       dark:bg-[rgba(46,46,46,0.75)] dark:text-white 
       "
         style={{
@@ -140,7 +141,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
           </div>
           <div className="w-[90px]"></div>
         </div>
-        <div className="flex flex-col gap-2 sm:gap-8 max-h-[65vh] overflow-y-auto scrollbar">
+        <div className="flex flex-col gap-2 sm:gap-8 max-h-[65vh] overflow-y-auto overflow-auto scrollbar">
           {userPackageData[packageIdx] &&
             Object.keys(userPackageData[packageIdx].conList).map(key => {
               const item = items[parseInt(key)];

@@ -226,8 +226,15 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
     const doubleConMaxPerPage = Math.floor(pageSize / 2);
 
-    const startIdx = (queryPage - 1) * pageSize - Math.min(queryDoubleConCount, (queryPage - 1) * doubleConMaxPerPage);
-    const endIdx = queryPage * pageSize - Math.min(queryDoubleConCount, queryPage * doubleConMaxPerPage);
+    let startIdx, endIdx;
+
+    if (!isDoubleCon) {
+      startIdx = (queryPage - 1) * pageSize;
+      endIdx = queryPage * pageSize;
+    } else {
+      startIdx = (queryPage - 1) * pageSize - Math.min(queryDoubleConCount, (queryPage - 1) * doubleConMaxPerPage);
+      endIdx = queryPage * pageSize - Math.min(queryDoubleConCount, queryPage * doubleConMaxPerPage);
+    }
 
     console.log(startIdx, endIdx);
 
@@ -237,7 +244,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     const slicedRes = originalQueryResult.slice(startIdx, endIdx);
 
     setQueryResult(new Set(slicedRes));
-  }, [queryPage, originalQueryResult, queryDoubleConCount]);
+  }, [queryPage, originalQueryResult, queryDoubleConCount, isDoubleCon]);
 
   useEffect(() => {
     if (isModalOpen) {
@@ -1115,6 +1122,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             `}>
       <div
         className="bg-[rgba(246,246,246,0.75)] pl-6 pr-6 pt-6 pb-3 rounded-2xl shadow-[0_30px_60px_-20px_rgba(0,0,0,0.3)] pointer-events-auto flex flex-col gap-1 
+        text-black
       dark:bg-[rgba(46,46,46,0.75)] dark:text-white/90
       "
         style={{
@@ -1212,7 +1220,6 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         {!userPackageData && <div>아래 [콘 목록]에서 동기화를 먼저 해주세요!</div>}
 
         {debouncedSearchText === '' &&
-          !queryResult &&
           (isDoubleCon && !firstDoubleCon
             ? recentUsedDoubleConList && recentUsedDoubleConList.length > 0
               ? true
@@ -1223,13 +1230,17 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             <span className="text-md font-semibold mb-1 text-gray-800 dark:text-gray-200">최근 사용한 콘</span>
           )}
 
+        {/* {debouncedSearchText} */}
+
         {
           <div className="flex flex-wrap w-[350px] gap-1">
-            {queryResult &&
+            {debouncedSearchText !== '' &&
+              queryResult &&
               Array.from(queryResult).map((detailData, index) => {
                 // console.log(queryResult, detailIdxDict, "!@#!@2213#")
                 const detailIdx = detailData.detailIdx;
 
+                const divKey = detailData.key;
                 // const detailData =
 
                 // console.log(detailData, detailIdxDict, detailIdx, "detailData");
@@ -1252,7 +1263,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
                   return (
                     <div
-                      key={detailIdx + '_' + index}
+                      key={divKey}
                       className={`flex cursor-pointer w-[calc(50%-0.2em)] rounded-md
                         transition-all duration-200
                                           ${
@@ -1365,7 +1376,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
               })}
 
             {debouncedSearchText === '' &&
-              !queryResult &&
+              // !queryResult &&
               (!(isDoubleCon && !firstDoubleCon)
                 ? Array.from(recentUsedConList)
                     .reverse()
@@ -1504,7 +1515,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
                     }))}
           </div>
         }
-        {queryResult && queryMaxPageRef.current > 1 && (
+        {debouncedSearchText !== '' && queryResult && queryMaxPageRef.current > 1 && (
           <div className="flex flex-row gap-2 justify-center items-center">
             <div
               className={`cursor-pointer
