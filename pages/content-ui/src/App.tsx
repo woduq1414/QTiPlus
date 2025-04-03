@@ -7,7 +7,7 @@ import SearchPage from './components/SearchPage';
 import ConListPage from './components/ConListPage';
 import useGlobalStore from './store/globalStore';
 import parseCookies from './functions/cookies';
-import readLocalStorage from './functions/storage';
+import Storage from './functions/storage';
 import ConInfoEditPage from './components/ConInfoEditPage';
 
 import { Toaster } from 'react-hot-toast';
@@ -60,8 +60,9 @@ function Router() {
       const userId = response.userId;
       setUserId(userId);
 
-      const storageKey = `UserPackageData_${userId}`;
-      readLocalStorage(storageKey).then(data => {
+      Storage.saveCurrentUserId(userId);
+
+      Storage.getUserPackageData().then(data => {
         setUserPackageData(data);
       });
     });
@@ -70,26 +71,18 @@ function Router() {
   }, []);
 
   useEffect(() => {
-    const storageKey = `UserConfig`;
-    readLocalStorage(storageKey).then(data => {
+    Storage.getUserConfig().then(data => {
       if (data) {
         setSetting(data);
       } else {
-        setSetting({
+        const defaultSetting = {
           isDarkMode: false,
           isShowRightBottomButton: true,
           isDefaultBigCon: true,
           isChoseongSearch: true,
-        });
-
-        chrome.storage.local.set({
-          UserConfig: {
-            isDarkMode: false,
-            isShowRightBottomButton: true,
-            isDefaultBigCon: true,
-            isChoseongSearch: true,
-          },
-        });
+        };
+        setSetting(defaultSetting);
+        Storage.setUserConfig(defaultSetting);
       }
     });
   }, []);
@@ -112,11 +105,7 @@ function Router() {
         let prevSetting = useGlobalStore.getState().setting;
         let newSetting = { ...useGlobalStore.getState().setting, isDarkMode: !prevSetting.isDarkMode };
 
-        chrome.storage.local.set({
-          UserConfig: {
-            ...newSetting,
-          },
-        });
+        Storage.setUserConfig(newSetting);
 
         setSetting(newSetting);
 
@@ -137,13 +126,13 @@ function Router() {
       ${isModalOpen ? 'unset' : 'hidden'}
     `}>
         {currentPage === 0 ? (
-          <SearchPage detailIdxDict={detailIdxDict} />
+          <SearchPage />
         ) : currentPage === 1 ? (
-          <ConListPage detailIdxDict={detailIdxDict} />
+          <ConListPage />
         ) : currentPage === 2 ? (
           <ConInfoEditPage packageIdx={currentPackageIdx} />
         ) : currentPage === 3 ? (
-          <SettingPage detailIdxDict={detailIdxDict} />
+          <SettingPage />
         ) : currentPage === 4 ? (
           <ReplaceWordEditPage />
         ) : currentPage === 5 ? (

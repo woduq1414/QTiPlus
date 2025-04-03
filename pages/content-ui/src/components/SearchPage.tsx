@@ -23,17 +23,12 @@ import { title } from 'process';
 import makeToast from '@src/functions/toast';
 import { on } from 'events';
 import Modal from './Modal';
+import Storage from '@src/functions/storage';
 
-interface SearchPageProps {
-  detailIdxDict: Record<string, any>;
-}
-
-const SearchPage: React.FC<SearchPageProps> = props => {
+const SearchPage: React.FC = () => {
   const pageSize = 16;
   const { currentPage, setCurrentPage, userPackageData, setIsModalOpen, isModalOpen, userId, setIsEditMode, setting } =
     useGlobalStore();
-
-  const detailIdxDict = props.detailIdxDict;
 
   const [searchInput, setSearchInput] = useState<string>('');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -253,70 +248,37 @@ const SearchPage: React.FC<SearchPageProps> = props => {
       setIsDoubleCon(false);
 
       setFirstDoubleCon(null);
-      const recentUsedConListKey = `RecentUsedConList_${userId}`;
-      readLocalStorage(recentUsedConListKey).then(data => {
+      Storage.getRecentUsedConList().then(data => {
         if (data === null) {
           setRecentUsedConList([]);
         } else {
-          if (data === undefined) {
-            setRecentUsedConList([]);
-          } else {
-            setRecentUsedConList(data as any);
-          }
+          setRecentUsedConList(data);
         }
       });
 
-      const recentUsedDoubleConListKey = `RecentUsedDoubleConList_${userId}`;
-      readLocalStorage(recentUsedDoubleConListKey).then(data => {
+      Storage.getRecentUsedDoubleConList().then(data => {
         if (data === null) {
           setRecentUsedDoubleConList([]);
         } else {
-          if (data === undefined) {
-            setRecentUsedDoubleConList([]);
-          } else {
-            setRecentUsedDoubleConList(data as any);
-          }
+          setRecentUsedDoubleConList(data);
         }
       });
 
-      const favoriteConListKey = `FavoriteConList_${userId}`;
-      readLocalStorage(favoriteConListKey).then(data => {
+      Storage.getFavoriteConList().then(data => {
         if (data === null) {
           setFavoriteConList({});
-
-          chrome.storage.local.set({ [favoriteConListKey]: {} }, async function () {
-            // console.log('Value is set to ', {});
-          });
         } else {
-          if (data === undefined) {
-            setFavoriteConList({});
-          } else {
-            setFavoriteConList(data as any);
-          }
+          setFavoriteConList(data);
         }
       });
 
-      const bigConExpireKey = `BigConExpire_${userId}`;
-      readLocalStorage(bigConExpireKey).then(data => {
+      Storage.getBigConExpire().then(data => {
         if (data === null) {
           setBigConExpire(0);
           setIsBigCon(false);
-        }
-        if (data === undefined) {
-          setBigConExpire(0);
-          setIsBigCon(false);
         } else {
-          setBigConExpire(data as number);
-
-          if ((data as number) > new Date().getTime() / 1000) {
-            if (setting.isDefaultBigCon) {
-              setIsBigCon(true);
-            } else {
-              setIsBigCon(false);
-            }
-          } else {
-            setIsBigCon(false);
-          }
+          setBigConExpire(data);
+          setIsBigCon(data > Date.now());
         }
       });
 
@@ -428,7 +390,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
       // console.log(detailData, '!!!!!!!!!!!!');
 
-      const prevCustomConList = (await readLocalStorage('CustomConList')) as any;
+      const prevCustomConList = (await Storage.getCustomConList()) as any;
 
       if (prevCustomConList === null || prevCustomConList === undefined) {
         return;
@@ -461,9 +423,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
     } else {
       const detailIdx = userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx;
 
-      const favoriteConListKey = `FavoriteConList_${userId}`;
-
-      let prevfavoriteConList = (await readLocalStorage(favoriteConListKey)) as any;
+      let prevfavoriteConList = await Storage.getFavoriteConList();
 
       if (prevfavoriteConList === null) {
         prevfavoriteConList = {};
@@ -475,9 +435,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
         delete prevfavoriteConList[detailIdx];
       }
 
-      chrome.storage.local.set({ [favoriteConListKey]: prevfavoriteConList }, async function () {
-        // console.log('Value is set to ', prevfavoriteConList);
-      });
+      await Storage.setFavoriteConList(prevfavoriteConList);
 
       setFavoriteConList(prevfavoriteConList);
     }
@@ -503,15 +461,12 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
       const isMobileVersion = window.location.host === 'm.dcinside.com';
 
-      const recentUsedConListKey = `RecentUsedConList_${userId}`;
-
-      let recentUsedConList = (await readLocalStorage(recentUsedConListKey)) as any[];
+      let recentUsedConList = await Storage.getRecentUsedConList();
       if (recentUsedConList === null) {
         recentUsedConList = [];
       }
 
-      const recentUsedDoubleConListKey = `RecentUsedDoubleConList_${userId}`;
-      let recentUsedDoubleConList = (await readLocalStorage(recentUsedDoubleConListKey)) as any[];
+      let recentUsedDoubleConList = await Storage.getRecentUsedDoubleConList();
       if (recentUsedDoubleConList === null) {
         recentUsedDoubleConList = [];
       }
@@ -551,11 +506,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
             title: detailData.title,
             sort: detailData.sort,
           });
-          chrome.storage.local.set({ [recentUsedConListKey]: recentUsedConList }, async function () {
-            // console.log('Value is set to ', recentUsedConList);
-          });
-
-          setRecentUsedConList(recentUsedConList);
+          await Storage.setRecentUsedConList(recentUsedConList);
 
           if (!e.ctrlKey) {
             setQueryResult(undefined);
@@ -593,9 +544,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
           recentUsedDoubleConList = recentUsedDoubleConList.slice(-10);
 
-          chrome.storage.local.set({ [recentUsedDoubleConListKey]: recentUsedDoubleConList }, async function () {
-            // console.log('Value is set to ', recentUsedDoubleConList);
-          });
+          await Storage.setRecentUsedDoubleConList(recentUsedDoubleConList);
         }
       }
 
@@ -664,9 +613,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
       recentUsedConList = recentUsedConList.slice(-20);
 
-      chrome.storage.local.set({ [recentUsedConListKey]: recentUsedConList }, async function () {
-        // console.log('Value is set to ', recentUsedConList);
-      });
+      await Storage.setRecentUsedConList(recentUsedConList);
 
       const noteEditableDom = document.getElementsByClassName('note-editable')[0];
       if (noteEditableDom) {
@@ -1622,7 +1569,7 @@ const SearchPage: React.FC<SearchPageProps> = props => {
               return;
             }
 
-            const prevCustomConList = (await readLocalStorage('CustomConList')) as any;
+            const prevCustomConList = (await Storage.getCustomConList()) as any;
 
             if (prevCustomConList === null || prevCustomConList === undefined) {
               return;
@@ -1660,23 +1607,21 @@ const SearchPage: React.FC<SearchPageProps> = props => {
 
             // console.log(prevCustomConList, 'prevCustomConList');
 
-            chrome.storage.local.set({ ['CustomConList']: prevCustomConList }, async function () {
-              // console.log('CustomConList saved');
+            await Storage.setCustomConList(prevCustomConList);
 
-              chrome.runtime.sendMessage(
-                {
-                  type: 'CHANGED_DATA',
-                },
-                response => {
-                  // console.log(response);
-                  // const conSearchTmp = new ConSearch();
-                  // conSearchTmp.deserialize(response.conSearch);
+            chrome.runtime.sendMessage(
+              {
+                type: 'CHANGED_DATA',
+              },
+              response => {
+                // console.log(response);
+                // const conSearchTmp = new ConSearch();
+                // conSearchTmp.deserialize(response.conSearch);
 
-                  // setConSearch(conSearchTmp);
-                  makeToast('저장 완료!');
-                },
-              );
-            });
+                // setConSearch(conSearchTmp);
+                makeToast('저장 완료!');
+              },
+            );
 
             setIsDoubleConPresetEditModalOpen(false);
           }

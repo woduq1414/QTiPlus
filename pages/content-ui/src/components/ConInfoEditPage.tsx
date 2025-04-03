@@ -8,6 +8,7 @@ import { WithContext as ReactTags, SEPARATORS } from 'react-tag-input';
 
 import { Tag } from 'react-tag-input';
 import makeToast from '@src/functions/toast';
+import Storage from '@src/functions/storage';
 
 interface ConInfoEditPageProps {
   packageIdx: number;
@@ -55,7 +56,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
 
     async function fetchConInfo() {
       let tmp: any;
-      const prevCustomConList = await readLocalStorage('CustomConList');
+      const prevCustomConList = await Storage.getCustomConList();
       if (prevCustomConList === null || prevCustomConList === undefined) {
         return;
       } else {
@@ -236,42 +237,27 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
               packageIdx: String(packageIdx),
             };
 
-            let oldCustomConList = await readLocalStorage('CustomConList');
-
+            let oldCustomConList = await Storage.getCustomConList();
             if (oldCustomConList === null || oldCustomConList === undefined) {
               oldCustomConList = {};
             }
 
             let newCustomConList = { ...(oldCustomConList || {}), [packageIdx]: newConList };
 
-            // console.log(newCustomConList);
+            await Storage.setCustomConList(newCustomConList);
 
-            chrome.storage.local.set({ ['CustomConList']: newCustomConList }, async function () {
-              // console.log('Value is set to ', newCustomConList);
+            chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
+              setDetailIdxDict(response.detailIdxDict);
+              makeToast('저장 완료!');
 
-              chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
-                // console.log(response);
-                // const conSearchTmp = new ConSearch();
-                // conSearchTmp.deserialize(response.conSearch);
-
-                // setConSearch(conSearchTmp);
-                setDetailIdxDict(response.detailIdxDict);
-
-                makeToast('저장 완료!');
-
-                chrome.runtime.sendMessage({
-                  type: 'TRIGGER_EVENT',
-                  action: 'CON_INFO_EDIT',
-                  data: {
-                    packageIdx: packageIdx,
-                  },
-                });
+              chrome.runtime.sendMessage({
+                type: 'TRIGGER_EVENT',
+                action: 'CON_INFO_EDIT',
+                data: {
+                  packageIdx: packageIdx,
+                },
               });
             });
-
-            // const newUserPackageData = { ...userPackageData };
-            // newUserPackageData[packageIdx].conList = newConList;
-            // setUserPackageData(newUserPackageData);
           }}>
           저장
         </div>

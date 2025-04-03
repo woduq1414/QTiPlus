@@ -7,12 +7,9 @@ import { useEffect, useState, useRef } from 'react';
 import Switch from 'react-switch';
 import Modal from './Modal';
 import { Cog6ToothIcon, XMarkIcon } from '@heroicons/react/16/solid';
+import Storage from '@src/functions/storage';
 
-interface SearchPageProps {
-  detailIdxDict: Record<string, any>;
-}
-
-const ConListPage: React.FC<SearchPageProps> = props => {
+const ConListPage: React.FC = () => {
   const {
     userPackageData,
     userId,
@@ -50,8 +47,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
     });
 
     async function func() {
-      setCustomConList(await readLocalStorage('CustomConList'));
-      // console.log(await readLocalStorage('CustomConList'), "!@#!#!@#")
+      setCustomConList(await Storage.getCustomConList());
     }
 
     func();
@@ -456,7 +452,7 @@ const ConListPage: React.FC<SearchPageProps> = props => {
               const cookies = parseCookies();
               const ci_t = cookies['ci_c'];
 
-              const customConList = (await readLocalStorage('CustomConList')) as any;
+              const customConList = (await Storage.getCustomConList()) as any;
 
               // console.log(Object.keys(customConList).length);
 
@@ -611,7 +607,11 @@ const ConListPage: React.FC<SearchPageProps> = props => {
           text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
                             w-full"
               onClick={async () => {
-                const customConList = (await readLocalStorage('CustomConList')) as any;
+                let customConList = (await Storage.getCustomConList()) as any;
+
+                if (!customConList) {
+                  customConList = {};
+                }
 
                 const element = document.createElement('a');
 

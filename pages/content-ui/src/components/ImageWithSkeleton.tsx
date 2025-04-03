@@ -18,19 +18,13 @@ const ImageWithSkeleton = ({
     img.onload = () => setIsLoading(false);
 
     return () => {
-      img.onload = null; // 메모리 누수 방지
+      img.onload = null;
     };
   }, [src]);
   return (
     <div className="relative  w-full h-full">
       {/* 스켈레톤 UI */}
       {isLoading && <div className="absolute inset-0 animate-pulse bg-gray-300"></div>}
-
-      {/* 실제 이미지 */}
-
-      {/* <div className=' w-full h-full background-gray-300'>
-
-      </div> */}
 
       <img
         src={src}
@@ -41,7 +35,6 @@ const ImageWithSkeleton = ({
         ${doubleConType === -1 ? 'rounded-md' : ''}
         
         `}
-        // onLoad={() => setIsLoading(false)}
       />
     </div>
   );

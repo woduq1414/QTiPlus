@@ -9,11 +9,7 @@ import Modal from './Modal';
 import { Cog6ToothIcon, PaperClipIcon, XMarkIcon } from '@heroicons/react/16/solid';
 import { DocumentIcon } from '@heroicons/react/24/outline';
 
-interface SearchPageProps {
-  detailIdxDict: Record<string, any>;
-}
-
-const SettingPage: React.FC<SearchPageProps> = props => {
+const SettingPage: React.FC = () => {
   const {
     userPackageData,
     userId,
@@ -27,26 +23,11 @@ const SettingPage: React.FC<SearchPageProps> = props => {
     setSetting,
   } = useGlobalStore();
 
-  const [replaceWordData, setReplaceWordData] = useState<any>(null);
-
   useEffect(() => {
     chrome.storage.local.set({
       UserConfig: setting,
     });
   }, [setting]);
-
-  useEffect(() => {
-    readLocalStorage('ReplaceWordData').then((data: any) => {
-      // console.log(data);
-      if (data === null) {
-        // setReplaceWordData(data);
-      } else {
-        setReplaceWordData(data);
-      }
-    });
-  }, []);
-
-  const [isReplaceWordModalOpen, setIsReplaceWordModalOpen] = useState(false);
 
   return (
     <div
@@ -170,7 +151,6 @@ const SettingPage: React.FC<SearchPageProps> = props => {
                 uncheckedIcon={false}
                 checkedIcon={false}
                 boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
-                // activeBoxShadow="0px 0px 1px 10px rgba(0, 0, 0, 0.2)"
                 height={25}
                 width={45}
               />
