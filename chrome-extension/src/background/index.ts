@@ -242,6 +242,7 @@ async function loadJSON() {
 
 async function getConInfoData() {
   const prevCustomConList: any = await Storage.getCustomConList(false);
+
   if (prevCustomConList === null || prevCustomConList === undefined) {
     const conInfoData = await loadJSON();
 
@@ -272,64 +273,69 @@ async function conTreeInit() {
 
   console.log(conInfoData);
 
-  for (let packageIdx in conInfoData) {
-    if (packageIdx === 'doubleConPreset') {
-      continue;
-    } else {
-      const conList = conInfoData[packageIdx as keyof typeof conInfoData].conList;
-      for (let sort in conList) {
-        const con = conList[sort as keyof typeof conList];
-        // console.log(con.title);
+  const conLabelList = conInfoData['conLabelList'];
 
-        const key = packageIdx + '-' + sort;
+  for (let packageIdx in conLabelList) {
+    const conList = conLabelList[packageIdx].conList;
+    for (let sort in conList) {
+      const con = conList[sort as keyof typeof conList];
+      // console.log(con.title);
 
-        conSearchTmp.addCon(key, con.title, con.tag.split(' '));
+      const key = packageIdx + '-' + sort;
 
-        conSearchChoseongTmp.addCon(
-          key,
-          convertKoreanCharToChoseong(con.title),
-          con.tag.split(' ').map((tag: string) => convertKoreanCharToChoseong(tag)),
-        );
+      conSearchTmp.addCon(key, con.title, con.tag.split(' '));
 
-        detailIdxDictTmp[key] = {
-          // detailIdx: con.detailIdx,
-          title: con.title,
-          packageIdx: packageIdx,
-          sort: sort,
-          imgPath: con.imgPath,
-          who: con.who,
-        };
-      }
+      conSearchChoseongTmp.addCon(
+        key,
+        convertKoreanCharToChoseong(con.title),
+        con.tag.split(' ').map((tag: string) => convertKoreanCharToChoseong(tag)),
+      );
+
+      detailIdxDictTmp[key] = {
+        // detailIdx: con.detailIdx,
+        title: con.title,
+        packageIdx: packageIdx,
+        sort: sort,
+        imgPath: con.imgPath,
+        who: con.who,
+      };
     }
   }
 
   if (conInfoData['doubleConPreset'] !== undefined) {
-    const doubleConPresetList = conInfoData['doubleConPreset'];
+    const doubleConPresetDict = conInfoData['doubleConPreset'];
 
-    for (let i = 0; i < doubleConPresetList.length; i++) {
-      let firstConInfo = doubleConPresetList[i].firstDoubleCon;
-      let secondConInfo = doubleConPresetList[i].secondDoubleCon;
+    // doubleConPreset이 리스트인 경우 딕셔너리로 변환 (이전 데이터와의 호환성을 위해)
+    if (Array.isArray(doubleConPresetDict)) {
+      const convertedDict: { [key: string]: any } = {};
+      for (const item of doubleConPresetDict) {
+        convertedDict[item.presetKey] = item;
+      }
+      conInfoData['doubleConPreset'] = convertedDict;
+    }
 
-      let firstConKey = firstConInfo.packageIdx + '-' + firstConInfo.sort;
-      let secondConKey = secondConInfo.packageIdx + '-' + secondConInfo.sort;
+    // 딕셔너리 형태로 처리
+    for (const presetKey in conInfoData['doubleConPreset']) {
+      const preset = conInfoData['doubleConPreset'][presetKey];
+      let firstConInfo = preset.firstDoubleCon;
+      let secondConInfo = preset.secondDoubleCon;
 
-      const firstCon = conInfoData[firstConInfo.packageIdx]?.conList?.[firstConInfo.sort];
-      const secondCon = conInfoData[secondConInfo.packageIdx]?.conList?.[secondConInfo.sort];
+      const firstCon = conLabelList[firstConInfo.packageIdx]?.conList?.[firstConInfo.sort];
+      const secondCon = conLabelList[secondConInfo.packageIdx]?.conList?.[secondConInfo.sort];
 
       if (firstCon === undefined || secondCon === undefined) {
-        // console.log('firstCon or secondCon is undefined');
         continue;
       }
 
-      conSearchTmp.addCon(doubleConPresetList[i].presetKey, '', doubleConPresetList[i].tag.split(' '));
+      conSearchTmp.addCon(presetKey, '', preset.tag.split(' '));
 
       conSearchChoseongTmp.addCon(
-        doubleConPresetList[i].presetKey,
+        presetKey,
         '',
-        doubleConPresetList[i].tag.split(' ').map((tag: string) => convertKoreanCharToChoseong(tag)),
+        preset.tag.split(' ').map((tag: string) => convertKoreanCharToChoseong(tag)),
       );
 
-      detailIdxDictTmp[doubleConPresetList[i].presetKey] = {
+      detailIdxDictTmp[presetKey] = {
         isDoubleCon: true,
         firstDoubleCon: {
           packageIdx: firstConInfo.packageIdx,
@@ -341,7 +347,7 @@ async function conTreeInit() {
           sort: secondConInfo.sort,
           ...secondCon,
         },
-        tag: doubleConPresetList[i].tag,
+        tag: preset.tag,
         who: firstCon.who.concat(secondCon.who),
       };
     }
@@ -365,17 +371,14 @@ conTreeInit().then(res => {
       initUserConfigStorage();
       initReplaceWordDataStorage();
 
-      sendResponse({
-        detailIdxDict: tmpRes?.detailIdxDictTmp,
-        // conSearch: tmpRes?.conSearchTmp.serialize(),
-      }); // JSON으로 변환하여 보냄
+      // JSON으로 변환하여 보냄
       return true;
     } else if (message.type === 'CHANGED_DATA') {
       async function func() {
         const res2 = await conTreeInit();
 
         sendResponse({
-          detailIdxDict: res2?.detailIdxDictTmp,
+          status: 'success',
           // conSearch: res2?.conSearchTmp.serialize(),
         });
       }
@@ -617,6 +620,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         hashSHA256(userId).then(hashedUserId => {
           Storage.setUserId(hashedUserId);
+          Storage.saveCurrentUserId(hashedUserId);
 
           sendResponse({ userId: hashedUserId });
         });
@@ -836,18 +840,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // );
   } else if (message.type == 'UPDATE_HIDE_STATE') {
     async function func() {
-      const userId = message.data.userId;
+      const userId = Storage.getUserId(true);
       const hideState = message.data.hideState;
 
       const storageKey = `UserPackageData_${userId}`;
 
-      let oldUserPackageData = await Storage.getUserPackageData(true);
+      console.log(await Storage.getUserId(true), 'userId');
+
+      let oldUserPackageData = await Storage.getUserPackageData(false);
 
       for (let packageIdx in oldUserPackageData) {
         oldUserPackageData[packageIdx].isHide = hideState[packageIdx];
       }
 
       await Storage.setUserPackageData(oldUserPackageData);
+
+      console.log(oldUserPackageData, 'oldUserPackageData');
+
       sendResponse({ data: oldUserPackageData });
     }
 

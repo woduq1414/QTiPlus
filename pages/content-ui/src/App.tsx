@@ -29,9 +29,7 @@ function Router() {
       // console.log(response, 'get_init_data');
       // const conSearchTmp = new ConSearch();
       // conSearchTmp.deserialize(response.conSearch);
-
       // setConSearch(conSearchTmp);
-      setDetailIdxDict(response.detailIdxDict);
     });
   }, []);
 

@@ -47,13 +47,20 @@ const ConListPage: React.FC = () => {
     });
 
     async function func() {
-      setCustomConList(await Storage.getCustomConList());
+      // setConLabelList();
+      const storageConLabelList = await Storage.getCustomConList();
+      // console.log(storageConLabelList, "!!!");
+      if (storageConLabelList) {
+        setConLabelList(storageConLabelList['conLabelList']);
+        setDoubleConPreset(storageConLabelList['doubleConPreset']);
+      }
     }
 
     func();
   }, []);
 
-  const [customConList, setCustomConList] = useState<any>(null);
+  const [conLabelList, setConLabelList] = useState<any>(null);
+  const [doubleConPreset, setDoubleConPreset] = useState<any>(null);
 
   const [isHideState, setIsHideState] = useState<{ [key: string]: boolean }>({});
   useEffect(() => {
@@ -119,19 +126,19 @@ const ConListPage: React.FC = () => {
                   {
                     type: 'UPDATE_HIDE_STATE',
                     data: {
-                      userId: userId,
                       hideState: isHideState,
                     },
                   },
                   function (response) {
                     setUserPackageData(response.data);
 
+                    console.log(isHideState, response.data);
+
                     chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
                       // const conSearchTmp = new ConSearch();
                       // conSearchTmp.deserialize(response.conSearch);
 
                       // setConSearch(conSearchTmp);
-                      setDetailIdxDict(response.detailIdxDict);
 
                       makeToast('저장 완료!');
                     });
@@ -179,7 +186,7 @@ const ConListPage: React.FC = () => {
 
                 const packageData = userPackageData[key];
 
-                const customConData = customConList ? customConList[packageData.packageIdx] : null;
+                const customConData = conLabelList ? conLabelList[packageData.packageIdx] : null;
                 let cnt = 0;
                 if (!customConData) {
                 } else {
@@ -265,12 +272,12 @@ const ConListPage: React.FC = () => {
             </div>
           )}
         </div>
-        {customConList &&
+        {conLabelList &&
         userPackageData &&
-        Object.keys(customConList).filter(key => key != 'doubleConPreset' && !userPackageData[key]).length > 0 ? (
+        Object.keys(conLabelList).filter(key => !userPackageData[key]).length > 0 ? (
           <div className="flex w-full text-sm gap-x-2 gap-y-1 flex-wrap overflow-y-auto overflow-auto scrollbar items-center  text-gray-700 dark:text-gray-300 max-h-[100px] sm:max-h-[50px] ">
             <span>보유하지 않은 콘 :</span>
-            {Object.keys(customConList)
+            {Object.keys(conLabelList)
               .filter(key => !userPackageData[key])
               .map(key => {
                 return (
@@ -282,7 +289,7 @@ const ConListPage: React.FC = () => {
 
                       window.open(`https://dccon.dcinside.com/hot/1/title/QWER#${key}`);
                     }}>
-                    {customConList[key].title}
+                    {conLabelList[key].title}
                   </span>
                 );
               })}
@@ -315,7 +322,7 @@ const ConListPage: React.FC = () => {
 
                       setIsImportOverwrite(true);
                       setIsImportIncludeDoubleConPreset(true);
-                      // setCustomConList(data);
+                      // setConLabelList(data);
                     };
                     reader.readAsText(file);
                   }
@@ -449,83 +456,95 @@ const ConListPage: React.FC = () => {
           text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
                             w-full"
             onClick={async () => {
-              const cookies = parseCookies();
-              const ci_t = cookies['ci_c'];
-
               const customConList = (await Storage.getCustomConList()) as any;
 
-              // console.log(Object.keys(customConList).length);
+              if (!customConList) {
+                makeToast('콘 목록을 불러오지 못했습니다.');
 
-              for (let key of Object.keys(importedFileData)) {
-                if (key === 'doubleConPreset') {
-                  if (!isImportIncludeDoubleConPreset) {
-                    continue;
-                  }
+                return;
+              }
 
-                  let keyDict = {} as any;
-                  if (customConList['doubleConPreset']) {
-                    for (let i = 0; i < customConList['doubleConPreset'].length; i++) {
-                      keyDict[customConList['doubleConPreset'][i].presetKey] = i;
-                    }
-                  } else {
-                  }
+              const conLabelList = customConList['conLabelList'];
+              const doubleConPreset = customConList['doubleConPreset'];
 
-                  for (let i = 0; i < importedFileData[key].length; i++) {
-                    if (keyDict[importedFileData[key][i].presetKey] !== undefined) {
-                      if (isImportOverwrite) {
-                        customConList['doubleConPreset'][keyDict[importedFileData[key][i].presetKey]] =
-                          importedFileData[key][i];
-                      }
-                    } else {
-                      customConList['doubleConPreset'].push(importedFileData[key][i]);
-                    }
-                  }
+              // console.log(Object.keys(conLabelList).length);
+              let importedConLabelList = importedFileData['conLabelList'];
 
-                  continue;
-                }
+              if (!importedConLabelList) {
+                makeToast('콘 목록을 불러오지 못했습니다.');
 
+                return;
+              }
+
+              for (let key of Object.keys(importedConLabelList)) {
                 // console.log(key);
 
-                if (!customConList[key]) {
-                  customConList[key] = JSON.parse(JSON.stringify(importedFileData[key]));
-                  customConList[key].conList = {};
+                if (!conLabelList[key]) {
+                  conLabelList[key] = JSON.parse(JSON.stringify(importedFileData[key]));
+                  conLabelList[key].conList = {};
 
                   // alert("!!!");
                 }
 
-                for (let conKey of Object.keys(importedFileData[key].conList)) {
+                for (let conKey of Object.keys(importedConLabelList[key].conList)) {
                   // console.log(ke
 
                   if (isImportOverwrite) {
-                    customConList[key].conList[conKey] = importedFileData[key].conList[conKey];
+                    conLabelList[key].conList[conKey] = importedConLabelList[key].conList[conKey];
 
-                    // console.log(customConList[key].conList[conKey], importedFileData[key].conList[conKey], "!!!!!!!!!!!", conKey, key);
+                    // console.log(conLabelList[key].conList[conKey], importedFileData[key].conList[conKey], "!!!!!!!!!!!", conKey, key);
                   } else {
                     if (
-                      customConList[key] !== undefined &&
-                      customConList[key].conList[conKey] !== undefined &&
-                      (customConList[key].conList[conKey].title !== '' || customConList[key].conList[conKey].tag !== '')
+                      conLabelList[key] !== undefined &&
+                      conLabelList[key].conList[conKey] !== undefined &&
+                      (conLabelList[key].conList[conKey].title !== '' || conLabelList[key].conList[conKey].tag !== '')
                     ) {
                       continue;
                     } else {
-                      customConList[key].conList[conKey] = importedFileData[key].conList[conKey];
+                      conLabelList[key].conList[conKey] = importedConLabelList[key].conList[conKey];
                     }
 
-                    // if (isImportOverwrite || !customConList[conKey]) {
-                    //     customConList[conKey] = importedFileData[key].conList[conKey];
+                    // if (isImportOverwrite || !conLabelList[conKey]) {
+                    //     conLabelList[conKey] = importedFileData[key].conList[conKey];
                     // }
                   }
                 }
               }
 
-              setCustomConList(customConList);
-              chrome.storage.local.set({ ['CustomConList']: customConList }, async function () {
+              if (doubleConPreset && isImportIncludeDoubleConPreset && importedFileData['doubleConPreset']) {
+                // 딕셔너리 형태로 처리
+                if (isImportOverwrite) {
+                  // 덮어쓰기 모드: 모든 항목을 덮어씁니다
+                  for (const key in importedFileData['doubleConPreset']) {
+                    doubleConPreset[key] = importedFileData['doubleConPreset'][key];
+                  }
+                } else {
+                  // 건너뛰기 모드: 기존 항목은 유지하고 새로운 항목만 추가합니다
+                  for (const key in importedFileData['doubleConPreset']) {
+                    if (!(key in doubleConPreset)) {
+                      doubleConPreset[key] = importedFileData['doubleConPreset'][key];
+                    }
+                  }
+                }
+              }
+
+              setConLabelList(conLabelList);
+              setDoubleConPreset(doubleConPreset);
+
+              console.log(conLabelList, doubleConPreset);
+
+              Storage.setCustomConList({
+                conLabelList,
+                doubleConPreset,
+              }).then(() => {
+                console.log('setCustomConList');
+
                 chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
                   // const conSearchTmp = new ConSearch();
                   // conSearchTmp.deserialize(response.conSearch);
 
                   // setConSearch(conSearchTmp);
-                  setDetailIdxDict(response.detailIdxDict);
+                  // setDetailIdxDict(response.detailIdxDict);
 
                   makeToast('저장 완료!');
 
@@ -607,77 +626,81 @@ const ConListPage: React.FC = () => {
           text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5   dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
                             w-full"
               onClick={async () => {
-                let customConList = (await Storage.getCustomConList()) as any;
+                const customConList = (await Storage.getCustomConList()) as any;
 
                 if (!customConList) {
-                  customConList = {};
+                  makeToast('콘 목록을 불러오지 못했습니다.');
+                  return;
+                }
+
+                let conLabelList = customConList['conLabelList'];
+                let doubleConPreset = customConList['doubleConPreset'];
+
+                if (!conLabelList) {
+                  conLabelList = {};
                 }
 
                 const element = document.createElement('a');
 
-                for (let key of Object.keys(customConList)) {
-                  if (key === 'doubleConPreset') {
-                    continue;
-                  }
-
+                for (let key of Object.keys(conLabelList)) {
                   if (!isExportHidePackageInclude && userPackageData[key] && isHideState[key]) {
-                    delete customConList[key];
+                    delete conLabelList[key];
                     continue;
                   }
                   if (!isExportNotHavePackageInclude && !userPackageData[key]) {
-                    delete customConList[key];
+                    delete conLabelList[key];
                     continue;
                   }
 
-                  for (let conKey of Object.keys(customConList[key].conList)) {
+                  for (let conKey of Object.keys(conLabelList[key].conList)) {
                     if (
-                      customConList[key].conList[conKey].title === '' &&
-                      customConList[key].conList[conKey].tag === ''
+                      conLabelList[key].conList[conKey].title === '' &&
+                      conLabelList[key].conList[conKey].tag === ''
                     ) {
-                      delete customConList[key].conList[conKey];
+                      delete conLabelList[key].conList[conKey];
                     }
                   }
                 }
 
-                if (customConList['doubleConPreset'] !== undefined) {
-                  customConList['doubleConPreset'] = customConList['doubleConPreset']
-                    .map((item: any) => {
-                      if (
-                        !isExportHidePackageInclude &&
-                        ((userPackageData[item.firstDoubleCon?.packageIdx] &&
-                          isHideState[item.firstDoubleCon?.packageIdx]) ||
-                          (userPackageData[item.secondDoubleCon?.packageIdx] &&
-                            isHideState[item.secondDoubleCon?.packageIdx]))
-                      ) {
-                        return null;
-                      }
+                if (doubleConPreset !== undefined) {
+                  // 딕셔너리 형태로 필터링
+                  const filteredDoubleConPreset: { [key: string]: any } = {};
 
-                      if (
-                        !isExportNotHavePackageInclude &&
-                        (!userPackageData[item.firstDoubleCon?.packageIdx] ||
-                          !userPackageData[item.secondDoubleCon?.packageIdx])
-                      ) {
-                        return null;
-                      }
+                  for (const key in doubleConPreset) {
+                    const item = doubleConPreset[key];
 
-                      return {
-                        presetKey: item.presetKey,
-                        tag: item.tag,
-                        firstDoubleCon: item.firstDoubleCon,
-                        secondDoubleCon: item.secondDoubleCon,
-                      };
-                    })
-                    .filter((item: any) => item !== null);
+                    if (
+                      !isExportHidePackageInclude &&
+                      ((userPackageData[item.firstDoubleCon?.packageIdx] &&
+                        isHideState[item.firstDoubleCon?.packageIdx]) ||
+                        (userPackageData[item.secondDoubleCon?.packageIdx] &&
+                          isHideState[item.secondDoubleCon?.packageIdx]))
+                    ) {
+                      continue;
+                    }
+
+                    if (
+                      !isExportNotHavePackageInclude &&
+                      (!userPackageData[item.firstDoubleCon?.packageIdx] ||
+                        !userPackageData[item.secondDoubleCon?.packageIdx])
+                    ) {
+                      continue;
+                    }
+
+                    filteredDoubleConPreset[key] = item;
+                  }
+
+                  doubleConPreset = filteredDoubleConPreset;
                 }
 
-                if (!isExportIncludeDoubleConPreset || customConList['doubleConPreset'] === undefined) {
-                  customConList['doubleConPreset'] = [];
+                if (!isExportIncludeDoubleConPreset || doubleConPreset === undefined) {
+                  doubleConPreset = {};
                 }
 
-                const file = new Blob([JSON.stringify(customConList)], { type: 'text/plain' });
+                const file = new Blob([JSON.stringify({ conLabelList, doubleConPreset })], { type: 'text/plain' });
                 element.href = URL.createObjectURL(file);
 
-                element.download = `CustomConList_${userId.slice(0, 3)}_${new Date().getTime()}.json`;
+                element.download = `ConLabelList_${userId.slice(0, 3)}_${new Date().getTime()}.json`;
                 document.body.appendChild(element); // Required for this to work in FireFox
                 element.click();
 

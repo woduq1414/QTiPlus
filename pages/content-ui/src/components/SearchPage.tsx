@@ -397,25 +397,26 @@ const SearchPage: React.FC = () => {
       }
 
       if (prevCustomConList?.['doubleConPreset'] === undefined) {
-        prevCustomConList['doubleConPreset'] = [];
+        prevCustomConList['doubleConPreset'] = {};
       }
 
-      let prevTag = '';
+      const prevTag = prevCustomConList['doubleConPreset'][presetKey]?.tag || '';
 
-      for (let i = 0; i < prevCustomConList['doubleConPreset'].length; i++) {
-        if (prevCustomConList['doubleConPreset'][i].presetKey === presetKey) {
-          prevTag = prevCustomConList['doubleConPreset'][i].tag;
-          break;
-        }
-      }
-
-      // console.log(prevTag, 'prevTag', prevCustomConList['doubleConPreset']);
+      console.log(
+        {
+          firstDoubleCon: firstDoubleCon,
+          secondDoubleCon: secondDoubleCon,
+          tag: prevTag,
+          presetKey: presetKey,
+        },
+        'prevCustomConList',
+        prevCustomConList['doubleConPreset'][presetKey],
+      );
 
       setDoubleConPresetEditData({
         firstDoubleCon: firstDoubleCon,
         secondDoubleCon: secondDoubleCon,
         tag: prevTag,
-
         presetKey: presetKey,
       });
 
@@ -1496,30 +1497,6 @@ const SearchPage: React.FC = () => {
           </div>
         )}
 
-        {/* <div className="flex flex-col gap-2">
-                  {userPackageData &&
-                    Object.keys(userPackageData).map(key => {
-                      const packageData = userPackageData[key];
-                      return (
-                        <div
-                          key={key}
-                          onClick={async () => {
-                            console.log(packageData);
-                            console.log(chrome, chrome.tabs);
-        
-                            chrome.runtime.sendMessage({
-                              action: 'openTab',
-                              url: 'https://dcimg5.dcinside.com/',
-                              data: packageData,
-                            });
-        
-                          }}>
-                          <h1>{packageData.title}</h1>
-                        </div>
-                      );
-                    })}
-                </div> */}
-
         <div
           className="cursor-pointer
           text-center
@@ -1576,36 +1553,25 @@ const SearchPage: React.FC = () => {
             }
 
             if (prevCustomConList?.['doubleConPreset'] === undefined) {
-              prevCustomConList['doubleConPreset'] = [];
+              prevCustomConList['doubleConPreset'] = {};
             }
 
-            let prevTag = '';
+            // 딕셔너리 형태로 처리
+            const presetKey = doubleConPresetEditData.presetKey;
 
-            let f = false;
-            for (let i = 0; i < prevCustomConList['doubleConPreset'].length; i++) {
-              if (prevCustomConList['doubleConPreset'][i].presetKey === doubleConPresetEditData.presetKey) {
-                prevCustomConList['doubleConPreset'][i].tag = doubleConPresetEditData.tag;
-                f = true;
-                break;
-              }
-            }
-
-            if (f === false) {
-              prevCustomConList['doubleConPreset'].push({
-                presetKey: doubleConPresetEditData.presetKey,
-                tag: doubleConPresetEditData.tag,
-                firstDoubleCon: {
-                  packageIdx: doubleConPresetEditData.firstDoubleCon.packageIdx,
-                  sort: doubleConPresetEditData.firstDoubleCon.sort,
-                },
-                secondDoubleCon: {
-                  packageIdx: doubleConPresetEditData.secondDoubleCon.packageIdx,
-                  sort: doubleConPresetEditData.secondDoubleCon.sort,
-                },
-              });
-            }
-
-            // console.log(prevCustomConList, 'prevCustomConList');
+            // 이미 존재하는 경우 업데이트, 없는 경우 추가
+            prevCustomConList['doubleConPreset'][presetKey] = {
+              presetKey: doubleConPresetEditData.presetKey,
+              tag: doubleConPresetEditData.tag,
+              firstDoubleCon: {
+                packageIdx: doubleConPresetEditData.firstDoubleCon.packageIdx,
+                sort: doubleConPresetEditData.firstDoubleCon.sort,
+              },
+              secondDoubleCon: {
+                packageIdx: doubleConPresetEditData.secondDoubleCon.packageIdx,
+                sort: doubleConPresetEditData.secondDoubleCon.sort,
+              },
+            };
 
             await Storage.setCustomConList(prevCustomConList);
 

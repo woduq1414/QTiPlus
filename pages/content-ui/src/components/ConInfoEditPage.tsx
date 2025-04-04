@@ -2,13 +2,13 @@ import parseCookies from '@src/functions/cookies';
 import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef } from 'react';
 
-import readLocalStorage from '@src/functions/storage';
 import ConSearch from '@src/class/Trie';
 import { WithContext as ReactTags, SEPARATORS } from 'react-tag-input';
 
 import { Tag } from 'react-tag-input';
 import makeToast from '@src/functions/toast';
-import Storage from '@src/functions/storage';
+
+import Storage from '@extension/shared/lib/storage';
 
 interface ConInfoEditPageProps {
   packageIdx: number;
@@ -57,10 +57,15 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
     async function fetchConInfo() {
       let tmp: any;
       const prevCustomConList = await Storage.getCustomConList();
-      if (prevCustomConList === null || prevCustomConList === undefined) {
+      if (!prevCustomConList) {
+        return;
+      }
+      const conLabelList = prevCustomConList['conLabelList'];
+
+      if (conLabelList === null || conLabelList === undefined) {
         return;
       } else {
-        tmp = prevCustomConList;
+        tmp = conLabelList;
       }
       let isCreateNew = false;
       if (tmp[packageIdx] === undefined) {
@@ -238,13 +243,19 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
             };
 
             let oldCustomConList = await Storage.getCustomConList();
-            if (oldCustomConList === null || oldCustomConList === undefined) {
-              oldCustomConList = {};
+            let conLabelList = {};
+            if (!oldCustomConList) {
+              conLabelList = {};
+            } else {
+              conLabelList = oldCustomConList['conLabelList'];
             }
 
-            let newCustomConList = { ...(oldCustomConList || {}), [packageIdx]: newConList };
+            let newCustomConList = { ...(conLabelList || {}), [packageIdx]: newConList };
 
-            await Storage.setCustomConList(newCustomConList);
+            await Storage.setCustomConList({
+              ...oldCustomConList,
+              conLabelList: newCustomConList,
+            });
 
             chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
               setDetailIdxDict(response.detailIdxDict);

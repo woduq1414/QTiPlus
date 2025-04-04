@@ -2,13 +2,14 @@ import parseCookies from '@src/functions/cookies';
 import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef, use } from 'react';
 
-import readLocalStorage from '@src/functions/storage';
 import ConSearch from '@src/class/Trie';
 import { WithContext as ReactTags, SEPARATORS } from 'react-tag-input';
 
 import { Tag } from 'react-tag-input';
 import makeToast from '@src/functions/toast';
 import { MinusIcon, PlusIcon, TrashIcon } from '@heroicons/react/16/solid';
+
+import Storage from '@extension/shared/lib/storage';
 
 interface Item {
   key: string;
@@ -35,7 +36,7 @@ const ReplaceWordEditPage: React.FC = props => {
 
   useEffect(() => {
     async function func() {
-      const data = (await readLocalStorage('ReplaceWordData')) as { [key: string]: string[] } | null;
+      const data = (await Storage.getReplaceWordData()) as { [key: string]: string[] } | null;
       //   console.log(data);
 
       if (!data) {
@@ -185,7 +186,6 @@ const ReplaceWordEditPage: React.FC = props => {
               // conSearchTmp.deserialize(response.conSearch);
 
               // setConSearch(conSearchTmp);
-              setDetailIdxDict(response.detailIdxDict);
 
               makeToast('저장 완료!');
             });

@@ -2,7 +2,7 @@ import parseCookies from '@src/functions/cookies';
 import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef, use } from 'react';
 
-import readLocalStorage from '@src/functions/storage';
+import Storage from '@extension/shared/lib/storage';
 import ConSearch from '@src/class/Trie';
 import { WithContext as ReactTags, SEPARATORS } from 'react-tag-input';
 
@@ -40,7 +40,7 @@ const DoubleConPresetEditPage: React.FC = props => {
 
   useEffect(() => {
     async function func() {
-      const data = (await readLocalStorage('CustomConList')) as any | null;
+      const data = (await Storage.getCustomConList()) as any | null;
 
       //   console.log(data);
 
@@ -54,10 +54,13 @@ const DoubleConPresetEditPage: React.FC = props => {
       }
 
       let newData = {} as any;
-      for (let i = 0; i < doubleConPreset.length; i++) {
-        const firstDoubleCon = doubleConPreset[i].firstDoubleCon;
-        const secondDoubleCon = doubleConPreset[i].secondDoubleCon;
-        const tag = doubleConPreset[i].tag;
+
+      // 딕셔너리 형태로 처리
+      for (const key in doubleConPreset) {
+        const item = doubleConPreset[key];
+        const firstDoubleCon = item.firstDoubleCon;
+        const secondDoubleCon = item.secondDoubleCon;
+        const tag = item.tag;
 
         if (firstDoubleCon === undefined || secondDoubleCon === undefined) {
           continue;
@@ -77,8 +80,8 @@ const DoubleConPresetEditPage: React.FC = props => {
         const firstDoubleConData = userPackageData?.[firstDoubleCon.packageIdx].conList[firstDoubleCon.sort];
         const secondDoubleConData = userPackageData?.[secondDoubleCon.packageIdx].conList[secondDoubleCon.sort];
 
-        newData[doubleConPreset[i].presetKey] = {
-          tag: doubleConPreset[i].tag,
+        newData[key] = {
+          tag: item.tag,
           firstDoubleCon: {
             imgPath: firstDoubleConData.imgPath,
             packageIdx: firstDoubleCon.packageIdx,
@@ -194,7 +197,7 @@ const DoubleConPresetEditPage: React.FC = props => {
                   </div>
                   <input
                     type="text"
-                    placeholder="조건 키워드"
+                    placeholder=""
                     value={item.tag}
                     className="border px-2 py-2 rounded-lg flex-grow
            bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white
@@ -231,7 +234,7 @@ const DoubleConPresetEditPage: React.FC = props => {
               };
             });
 
-            let customConList = (await readLocalStorage('CustomConList')) as any | null;
+            let customConList = (await Storage.getCustomConList()) as any | null;
             if (customConList === null || customConList === undefined) {
               customConList = {};
             }
@@ -240,34 +243,18 @@ const DoubleConPresetEditPage: React.FC = props => {
 
             // console.log(newItems);
 
-            chrome.storage.local.set({
-              CustomConList: customConList,
-            });
+            await Storage.setCustomConList(customConList);
 
             chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
               // const conSearchTmp = new ConSearch();
               // conSearchTmp.deserialize(response.conSearch);
 
               // setConSearch(conSearchTmp);
-              setDetailIdxDict(response.detailIdxDict);
 
               makeToast('저장 완료!');
             });
 
             return;
-            chrome.storage.local.set({
-              ReplaceWordData: newItems,
-            });
-
-            chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
-              // const conSearchTmp = new ConSearch();
-              // conSearchTmp.deserialize(response.conSearch);
-
-              // setConSearch(conSearchTmp);
-              setDetailIdxDict(response.detailIdxDict);
-
-              makeToast('저장 완료!');
-            });
 
             // setCurrentPage(3);
           }}>
