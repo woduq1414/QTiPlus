@@ -1,5 +1,5 @@
 import parseCookies from '@src/functions/cookies';
-import readLocalStorage from '@src/functions/storage';
+
 import makeToast from '@src/functions/toast';
 import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef } from 'react';
@@ -7,7 +7,7 @@ import { useEffect, useState, useRef } from 'react';
 import Switch from 'react-switch';
 import Modal from './Modal';
 import { Cog6ToothIcon, XMarkIcon } from '@heroicons/react/16/solid';
-import Storage from '@src/functions/storage';
+import Storage from '@extension/shared/lib/storage';
 
 const ConListPage: React.FC = () => {
   const {

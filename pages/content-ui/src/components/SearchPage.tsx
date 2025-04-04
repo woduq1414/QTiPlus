@@ -2,7 +2,7 @@ import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef, MouseEventHandler } from 'react';
 
 import parseCookies from '@src/functions/cookies';
-import readLocalStorage from '@src/functions/storage';
+
 import getQueryValue from '@src/functions/query';
 import useDebounce from '@src/hook/useDebounce';
 import ImageWithSkeleton from './ImageWithSkeleton';
@@ -23,7 +23,7 @@ import { title } from 'process';
 import makeToast from '@src/functions/toast';
 import { on } from 'events';
 import Modal from './Modal';
-import Storage from '@src/functions/storage';
+import Storage from '@extension/shared/lib/storage';
 
 const SearchPage: React.FC = () => {
   const pageSize = 16;

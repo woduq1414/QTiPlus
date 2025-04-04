@@ -1,5 +1,6 @@
 import 'webextension-polyfill';
 import { exampleThemeStorage } from '@extension/storage';
+import Storage from '@extension/shared/lib/storage';
 
 import ConSearch from './ConSearch';
 
@@ -57,37 +58,43 @@ console.log(process.env['CEB_EXTENSION_VERSION'], 'version');
 const AMPLITUDE_KEY = process.env['CEB_AMPLITUDE_KEY'] as string;
 
 let storageData: any = {};
-const readLocalStorage = async (key: any, isUseCache: boolean = true) => {
-  return new Promise((resolve, reject) => {
-    if (isUseCache && storageData[key] !== undefined) {
-      // console.log("cached")
-      resolve(storageData[key]);
-      return;
-    }
+let cachedSearchResult: any = {};
 
-    chrome.storage.local.get([key], function (result) {
-      if (result[key] === undefined) {
-        // reject();
-        resolve(null);
-      } else {
-        resolve(result[key]);
-      }
-    });
-  });
-};
-
-readLocalStorage('UserId').then((data: any) => {
-  if (data) {
-    // amplitude.setUserId(data);
-    // amplitude.setGroup('version', '1.0.3');
-    // amplitude.init("" as string, {
-    //   autocapture: false,
-    //   trackingOptions: { ipAddress: false },
-    //   userId: data,
-    // });
-    // amplitude.setUserId(data);
-  }
-});
+// Storage 클래스의 메서드를 직접 사용하도록 수정
+// const readLocalStorage = async (key: string, isUseCache: boolean = true) => {
+//   // 키에 따라 적절한 Storage 메서드 호출
+//   switch (key) {
+//     case 'UserId':
+//       return await Storage.getUserId(isUseCache);
+//     case 'DeviceId':
+//       return await Storage.getDeviceId(isUseCache);
+//     case 'UserConfig':
+//       return await Storage.getUserConfig(isUseCache);
+//     case 'ReplaceWordData':
+//       return await Storage.getReplaceWordData(isUseCache);
+//     case 'CustomConList':
+//       return await Storage.getCustomConList(isUseCache);
+//     default:
+//       if (key.startsWith('UserPackageData_')) {
+//         return await Storage.getUserPackageData(isUseCache);
+//       } else if (key.startsWith('FavoriteConList_')) {
+//         return await Storage.getFavoriteConList(isUseCache);
+//       } else if (key.startsWith('BigConExpire_')) {
+//         return await Storage.getBigConExpire(isUseCache);
+//       } else {
+//         // 기본적인 경우 - 직접 chrome.storage API 사용
+//         return new Promise((resolve) => {
+//           chrome.storage.local.get([key], function (result) {
+//             if (result[key] === undefined) {
+//               resolve(null);
+//             } else {
+//               resolve(result[key]);
+//             }
+//           });
+//         });
+//       }
+//   }
+// };
 
 console.log('Background loaded');
 // console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
@@ -187,40 +194,38 @@ let tmpRes: any = undefined;
 
 // init storageData from local storage
 
-chrome.storage.local.get(null, function (items) {
-  storageData = items;
-  // console.log(storageData);
-});
+// chrome.storage.local.get(null, function (items) {
+//   storageData = items;
+//   // console.log(storageData);
+// });
 
-let cachedSearchResult: any = {};
+// chrome.storage.onChanged.addListener(function (changes, areaName) {
+//   if (areaName === 'local' && changes) {
+//     // myKey의 값이 변경되었을 때 myVariable 업데이트
 
-chrome.storage.onChanged.addListener(function (changes, areaName) {
-  if (areaName === 'local' && changes) {
-    // myKey의 값이 변경되었을 때 myVariable 업데이트
+//     for (let key in changes) {
+//       const storageChange = changes[key];
+//       if (
+//         key.startsWith('CustomConList') ||
+//         key.startsWith('UserPackageData') ||
+//         key === 'UserConfig' ||
+//         key === 'ReplaceWordData'
+//       ) {
+//         cachedSearchResult = {};
+//       }
 
-    for (let key in changes) {
-      const storageChange = changes[key];
-      if (
-        key.startsWith('CustomConList') ||
-        key.startsWith('UserPackageData') ||
-        key === 'UserConfig' ||
-        key === 'ReplaceWordData'
-      ) {
-        cachedSearchResult = {};
-      }
+//       console.log(key, storageChange.newValue, changes, areaName);
 
-      console.log(key, storageChange.newValue, changes, areaName);
+//       try {
+//         storageData[key] = JSON.parse(JSON.stringify(storageChange.newValue));
+//       } catch (e) {
+//         // storageData[key] = storageChange.newValue;
+//       }
 
-      try {
-        storageData[key] = JSON.parse(JSON.stringify(storageChange.newValue));
-      } catch (e) {
-        // storageData[key] = storageChange.newValue;
-      }
-
-      // console.log(storageChange);
-    }
-  }
-});
+//       // console.log(storageChange);
+//     }
+//   }
+// });
 
 async function loadJSON() {
   try {
@@ -236,14 +241,11 @@ async function loadJSON() {
 }
 
 async function getConInfoData() {
-  const prevCustomConList: any = await readLocalStorage('CustomConList', false);
+  const prevCustomConList: any = await Storage.getCustomConList(false);
   if (prevCustomConList === null || prevCustomConList === undefined) {
     const conInfoData = await loadJSON();
 
-    const storageKey = 'CustomConList';
-    chrome.storage.local.set({ [storageKey]: conInfoData }, async function () {
-      console.log('Value is set to ', conInfoData);
-    });
+    await Storage.setCustomConList(conInfoData);
 
     return conInfoData;
   } else {
@@ -391,7 +393,7 @@ conTreeInit().then(res => {
         let finalResult = new Set();
         const detailIdxDict = tmpRes?.detailIdxDictTmp;
 
-        const userPackageData = (await readLocalStorage(`UserPackageData_${userId}`)) as any;
+        const userPackageData = await Storage.getUserPackageData(true);
 
         if (userPackageData === null) {
           sendResponse({
@@ -435,7 +437,7 @@ conTreeInit().then(res => {
           }
           let additionalCategoryList = [];
 
-          let replaceWordData = (await readLocalStorage('ReplaceWordData')) as any;
+          let replaceWordData = await Storage.getReplaceWordData(true);
 
           if (replaceWordData === null) {
             replaceWordData = {};
@@ -471,7 +473,8 @@ conTreeInit().then(res => {
             let result3 = new Set();
 
             // console.log(storageData['UserConfig'], '!!');
-            if (storageData['UserConfig']?.isChoseongSearch) {
+            const userConfig = await Storage.getUserConfig(true);
+            if (userConfig?.isChoseongSearch) {
               result3 = tmpRes?.conSearchChoseongTmp.searchTrie(convertDoubleConsonantToSingle(query));
             } else {
             }
@@ -548,7 +551,7 @@ conTreeInit().then(res => {
         // }
         cachedSearchResult[query] = Array.from(finalResult);
 
-        const favoriteConList = (await readLocalStorage(`FavoriteConList_${userId}`)) as any;
+        const favoriteConList = await Storage.getFavoriteConList(true);
 
         // move favorite to top
 
@@ -613,9 +616,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         };
 
         hashSHA256(userId).then(hashedUserId => {
-          chrome.storage.local.set({
-            UserId: hashedUserId,
-          });
+          Storage.setUserId(hashedUserId);
 
           sendResponse({ userId: hashedUserId });
         });
@@ -632,7 +633,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       const storageKey = `UserPackageData_${userId}`;
 
-      const oldUserPackageData = (await chrome.storage.local.get([storageKey]))[storageKey];
+      const oldUserPackageData = await Storage.getUserPackageData(true);
 
       async function fetchList(page: number) {
         // document.cookie = cookies;
@@ -714,9 +715,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       if (data.bigcon.status == 'enabled') {
         const bigConExpire = data.bigcon.expire;
-        chrome.storage.local.set({ ['BigConExpire_' + userId]: bigConExpire }, async function () {
-          // console.log('Value is set to ', {});
-        });
+        await Storage.setBigConExpire(bigConExpire);
       }
 
       const maxPage = data.max_page + 1;
@@ -813,17 +812,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
       }
 
-      chrome.storage.local.set({ [storageKey]: allResult }, async function () {
-        // console.log('Value is set to ', allResult);
+      await Storage.setUserPackageData(allResult);
 
-        // refresh page
-
-        // setUserPackageData(allResult);
-
-        // makeToast('동기화 성공!');
-
-        sendResponse({ data: allResult });
-      });
+      sendResponse({ data: allResult });
     }
 
     func();
@@ -850,15 +841,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       const storageKey = `UserPackageData_${userId}`;
 
-      let oldUserPackageData = (await chrome.storage.local.get([storageKey]))[storageKey];
+      let oldUserPackageData = await Storage.getUserPackageData(true);
 
       for (let packageIdx in oldUserPackageData) {
         oldUserPackageData[packageIdx].isHide = hideState[packageIdx];
       }
 
-      chrome.storage.local.set({ [storageKey]: oldUserPackageData }, async function () {
-        sendResponse({ data: oldUserPackageData });
-      });
+      await Storage.setUserPackageData(oldUserPackageData);
+      sendResponse({ data: oldUserPackageData });
     }
 
     func();
@@ -879,18 +869,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return hashHex;
     };
 
-    readLocalStorage('UserId').then(async (userId: any) => {
+    Storage.getUserId(true).then(async (userId: any) => {
       if (userId) {
         const hashedInsertId = (await hashSHA256(`${JSON.stringify(data)}${action}${userId}`)).slice(0, 10);
 
-        readLocalStorage('DeviceId').then(async (deviceId: any) => {
+        Storage.getDeviceId(true).then(async (deviceId: any) => {
           if (deviceId === null || deviceId === undefined) {
             // set new deviceId
 
             const newDeviceId = uuidv4();
-            chrome.storage.local.set({ DeviceId: newDeviceId }, async function () {
-              console.log('Value is set to ', newDeviceId);
-            });
+            await Storage.setDeviceId(newDeviceId);
 
             deviceId = newDeviceId;
           }
@@ -1000,17 +988,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 function initUserConfigStorage() {
   const storageKey = `UserConfig`;
-  readLocalStorage(storageKey, false).then((data: any) => {
+  Storage.getUserConfig().then((data: any) => {
     // console.log(data);
     if (data) {
     } else {
-      chrome.storage.local.set({
-        UserConfig: {
-          isDarkMode: false,
-          isShowRightBottomButton: true,
-          isDefaultBigCon: true,
-          isChoseongSearch: true,
-        },
+      Storage.setUserConfig({
+        isDarkMode: false,
+        isShowRightBottomButton: true,
+        isDefaultBigCon: true,
+        isChoseongSearch: true,
       });
     }
   });
@@ -1018,31 +1004,29 @@ function initUserConfigStorage() {
 
 function initReplaceWordDataStorage() {
   const storageKey2 = `ReplaceWordData`;
-  readLocalStorage(storageKey2, false).then((data: any) => {
+  Storage.getReplaceWordData().then((data: any) => {
     // console.log(data);
     if (data) {
     } else {
-      chrome.storage.local.set({
-        ReplaceWordData: {
-          웃음: ['ㅋㅋ', '웃겨', '낄낄'],
-          슬픔: ['ㅠ', '슬퍼', '슬프', '울었'],
-          하이: ['ㅎㅇ', '안녕'],
-          바이: ['잘가', '빠이'],
-          미안: ['ㅈㅅ', '죄송'],
-          놀람: ['ㄴㅇㄱ', '헉'],
-          감사: ['ㄳ', 'ㄱㅅ'],
-          덜덜: ['ㄷㄷ', 'ㅎㄷㄷ', '후덜덜', '두렵', '무섭', '무서', '두려'],
-          신남: ['행복', '신나', '기뻐', '신났'],
-          화남: ['화났', '화나', '분노'],
-          커: ['커여', '커엽', '귀여', '귀엽'],
-          떽: ['섹시', '떽띠'],
-          굿: ['따봉', '좋'],
-          크아악: ['크아', '완장'],
-          댄스: ['춤'],
-          개추: ['추천', '게추', '따봉'],
-          비추: ['붐따'],
-          짝짝: ['박수'],
-        },
+      Storage.setReplaceWordData({
+        웃음: ['ㅋㅋ', '웃겨', '낄낄'],
+        슬픔: ['ㅠ', '슬퍼', '슬프', '울었'],
+        하이: ['ㅎㅇ', '안녕'],
+        바이: ['잘가', '빠이'],
+        미안: ['ㅈㅅ', '죄송'],
+        놀람: ['ㄴㅇㄱ', '헉'],
+        감사: ['ㄳ', 'ㄱㅅ'],
+        덜덜: ['ㄷㄷ', 'ㅎㄷㄷ', '후덜덜', '두렵', '무섭', '무서', '두려'],
+        신남: ['행복', '신나', '기뻐', '신났'],
+        화남: ['화났', '화나', '분노'],
+        커: ['커여', '커엽', '귀여', '귀엽'],
+        떽: ['섹시', '떽띠'],
+        굿: ['따봉', '좋'],
+        크아악: ['크아', '완장'],
+        댄스: ['춤'],
+        개추: ['추천', '게추', '따봉'],
+        비추: ['붐따'],
+        짝짝: ['박수'],
       });
     }
   });

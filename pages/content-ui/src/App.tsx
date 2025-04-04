@@ -7,7 +7,7 @@ import SearchPage from './components/SearchPage';
 import ConListPage from './components/ConListPage';
 import useGlobalStore from './store/globalStore';
 import parseCookies from './functions/cookies';
-import Storage from './functions/storage';
+import Storage from '@extension/shared/lib/storage';
 import ConInfoEditPage from './components/ConInfoEditPage';
 
 import { Toaster } from 'react-hot-toast';
