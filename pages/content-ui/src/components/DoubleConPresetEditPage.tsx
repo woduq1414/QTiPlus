@@ -10,6 +10,7 @@ import { Tag } from 'react-tag-input';
 import makeToast from '@src/functions/toast';
 import { MinusIcon, PlusIcon, TrashIcon } from '@heroicons/react/16/solid';
 import ImageWithSkeleton from './ImageWithSkeleton';
+import { Message } from '@extension/shared/lib/enums/Message';
 
 interface Item {
   presetKey: string;
@@ -245,7 +246,7 @@ const DoubleConPresetEditPage: React.FC = props => {
 
             await Storage.setCustomConList(customConList);
 
-            chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
+            chrome.runtime.sendMessage({ type: Message.CHANGED_DATA }, response => {
               // const conSearchTmp = new ConSearch();
               // conSearchTmp.deserialize(response.conSearch);
 

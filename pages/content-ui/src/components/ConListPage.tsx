@@ -8,6 +8,7 @@ import Switch from 'react-switch';
 import Modal from './Modal';
 import { Cog6ToothIcon, XMarkIcon } from '@heroicons/react/16/solid';
 import Storage from '@extension/shared/lib/storage';
+import { Message } from '@extension/shared/lib/enums/Message';
 
 const ConListPage: React.FC = () => {
   const {
@@ -134,7 +135,7 @@ const ConListPage: React.FC = () => {
 
                     console.log(isHideState, response.data);
 
-                    chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
+                    chrome.runtime.sendMessage({ type: Message.CHANGED_DATA }, response => {
                       // const conSearchTmp = new ConSearch();
                       // conSearchTmp.deserialize(response.conSearch);
 
@@ -539,7 +540,7 @@ const ConListPage: React.FC = () => {
               }).then(() => {
                 console.log('setCustomConList');
 
-                chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
+                chrome.runtime.sendMessage({ type: Message.CHANGED_DATA }, response => {
                   // const conSearchTmp = new ConSearch();
                   // conSearchTmp.deserialize(response.conSearch);
 

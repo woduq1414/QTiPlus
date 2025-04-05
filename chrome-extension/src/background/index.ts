@@ -1,6 +1,7 @@
 import 'webextension-polyfill';
 import { exampleThemeStorage } from '@extension/storage';
 import Storage from '@extension/shared/lib/storage';
+import { Message } from '@extension/shared/lib/enums/Message';
 
 import ConSearch from './ConSearch';
 
@@ -14,95 +15,25 @@ import { convertQwertyToHangul } from 'es-hangul';
 // import { track } from 'mixpanel-browser';
 import { v4 as uuidv4 } from 'uuid';
 import { hash } from 'crypto';
+import { ConLabelList, CustomConList, DoubleConPreset } from '@extension/shared/lib/models/CustomConList';
+import { DetailData, DetailDataSingle } from '@extension/shared/lib/models/DetailData';
+import { UserPackageConData } from '@extension/shared/lib/models/UserPackageData';
 
 const userAgent = navigator.userAgent as any;
-
-const os = (() => {
-  if (userAgent.indexOf('Windows') !== -1) return 'Windows';
-  if (userAgent.indexOf('Mac OS X') !== -1) return 'macOS';
-  if (userAgent.indexOf('Linux') !== -1) return 'Linux';
-  if (userAgent.indexOf('X11') !== -1) return 'Unix';
-  if (userAgent.indexOf('Android') !== -1) return 'Android';
-  if (userAgent.indexOf('iPhone') !== -1) return 'iPhone';
-  if (userAgent.indexOf('iPad') !== -1) return 'iPad';
-  return 'Unknown OS';
-})();
-
-const browser = (() => {
-  if (userAgent.indexOf('Chrome') !== -1) return 'Chrome';
-  if (userAgent.indexOf('Firefox') !== -1) return 'Firefox';
-  if (userAgent.indexOf('Safari') !== -1) return 'Safari';
-  if (userAgent.indexOf('Opera') !== -1) return 'Opera';
-  if (userAgent.indexOf('Edg') !== -1) return 'Edge';
-  return 'Unknown Browser';
-})();
-
-const browserVersion = (() => {
-  const match = userAgent.match(/(Chrome|Firefox|Safari|Opera|Edg)[\/\s](\d+)/);
-  return match ? match[2] : 'Unknown Version';
-})();
 
 // 브라우저 정보와 OS 정보 추출
 const browserInfo = {
   userAgent,
-  os,
-  browser,
-  browserVersion,
 };
 
 console.log(browserInfo, 'info');
 console.log(process.env['CEB_EXTENSION_VERSION'], 'version');
 
-// const MIXPANEL_KEY = process.env['CEB_MIXPANEL_KEY'] as string;
-
 const AMPLITUDE_KEY = process.env['CEB_AMPLITUDE_KEY'] as string;
 
-let storageData: any = {};
 let cachedSearchResult: any = {};
 
-// Storage 클래스의 메서드를 직접 사용하도록 수정
-// const readLocalStorage = async (key: string, isUseCache: boolean = true) => {
-//   // 키에 따라 적절한 Storage 메서드 호출
-//   switch (key) {
-//     case 'UserId':
-//       return await Storage.getUserId(isUseCache);
-//     case 'DeviceId':
-//       return await Storage.getDeviceId(isUseCache);
-//     case 'UserConfig':
-//       return await Storage.getUserConfig(isUseCache);
-//     case 'ReplaceWordData':
-//       return await Storage.getReplaceWordData(isUseCache);
-//     case 'CustomConList':
-//       return await Storage.getCustomConList(isUseCache);
-//     default:
-//       if (key.startsWith('UserPackageData_')) {
-//         return await Storage.getUserPackageData(isUseCache);
-//       } else if (key.startsWith('FavoriteConList_')) {
-//         return await Storage.getFavoriteConList(isUseCache);
-//       } else if (key.startsWith('BigConExpire_')) {
-//         return await Storage.getBigConExpire(isUseCache);
-//       } else {
-//         // 기본적인 경우 - 직접 chrome.storage API 사용
-//         return new Promise((resolve) => {
-//           chrome.storage.local.get([key], function (result) {
-//             if (result[key] === undefined) {
-//               resolve(null);
-//             } else {
-//               resolve(result[key]);
-//             }
-//           });
-//         });
-//       }
-//   }
-// };
-
 console.log('Background loaded');
-// console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
-
-function removeSpecialChar(str: string) {
-  return str;
-  // return str.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎ]/g, '').toUpperCase();
-}
 
 function convertDoubleConsonantToSingle(str: string) {
   const doubleConsonant = {
@@ -117,7 +48,7 @@ function convertDoubleConsonantToSingle(str: string) {
     ㄿ: 'ㄹㅍ',
     ㅀ: 'ㄹㅎ',
     ㅄ: 'ㅂㅅ',
-  } as any;
+  } as { [key: string]: string };
 
   let result = '';
   for (let i = 0; i < str.length; i++) {
@@ -153,7 +84,7 @@ function convertKoreanCharToChoseong(str: string) {
     'ㅌ',
     'ㅍ',
     'ㅎ',
-  ];
+  ] as string[];
 
   const result = [];
 
@@ -169,7 +100,7 @@ function convertKoreanCharToChoseong(str: string) {
     ㄿ: ['ㄹ', 'ㅍ'],
     ㅀ: ['ㄹ', 'ㅎ'],
     ㅄ: ['ㅂ', 'ㅅ'],
-  } as any;
+  } as { [key: string]: string[] };
 
   for (let i = 0; i < str.length; i++) {
     const code = str.charCodeAt(i);
@@ -192,41 +123,6 @@ function convertKoreanCharToChoseong(str: string) {
 
 let tmpRes: any = undefined;
 
-// init storageData from local storage
-
-// chrome.storage.local.get(null, function (items) {
-//   storageData = items;
-//   // console.log(storageData);
-// });
-
-// chrome.storage.onChanged.addListener(function (changes, areaName) {
-//   if (areaName === 'local' && changes) {
-//     // myKey의 값이 변경되었을 때 myVariable 업데이트
-
-//     for (let key in changes) {
-//       const storageChange = changes[key];
-//       if (
-//         key.startsWith('CustomConList') ||
-//         key.startsWith('UserPackageData') ||
-//         key === 'UserConfig' ||
-//         key === 'ReplaceWordData'
-//       ) {
-//         cachedSearchResult = {};
-//       }
-
-//       console.log(key, storageChange.newValue, changes, areaName);
-
-//       try {
-//         storageData[key] = JSON.parse(JSON.stringify(storageChange.newValue));
-//       } catch (e) {
-//         // storageData[key] = storageChange.newValue;
-//       }
-
-//       // console.log(storageChange);
-//     }
-//   }
-// });
-
 async function loadJSON() {
   try {
     const response = await fetch(chrome.runtime.getURL('data.json'));
@@ -241,7 +137,7 @@ async function loadJSON() {
 }
 
 async function getConInfoData() {
-  const prevCustomConList: any = await Storage.getCustomConList(false);
+  const prevCustomConList: CustomConList | null = await Storage.getCustomConList(false);
 
   if (prevCustomConList === null || prevCustomConList === undefined) {
     const conInfoData = await loadJSON();
@@ -258,22 +154,18 @@ async function getConInfoData() {
 
 async function conTreeInit() {
   const startT = performance.now();
-  // const userPackageData = await readLocalStorage('UserPackageData');
-
-  // sleep 3s
-  // await new Promise(resolve => setTimeout(resolve, 3000));
 
   const conSearchTmp = new ConSearch();
 
   const conSearchChoseongTmp = new ConSearch();
 
-  let detailIdxDictTmp = {} as any;
+  let detailIdxDictTmp = {} as { [key: string]: DetailData };
 
   const conInfoData = await getConInfoData();
 
   console.log(conInfoData);
 
-  const conLabelList = conInfoData['conLabelList'];
+  const conLabelList = conInfoData['conLabelList'] as ConLabelList;
 
   for (let packageIdx in conLabelList) {
     const conList = conLabelList[packageIdx].conList;
@@ -303,20 +195,11 @@ async function conTreeInit() {
   }
 
   if (conInfoData['doubleConPreset'] !== undefined) {
-    const doubleConPresetDict = conInfoData['doubleConPreset'];
-
-    // doubleConPreset이 리스트인 경우 딕셔너리로 변환 (이전 데이터와의 호환성을 위해)
-    if (Array.isArray(doubleConPresetDict)) {
-      const convertedDict: { [key: string]: any } = {};
-      for (const item of doubleConPresetDict) {
-        convertedDict[item.presetKey] = item;
-      }
-      conInfoData['doubleConPreset'] = convertedDict;
-    }
+    const doubleConPresetDict = conInfoData['doubleConPreset'] as DoubleConPreset;
 
     // 딕셔너리 형태로 처리
-    for (const presetKey in conInfoData['doubleConPreset']) {
-      const preset = conInfoData['doubleConPreset'][presetKey];
+    for (const presetKey in doubleConPresetDict) {
+      const preset = doubleConPresetDict[presetKey];
       let firstConInfo = preset.firstDoubleCon;
       let secondConInfo = preset.secondDoubleCon;
 
@@ -337,6 +220,7 @@ async function conTreeInit() {
 
       detailIdxDictTmp[presetKey] = {
         isDoubleCon: true,
+        presetKey: presetKey,
         firstDoubleCon: {
           packageIdx: firstConInfo.packageIdx,
           sort: firstConInfo.sort,
@@ -366,14 +250,14 @@ conTreeInit().then(res => {
   console.log(res);
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === 'GET_INIT_DATA') {
+    if (message.type === Message.GET_INIT_DATA) {
       getConInfoData();
       initUserConfigStorage();
       initReplaceWordDataStorage();
 
       // JSON으로 변환하여 보냄
       return true;
-    } else if (message.type === 'CHANGED_DATA') {
+    } else if (message.type === Message.CHANGED_DATA) {
       async function func() {
         const res2 = await conTreeInit();
 
@@ -386,7 +270,7 @@ conTreeInit().then(res => {
       func();
 
       return true;
-    } else if (message.type === 'SEARCH_CON') {
+    } else if (message.type === Message.SEARCH_CON) {
       async function func() {
         let query = message.query as string;
         const userId = message.userId as string;
@@ -580,14 +464,18 @@ conTreeInit().then(res => {
 
         finalResult.clear();
 
-        finalResult = new Set([...Array.from(doubleConList), ...Array.from(favoriteList), ...Array.from(otherList)]);
+        finalResult = new Set([
+          ...Array.from(doubleConList),
+          ...Array.from(favoriteList),
+          ...Array.from(otherList),
+        ]) as Set<string>;
 
         console.log(finalResult, 'finalResult');
 
         sendResponse({
           res: JSON.stringify(Array.from(finalResult)),
           detailRes: JSON.stringify(
-            Array.from(finalResult).map((key: any) => {
+            (Array.from(finalResult) as string[]).map((key: string) => {
               return {
                 key: key,
                 ...detailIdxDict[key],
@@ -605,7 +493,7 @@ conTreeInit().then(res => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'GET_ID_COOKIE') {
+  if (message.type === Message.GET_ID_COOKIE) {
     chrome.cookies.get({ url: 'https://gall.dcinside.com', name: 'mc_enc' }, function (cookie) {
       if (cookie) {
         const userId = cookie.value;
@@ -630,7 +518,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
 
     return true;
-  } else if (message.type == 'SYNC_CON_LIST') {
+  } else if (message.type === Message.SYNC_CON_LIST) {
     async function func() {
       const userId = message.data.userId;
       const ci_t = message.data.ci_t;
@@ -750,7 +638,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           let packageResult: {
             packageIdx: number;
-            conList: { [key: string]: any };
+            conList: { [key: string]: UserPackageConData };
             title: string;
             mainImg: string;
             isHide: boolean;
@@ -774,34 +662,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           result[packageIdx] = packageResult;
         });
 
-        // readLocalStorage('CustomConList').then((customConList: any) => {
-        //   if (customConList) {
-        //     for(let packageIdx in result){
-        //       console.log(packageIdx);
-        //       // if (customConList[packageIdx] === undefined) {
-        //       //   customConList[packageIdx] = {
-        //       //     conList: result[packageIdx]["conList"].reduce((acc: any, cur: any) => {
-        //       //       acc[cur.sort] = {
-
-        //       //         title: cur.title,
-        //       //         imgPath: cur.list_img,
-        //       //         who: [],
-        //       //         tag: "",
-
-        //       //       };
-        //       //       return acc;
-        //       //     }, {}),
-        //       //     title: item.title,
-        //       //     packageIdx: packageIdx,
-        //       //   };
-
-        //       //   console.log(customConList);
-        //       // };
-        //     }
-
-        //   }
-        // });
-
         return result;
       }
 
@@ -809,10 +669,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       for (let i = 0; i < maxPage; i++) {
         if (i === 0) {
-          Object.assign(allResult, await processData(data));
+          Object.assign(allResult, processData(data));
         } else {
           data = await fetchList(i);
-          Object.assign(allResult, await processData(data));
+          Object.assign(allResult, processData(data));
         }
       }
 
@@ -822,23 +682,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     func();
-    // fetch("https://gall.dcinside.com/dccon/lists", {
-    //   "headers": {
-    //     "accept": "*/*", "accept-language": "ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6",
-    //     "cache-control": "no-cache", "content-type": "application/x-www-form-urlencoded; charset=UTF-8", "pragma": "no-cache",
-    //     "sec-ch-ua": "\"Chromium\";v=\"134\", \"Not:A-Brand\";v=\"24\", \"Google Chrome\";v=\"134\"", "sec-ch-ua-mobile": "?0",
-    //     "sec-ch-ua-platform": "\"Windows\"", "sec-fetch-dest": "empty", "sec-fetch-mode": "cors", "sec-fetch-site": "same-origin", "x-requested-with": "XMLHttpRequest"
-    //   },
-    //   "referrer": "https://gall.dcinside.com/mgallery/board/view/?id=qwer_fan",
-    //   "referrerPolicy": "unsafe-url",
-    //   "body": "ci_t=8cf266840e18664a8ce9eb37750d0e65&target=icon&page=1", "method": "POST", "mode": "cors", "credentials": "include"
-    // }).then(response => response.json()).then(data => {
-    //   console.log(data);
-
-    //   sendResponse({ data });
-    // }
-    // );
-  } else if (message.type == 'UPDATE_HIDE_STATE') {
+  } else if (message.type === Message.UPDATE_HIDE_STATE) {
     async function func() {
       const userId = Storage.getUserId(true);
       const hideState = message.data.hideState;
@@ -861,7 +705,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     func();
-  } else if (message.type == 'TRIGGER_EVENT') {
+  } else if (message.type === Message.TRIGGER_EVENT) {
     const action = message.action;
     const data = message.data;
 

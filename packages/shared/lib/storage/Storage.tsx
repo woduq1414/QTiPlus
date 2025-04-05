@@ -1,45 +1,9 @@
 import exp from 'constants';
-
-interface UserConfig {
-  isDarkMode: boolean;
-  isShowRightBottomButton: boolean;
-  isDefaultBigCon: boolean;
-  isChoseongSearch: boolean;
-}
-
-interface CustomConList {
-  [key: string]: {
-    title: string;
-    conList: {
-      [key: string]: {
-        title: string;
-        tag: string;
-        imgPath: string;
-        who: string[];
-      };
-    };
-    packageIdx: string;
-  };
-}
-
-interface FavoriteConList {
-  [key: string]: boolean;
-}
-
-interface RecentUsedConList {
-  packageIdx: string;
-  sort: string;
-
-  detailIdx?: string;
-  imgPath?: string;
-  title?: string;
-}
-
-interface RecentUsedDoubleConList {
-  detailIdx: string;
-  firstDoubleCon: any;
-  secondDoubleCon: any;
-}
+import { UserConfig } from '../models/UserConfig.js';
+import { CustomConList } from '../models/CustomConList.js';
+import { FavoriteConList } from '../models/FavoriteConList.js';
+import { RecentUsedConList } from '../models/RecentUsedConList.js';
+import { RecentUsedDoubleConList } from '../models/RecentUsedDoubleConList.js';
 
 const readLocalStorage = async <T,>(key: string): Promise<T | null> => {
   return new Promise<T | null>((resolve, reject) => {

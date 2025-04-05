@@ -9,6 +9,7 @@ import { Tag } from 'react-tag-input';
 import makeToast from '@src/functions/toast';
 
 import Storage from '@extension/shared/lib/storage';
+import { Message } from '@extension/shared/lib/enums/Message';
 
 interface ConInfoEditPageProps {
   packageIdx: number;
@@ -257,8 +258,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
               conLabelList: newCustomConList,
             });
 
-            chrome.runtime.sendMessage({ type: 'CHANGED_DATA' }, response => {
-              setDetailIdxDict(response.detailIdxDict);
+            chrome.runtime.sendMessage({ type: Message.CHANGED_DATA }, response => {
               makeToast('저장 완료!');
 
               chrome.runtime.sendMessage({

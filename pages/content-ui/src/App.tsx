@@ -16,6 +16,7 @@ import SettingPage from './components/SettingPage';
 import ReplaceWordEditPage from './components/ReplaceWordEditPage';
 import { hash } from 'crypto';
 import DoubleConPresetEditPage from './components/DoubleConPresetEditPage';
+import { Message } from '@extension/shared/lib/enums/Message';
 
 // import "../public/style.css";
 
@@ -25,7 +26,7 @@ function Router() {
 
     // conTreeInit();
     // alert('content ui loaded');
-    chrome.runtime.sendMessage({ type: 'GET_INIT_DATA' }, response => {
+    chrome.runtime.sendMessage({ type: Message.GET_INIT_DATA }, response => {
       // console.log(response, 'get_init_data');
       // const conSearchTmp = new ConSearch();
       // conSearchTmp.deserialize(response.conSearch);
@@ -52,7 +53,7 @@ function Router() {
   } = useGlobalStore();
 
   useEffect(() => {
-    chrome.runtime.sendMessage({ type: 'GET_ID_COOKIE' }, response => {
+    chrome.runtime.sendMessage({ type: Message.GET_ID_COOKIE }, response => {
       // console.log(response, 'get_id_cookie');
 
       const userId = response.userId;

@@ -24,6 +24,7 @@ import makeToast from '@src/functions/toast';
 import { on } from 'events';
 import Modal from './Modal';
 import Storage from '@extension/shared/lib/storage';
+import { Message } from '@extension/shared/lib/enums/Message';
 
 const SearchPage: React.FC = () => {
   const pageSize = 16;
@@ -173,7 +174,7 @@ const SearchPage: React.FC = () => {
   useEffect(() => {
     if (debouncedSearchText) {
       let t = new Date();
-      chrome.runtime.sendMessage({ type: 'SEARCH_CON', query: debouncedSearchText, userId: userId }, response => {
+      chrome.runtime.sendMessage({ type: Message.SEARCH_CON, query: debouncedSearchText, userId: userId }, response => {
         const res = JSON.parse(response.detailRes);
 
         //
