@@ -76,21 +76,24 @@ export default withUI({
       addBase({
         '.scrollbar': {
           overflowY: 'auto',
-          scrollbarWidth: 'thin',
-        },
-        '.scrollbar::-webkit-scrollbar': {
-          height: '2px',
-          width: '2px',
-        },
-        '.scrollbar::-webkit-scrollbar-thumb': {
-          backgroundColor: '#aaa',
-          borderRadius: '4px',
-        },
-        '.scrollbar::-webkit-scrollbar-track': {
-          background: 'none',
-        },
-        '.scrollbar::-webkit-scrollbar-button': {
-          display: 'none',
+
+          '&::-webkit-scrollbar': {
+            height: '4px',
+            width: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: '#aaa',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent !important',
+          },
+          '&::-webkit-scrollbar-button': {
+            display: 'none !important',
+          },
+          '&::-webkit-scrollbar-button:start:decrement, &::-webkit-scrollbar-button:end:increment': {
+            display: 'none !important',
+          },
         },
       });
     }),
