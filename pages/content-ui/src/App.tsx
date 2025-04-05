@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-
+import { ToggleButton } from '@extension/ui';
 import { exampleThemeStorage } from '@extension/storage';
 import { t } from '@extension/i18n';
 import { Page } from './enums/Page';
@@ -130,7 +130,7 @@ function Router() {
         ) : currentPage === Page.CON_LIST ? (
           <ConListPage />
         ) : currentPage === Page.CON_INFO_EDIT ? (
-          <ConInfoEditPage packageIdx={currentPackageIdx} />
+          <ConInfoEditPage packageIdx={String(currentPackageIdx)} />
         ) : currentPage === Page.SETTING ? (
           <SettingPage />
         ) : currentPage === Page.REPLACE_WORD_EDIT ? (

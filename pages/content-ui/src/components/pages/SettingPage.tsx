@@ -49,7 +49,6 @@ const SettingPage: React.FC = () => {
           <div
             className="w-[90px] cursor-pointer font-semibold"
             onClick={() => {
-              // setUserPackageData(null);
               setCurrentPage(Page.CON_LIST);
             }}>
             이전

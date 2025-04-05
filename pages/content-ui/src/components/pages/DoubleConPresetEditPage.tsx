@@ -116,22 +116,6 @@ const DoubleConPresetEditPage: React.FC = props => {
           };
         }),
       );
-
-      // console.log(newData);
-
-      // let newData = {} as any;
-      // for (let key in data) {
-      //   newData[key] = data[key].join(' ');
-      // }
-
-      // setItems(
-      //   Object.keys(newData).map(key => {
-      //     return {
-      //       key: key,
-      //       value: newData[key],
-      //     };
-      //   }),
-      // );
     }
     func();
   }, []);
@@ -152,10 +136,7 @@ const DoubleConPresetEditPage: React.FC = props => {
           <div
             className="w-[90px] cursor-pointer"
             onClick={() => {
-              // setUserPackageData(null);
               setCurrentPage(Page.SETTING);
-
-              // setIsEditMode(true);
             }}>
             이전
           </div>
@@ -248,22 +229,13 @@ const DoubleConPresetEditPage: React.FC = props => {
             await Storage.setCustomConList(customConList);
 
             chrome.runtime.sendMessage({ type: Message.CHANGED_DATA }, response => {
-              // const conSearchTmp = new ConSearch();
-              // conSearchTmp.deserialize(response.conSearch);
-
-              // setConSearch(conSearchTmp);
-
               makeToast('저장 완료!');
             });
 
             return;
-
-            // setCurrentPage(3);
           }}>
           저장
         </div>
-
-        {/* <div>unicro_id : {userId}</div> */}
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, MouseEventHandler } from 'react';
 import parseCookies from '@src/functions/cookies';
 
 import getQueryValue from '@src/functions/query';
-import useDebounce from '@src/hook/useDebounce';
+import useDebounce from '@src/hooks/useDebounce';
 import ImageWithSkeleton from '@src/components/ImageWithSkeleton';
 import SingleConItem from '@src/components/SingleConItem';
 import DoubleConItem from '@src/components/DoubleConItem';
@@ -185,8 +185,9 @@ const SearchPage: React.FC = () => {
         if (isDoubleCon && !firstDoubleCon) {
           setOriginalQueryResult(res);
         } else {
+          console.log(res);
           setOriginalQueryResult(
-            res.filter((con: any) => {
+            res.filter((con: { key: string }) => {
               return !con.key.includes('/');
             }),
           );
@@ -412,14 +413,6 @@ const SearchPage: React.FC = () => {
 
     if (isDoubleCon) {
       if (firstDoubleCon2 === null) {
-        setFirstDoubleCon({
-          packageIdx: packageIdx,
-          detailIdx: detailIdx,
-          imgPath: detailData.imgPath,
-          title: detailData.title,
-          sort: detailData.sort,
-        });
-
         recentUsedConList = recentUsedConList.filter((con: any) => {
           return con.detailIdx !== detailIdx;
         });
@@ -431,6 +424,14 @@ const SearchPage: React.FC = () => {
           sort: detailData.sort,
         });
         await Storage.setRecentUsedConList(recentUsedConList);
+
+        setFirstDoubleCon({
+          packageIdx: packageIdx,
+          detailIdx: detailIdx,
+          imgPath: detailData.imgPath,
+          title: detailData.title,
+          sort: detailData.sort,
+        });
         return { shouldReturn: true };
       } else {
         packageIdx = `${firstDoubleCon2.packageIdx}, ${packageIdx}`;
@@ -991,6 +992,7 @@ const SearchPage: React.FC = () => {
     if (shouldReturn) {
       if (!e.ctrlKey) {
         setQueryResult(undefined);
+        // setOriginalQueryResult(undefined);
         setSearchInput('');
         searchInputRef.current?.focus();
       }
@@ -1330,13 +1332,6 @@ const SearchPage: React.FC = () => {
 
             return;
           }}>
-          {/* <Cog6ToothIcon
-            className=" inline-block"
-            style={{
-              width: '1em',
-              height: '1em',
-            }}
-          /> */}
           <ListBulletIcon
             className="inline-block "
             style={{
