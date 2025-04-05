@@ -6,6 +6,8 @@ import parseCookies from '@src/functions/cookies';
 import getQueryValue from '@src/functions/query';
 import useDebounce from '@src/hook/useDebounce';
 import ImageWithSkeleton from '@src/components/ImageWithSkeleton';
+import SingleConItem from '@src/components/SingleConItem';
+import DoubleConItem from '@src/components/DoubleConItem';
 import toast from 'react-hot-toast';
 import {
   CheckCircleIcon,
@@ -623,14 +625,6 @@ const SearchPage: React.FC = () => {
         if (packageIdx === undefined || detailIdx === undefined) {
           setIsModalOpen(false);
 
-          // copy img to clipboard
-
-          // makeToast(
-          //   `등록 실패 ㅠㅠ ${JSON.stringify({
-          //     packageIdx,
-          //     detailIdx,
-          //   })}`,
-          // );
           return;
         }
 
@@ -1146,26 +1140,8 @@ const SearchPage: React.FC = () => {
           value={searchInput}
           spellCheck="false"
           onKeyDown={e => {
-            // if (e.key === 'Enter') {
-            //   if (searchInput === debouncedSearchText) {
-            //     return;
-            //   }
-            //   console.log(searchInput);
-            //   let t = new Date();
-            //   chrome.runtime.sendMessage({ type: 'SEARCH_CON', query: searchInput }, response => {
-            //     const res = JSON.parse(response.res);
-            //     setQueryResult(new Set(res));
-            //     console.log('Time:', new Date().getTime() - t.getTime());
-            //   });
-            //   setSearchInput('');
             // }
           }}></input>
-
-        {/* <div>
-                    검색어 : {
-                        debouncedSearchText
-                    }
-                </div> */}
 
         {!userPackageData && <div>아래 [콘 목록]에서 동기화를 먼저 해주세요!</div>}
 
@@ -1180,53 +1156,31 @@ const SearchPage: React.FC = () => {
             <span className="text-md font-semibold mb-1 text-gray-800 dark:text-gray-200">최근 사용한 콘</span>
           )}
 
-        {/* {debouncedSearchText} */}
-
         {
           <div className="flex flex-wrap w-[350px] gap-1">
             {debouncedSearchText !== '' &&
               queryResult &&
               Array.from(queryResult).map((detailData, index) => {
-                // console.log(queryResult, detailIdxDict, "!@#!@2213#")
-                const detailIdx = detailData.detailIdx;
-
                 const divKey = detailData.key;
 
-                // const detailData =
-
-                // console.log(detailData, detailIdxDict, detailIdx, "detailData");
-
                 if (detailData.isDoubleCon === true) {
-                  const firstDoubleCon = detailData.firstDoubleCon;
-                  const secondDoubleCon = detailData.secondDoubleCon;
-
-                  // console.log(firstDoubleCon, secondDoubleCon, detailData, '!!!!!');
-
-                  // const horizontalItemCount = detailData[]
-
                   let horizontalItemCount = 3;
-
                   const nextItem = Array.from(queryResult)[index + 1];
-                  // console.log(nextItem);
                   if (nextItem && nextItem.key.includes('/') === true) {
                     horizontalItemCount = 2;
                   }
 
                   return (
-                    <div
+                    <DoubleConItem
                       key={divKey}
-                      className={`flex cursor-pointer w-[calc(50%-0.2em)] rounded-md
-                        transition-all duration-200
-                                          ${
-                                            focusedIndex === index
-                                              ? ' border-0 scale-[125%]  z-[9999999999] '
-                                              : 'scale-100 z-[9999999]'
-                                          }
-                                          `}
-                      ref={el => {
-                        imageRefs.current[index] = el;
-                      }}
-                      onKeyDown={e => handleImageKeyDown(e, index, detailData, horizontalItemCount)}
+                      detailData={detailData}
+                      index={index}
+                      focusedIndex={focusedIndex}
+                      imageRefs={imageRefs}
+                      handleImageKeyDown={handleImageKeyDown}
+                      onConClick={onConClick}
+                      onConRightClick={onConRightClick}
+                      horizontalItemCount={horizontalItemCount}
                       onFocus={() => {
                         setFocusedIndex(index);
                       }}
@@ -1235,53 +1189,21 @@ const SearchPage: React.FC = () => {
                           setFocusedIndex(null);
                         }
                       }}
-                      tabIndex={0}
-                      onClick={e => {
-                        onConClick({
-                          detailData: secondDoubleCon,
-                          e: e,
-                          manualFirstDoubleCon: firstDoubleCon,
-                        });
-                      }}
-                      onContextMenu={e => {
-                        onConRightClick({
-                          detailData: detailData,
-                          e: e,
-                        });
-                      }}>
-                      <div className="flex flex-row gap-[0em]">
-                        <ImageWithSkeleton src={firstDoubleCon.imgPath} alt={firstDoubleCon.title} doubleConType={0} />
-                        <ImageWithSkeleton
-                          src={secondDoubleCon.imgPath}
-                          alt={secondDoubleCon.title}
-                          doubleConType={1}
-                        />
-                      </div>
-
-                      {true && (
-                        <div className="absolute top-0 right-0">
-                          <Square2StackIcon className="w-5 h-5 text-white stroke-[0.9] stroke-gray-300" />
-                        </div>
-                      )}
-                      {/* <span>{detailData.title}</span> */}
-                    </div>
+                    />
                   );
                 } else {
                   return (
-                    <div
+                    <SingleConItem
                       key={divKey}
-                      className={`flex cursor-pointer w-[calc(25%-0.2em)] rounded-md
-                        transition-all duration-200
-                                              ${
-                                                focusedIndex === index
-                                                  ? ' border-0 scale-125  z-[9999999999]'
-                                                  : 'scale-100 z-[9999999]'
-                                              }
-                                              `}
-                      ref={el => {
-                        imageRefs.current[index] = el;
-                      }}
-                      onKeyDown={e => handleImageKeyDown(e, index, detailData)}
+                      detailData={detailData}
+                      index={index}
+                      focusedIndex={focusedIndex}
+                      imageRefs={imageRefs}
+                      handleImageKeyDown={handleImageKeyDown}
+                      onConClick={onConClick}
+                      onConRightClick={onConRightClick}
+                      favoriteConList={favoriteConList}
+                      userPackageData={userPackageData}
                       onFocus={() => {
                         setFocusedIndex(index);
                       }}
@@ -1290,38 +1212,7 @@ const SearchPage: React.FC = () => {
                           setFocusedIndex(null);
                         }
                       }}
-                      tabIndex={0}
-                      onClick={e => {
-                        onConClick({ detailData, e });
-                      }}
-                      onContextMenu={e => {
-                        onConRightClick({ detailData, e });
-                      }}>
-                      <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} doubleConType={-1} />
-                      {favoriteConList &&
-                        favoriteConList[
-                          userPackageData[detailData.packageIdx]?.conList?.[detailData.sort]?.detailIdx
-                        ] && (
-                          <div className="absolute top-0 right-0">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="rgb(240,177,0)"
-                              className="w-5 h-5"
-                              stroke="white"
-                              strokeWidth={1.3}
-                              strokeLinecap="round"
-                              strokeLinejoin="round">
-                              <path
-                                fillRule="evenodd"
-                                d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                      {/* <span>{detailData.title}</span> */}
-                    </div>
+                    />
                   );
                 }
               })}
@@ -1336,20 +1227,17 @@ const SearchPage: React.FC = () => {
                       const detailIdx = detailData.detailIdx;
 
                       return (
-                        <div
+                        <SingleConItem
                           key={detailIdx}
-                          className={`flex cursor-pointer w-[calc(25%-0.2em)] rounded-md
-                           transition-all duration-200
-                                            ${
-                                              focusedIndex === index
-                                                ? ' border-0 scale-125  z-[9999999999] '
-                                                : 'scale-100 z-[9999999]'
-                                            }
-                                            `}
-                          ref={el => {
-                            imageRefs.current[index] = el;
-                          }}
-                          onKeyDown={e => handleImageKeyDown(e, index, detailData)}
+                          detailData={detailData}
+                          index={index}
+                          focusedIndex={focusedIndex}
+                          imageRefs={imageRefs}
+                          handleImageKeyDown={handleImageKeyDown}
+                          onConClick={onConClick}
+                          onConRightClick={onConRightClick}
+                          favoriteConList={favoriteConList}
+                          userPackageData={userPackageData}
                           onFocus={() => {
                             setFocusedIndex(index);
                           }}
@@ -1358,36 +1246,7 @@ const SearchPage: React.FC = () => {
                               setFocusedIndex(null);
                             }
                           }}
-                          tabIndex={0}
-                          onClick={e => {
-                            onConClick({ detailData, e });
-                          }}
-                          onContextMenu={e => {
-                            onConRightClick({ detailData, e });
-                          }}>
-                          <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} doubleConType={-1} />
-
-                          {favoriteConList && favoriteConList[detailData.detailIdx] && (
-                            <div className="absolute top-0 right-0">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="rgb(240,177,0)"
-                                className="w-5 h-5"
-                                stroke="white"
-                                strokeWidth={1.3}
-                                strokeLinecap="round"
-                                strokeLinejoin="round">
-                                <path
-                                  fillRule="evenodd"
-                                  d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            </div>
-                          )}
-                          {/* <span>{detailData.title}</span> */}
-                        </div>
+                        />
                       );
                     })
                 : Array.from(recentUsedDoubleConList)
@@ -1397,28 +1256,20 @@ const SearchPage: React.FC = () => {
                       // console.log(detailData, 'detailData212');
 
                       const detailIdx = detailData.detailIdx;
-
-                      const firstDoubleCon = detailData.firstDoubleCon;
-                      const secondDoubleCon = detailData.secondDoubleCon as any;
-
                       detailData.isDoubleCon = true;
 
                       return (
-                        <div
-                          tabIndex={isDoubleConPresetEditModalOpen ? -1 : 0}
+                        <DoubleConItem
                           key={detailIdx}
-                          className={`flex cursor-pointer w-[calc(50%-0.2em)] rounded-md
-                          transition-all duration-200
-                                            ${
-                                              focusedIndex === index
-                                                ? ' border-0 scale-[125%]  z-[9999999999] '
-                                                : 'scale-100 z-[9999999]'
-                                            }
-                                            `}
-                          ref={el => {
-                            imageRefs.current[index] = el;
-                          }}
-                          onKeyDown={e => handleImageKeyDown(e, index, detailData, 2)}
+                          detailData={detailData}
+                          index={index}
+                          focusedIndex={focusedIndex}
+                          imageRefs={imageRefs}
+                          handleImageKeyDown={handleImageKeyDown}
+                          onConClick={onConClick}
+                          onConRightClick={onConRightClick}
+                          tabIndex={isDoubleConPresetEditModalOpen ? -1 : 0}
+                          horizontalItemCount={2}
                           onFocus={() => {
                             setFocusedIndex(index);
                           }}
@@ -1427,41 +1278,7 @@ const SearchPage: React.FC = () => {
                               setFocusedIndex(null);
                             }
                           }}
-                          onClick={e => {
-                            onConClick({
-                              detailData: secondDoubleCon,
-                              e: e,
-                              manualFirstDoubleCon: firstDoubleCon,
-                            });
-                          }}
-                          onContextMenu={e => {
-                            // onConRightClick({ detailData, e });
-                            onConRightClick({
-                              detailData: detailData,
-                              e: e,
-                              // firstDoubleCon: firstDoubleCon,
-                            });
-                          }}>
-                          <div className="flex flex-row gap-[0em]">
-                            <ImageWithSkeleton
-                              src={firstDoubleCon.imgPath}
-                              alt={firstDoubleCon.title}
-                              doubleConType={0}
-                            />
-                            <ImageWithSkeleton
-                              src={secondDoubleCon.imgPath}
-                              alt={secondDoubleCon.title}
-                              doubleConType={1}
-                            />
-                          </div>
-
-                          {true && (
-                            <div className="absolute top-0 right-0">
-                              <Square2StackIcon className="w-5 h-5 text-white stroke-[0.9] stroke-gray-300" />
-                            </div>
-                          )}
-                          {/* <span>{detailData.title}</span> */}
-                        </div>
+                        />
                       );
                     }))}
           </div>
