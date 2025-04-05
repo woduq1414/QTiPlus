@@ -1,21 +1,22 @@
 import { useEffect, useState, useRef } from 'react';
-import { ToggleButton } from '@extension/ui';
+
 import { exampleThemeStorage } from '@extension/storage';
 import { t } from '@extension/i18n';
+import { Page } from './enums/Page';
 
-import SearchPage from './components/SearchPage';
-import ConListPage from './components/ConListPage';
+import SearchPage from './components/pages/SearchPage';
+import ConListPage from './components/pages/ConListPage';
 import useGlobalStore from './store/globalStore';
 import parseCookies from './functions/cookies';
 import Storage from '@extension/shared/lib/storage';
-import ConInfoEditPage from './components/ConInfoEditPage';
+import ConInfoEditPage from './components/pages/ConInfoEditPage';
 
 import { Toaster } from 'react-hot-toast';
 import { ChatBubbleBottomCenterIcon, XMarkIcon } from '@heroicons/react/16/solid';
-import SettingPage from './components/SettingPage';
-import ReplaceWordEditPage from './components/ReplaceWordEditPage';
+import SettingPage from './components/pages/SettingPage';
+import ReplaceWordEditPage from './components/pages/ReplaceWordEditPage';
 import { hash } from 'crypto';
-import DoubleConPresetEditPage from './components/DoubleConPresetEditPage';
+import DoubleConPresetEditPage from './components/pages/DoubleConPresetEditPage';
 import { Message } from '@extension/shared/lib/enums/Message';
 
 // import "../public/style.css";
@@ -91,7 +92,7 @@ function Router() {
       if (event.altKey && (event.key === 'q' || event.key === 'Q' || event.key === 'ㅂ')) {
         event.preventDefault(); // 기본 동작 방지
         setIsModalOpen((prev: any) => !prev);
-        setCurrentPage(0);
+        setCurrentPage(Page.SEARCH);
 
         // console.log('alt + q');
       }
@@ -124,17 +125,17 @@ function Router() {
         className={`z-[999999999]
       ${isModalOpen ? 'unset' : 'hidden'}
     `}>
-        {currentPage === 0 ? (
+        {currentPage === Page.SEARCH ? (
           <SearchPage />
-        ) : currentPage === 1 ? (
+        ) : currentPage === Page.CON_LIST ? (
           <ConListPage />
-        ) : currentPage === 2 ? (
+        ) : currentPage === Page.CON_INFO_EDIT ? (
           <ConInfoEditPage packageIdx={currentPackageIdx} />
-        ) : currentPage === 3 ? (
+        ) : currentPage === Page.SETTING ? (
           <SettingPage />
-        ) : currentPage === 4 ? (
+        ) : currentPage === Page.REPLACE_WORD_EDIT ? (
           <ReplaceWordEditPage />
-        ) : currentPage === 5 ? (
+        ) : currentPage === Page.DOUBLE_CON_PRESET_EDIT ? (
           <DoubleConPresetEditPage />
         ) : null}
       </div>
@@ -146,7 +147,7 @@ function Router() {
             "
           onClick={() => {
             setIsModalOpen((prev: any) => !prev);
-            setCurrentPage(0);
+            setCurrentPage(Page.SEARCH);
           }}>
           {isModalOpen ? (
             <XMarkIcon strokeWidth={0.5} width={35} height={35} fill="#ffffff" />

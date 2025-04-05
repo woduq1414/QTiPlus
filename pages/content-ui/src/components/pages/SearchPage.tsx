@@ -5,7 +5,7 @@ import parseCookies from '@src/functions/cookies';
 
 import getQueryValue from '@src/functions/query';
 import useDebounce from '@src/hook/useDebounce';
-import ImageWithSkeleton from './ImageWithSkeleton';
+import ImageWithSkeleton from '@src/components/ImageWithSkeleton';
 import toast from 'react-hot-toast';
 import {
   CheckCircleIcon,
@@ -22,9 +22,10 @@ import { CheckCircleIcon as CheckCircleIconOutline } from '@heroicons/react/24/o
 import { title } from 'process';
 import makeToast from '@src/functions/toast';
 import { on } from 'events';
-import Modal from './Modal';
+import Modal from '@src/components/Modal';
 import Storage from '@extension/shared/lib/storage';
 import { Message } from '@extension/shared/lib/enums/Message';
+import { Page } from '@src/enums/Page';
 
 const SearchPage: React.FC = () => {
   const pageSize = 16;
@@ -1514,7 +1515,7 @@ const SearchPage: React.FC = () => {
           "
           onClick={async () => {
             // return;
-            setCurrentPage(1);
+            setCurrentPage(Page.CON_LIST);
             setIsEditMode(false);
 
             return;

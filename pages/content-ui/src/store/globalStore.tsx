@@ -1,8 +1,9 @@
 import { create } from 'zustand';
+import { Page } from '../enums/Page';
 
 interface GlobalStore {
-  currentPage: number;
-  setCurrentPage: (currentPage: number) => void;
+  currentPage: Page;
+  setCurrentPage: (currentPage: Page) => void;
 
   userId: string;
   setUserId: (userId: string) => void;
@@ -35,7 +36,7 @@ interface GlobalStore {
 }
 
 const useGlobalStore = create<GlobalStore>(set => ({
-  currentPage: 0,
+  currentPage: Page.SEARCH,
   setCurrentPage: currentPage => set({ currentPage }),
 
   userId: '',

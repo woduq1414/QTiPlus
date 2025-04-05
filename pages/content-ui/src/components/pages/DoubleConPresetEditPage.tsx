@@ -3,14 +3,15 @@ import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef, use } from 'react';
 
 import Storage from '@extension/shared/lib/storage';
-import ConSearch from '@src/class/Trie';
+
 import { WithContext as ReactTags, SEPARATORS } from 'react-tag-input';
 
 import { Tag } from 'react-tag-input';
 import makeToast from '@src/functions/toast';
 import { MinusIcon, PlusIcon, TrashIcon } from '@heroicons/react/16/solid';
-import ImageWithSkeleton from './ImageWithSkeleton';
+import ImageWithSkeleton from '@src/components/ImageWithSkeleton';
 import { Message } from '@extension/shared/lib/enums/Message';
+import { Page } from '@src/enums/Page';
 
 interface Item {
   presetKey: string;
@@ -152,7 +153,7 @@ const DoubleConPresetEditPage: React.FC = props => {
             className="w-[90px] cursor-pointer"
             onClick={() => {
               // setUserPackageData(null);
-              setCurrentPage(3);
+              setCurrentPage(Page.SETTING);
 
               // setIsEditMode(true);
             }}>

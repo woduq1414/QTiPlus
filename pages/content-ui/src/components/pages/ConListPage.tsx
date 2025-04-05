@@ -5,10 +5,11 @@ import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef } from 'react';
 
 import Switch from 'react-switch';
-import Modal from './Modal';
+import Modal from '@src/components/Modal';
 import { Cog6ToothIcon, XMarkIcon } from '@heroicons/react/16/solid';
 import Storage from '@extension/shared/lib/storage';
 import { Message } from '@extension/shared/lib/enums/Message';
+import { Page } from '@src/enums/Page';
 
 const ConListPage: React.FC = () => {
   const {
@@ -109,7 +110,7 @@ const ConListPage: React.FC = () => {
               className="w-[90px] cursor-pointer font-semibold"
               onClick={() => {
                 // setUserPackageData(null);
-                setCurrentPage(0);
+                setCurrentPage(Page.SEARCH);
               }}>
               이전
             </div>
@@ -233,7 +234,7 @@ const ConListPage: React.FC = () => {
                         if (!isEditMode) return;
 
                         setCurrentPackageIdx(packageData.packageIdx);
-                        setCurrentPage(2);
+                        setCurrentPage(Page.CON_INFO_EDIT);
                       }}>
                       <div className="w-[65px]">
                         <img
@@ -726,7 +727,7 @@ const ConListPage: React.FC = () => {
           "
           onClick={async () => {
             // return;
-            setCurrentPage(3);
+            setCurrentPage(Page.SETTING);
 
             return;
           }}>

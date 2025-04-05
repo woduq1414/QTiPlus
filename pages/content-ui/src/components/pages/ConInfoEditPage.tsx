@@ -2,14 +2,12 @@ import parseCookies from '@src/functions/cookies';
 import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef } from 'react';
 
-import ConSearch from '@src/class/Trie';
-import { WithContext as ReactTags, SEPARATORS } from 'react-tag-input';
-
 import { Tag } from 'react-tag-input';
 import makeToast from '@src/functions/toast';
 
 import Storage from '@extension/shared/lib/storage';
 import { Message } from '@extension/shared/lib/enums/Message';
+import { Page } from '@src/enums/Page';
 
 interface ConInfoEditPageProps {
   packageIdx: number;
@@ -137,7 +135,7 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = props => {
             className="w-[90px] cursor-pointer"
             onClick={() => {
               // setUserPackageData(null);
-              setCurrentPage(1);
+              setCurrentPage(Page.CON_LIST);
 
               setIsEditMode(true);
             }}>

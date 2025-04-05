@@ -2,7 +2,6 @@ import parseCookies from '@src/functions/cookies';
 import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef, use } from 'react';
 
-import ConSearch from '@src/class/Trie';
 import { WithContext as ReactTags, SEPARATORS } from 'react-tag-input';
 
 import { Tag } from 'react-tag-input';
@@ -11,6 +10,7 @@ import { MinusIcon, PlusIcon, TrashIcon } from '@heroicons/react/16/solid';
 
 import Storage from '@extension/shared/lib/storage';
 import { Message } from '@extension/shared/lib/enums/Message';
+import { Page } from '@src/enums/Page';
 
 interface Item {
   key: string;
@@ -29,7 +29,7 @@ const ReplaceWordEditPage: React.FC = props => {
     setIsEditMode,
   } = useGlobalStore();
   const [items, setItems] = useState<Item[]>(
-    Array.from({ length: 1001 }, (_, index) => ({
+    Array.from({ length: 1 }, (_, index) => ({
       key: '',
       value: '',
     })),
@@ -78,7 +78,7 @@ const ReplaceWordEditPage: React.FC = props => {
             className="w-[90px] cursor-pointer"
             onClick={() => {
               // setUserPackageData(null);
-              setCurrentPage(3);
+              setCurrentPage(Page.SETTING);
 
               // setIsEditMode(true);
             }}>
