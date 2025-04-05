@@ -17,7 +17,59 @@ interface Item {
   value: string;
 }
 
-const ReplaceWordEditPage: React.FC = props => {
+interface ReplaceWordData {
+  [key: string]: string[];
+}
+
+// 아이템 입력 필드 컴포넌트
+const ItemInput: React.FC<{
+  item: Item;
+  index: number;
+  onUpdate: (index: number, field: keyof Item, value: string) => void;
+  onDelete: (index: number) => void;
+}> = ({ item, index, onUpdate, onDelete }) => {
+  return (
+    <div className="flex flex-row gap-2 items-center mb-1">
+      <TrashIcon
+        className="w-4 h-4 cursor-pointer text-gray-600 dark:text-gray-400 hover:text-red-400 dark:hover:text-red-400"
+        onClick={() => onDelete(index)}
+      />
+      <input
+        type="text"
+        placeholder="키워드"
+        value={item.key}
+        className="border px-2 py-2 rounded-lg w-[100px] bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white"
+        onChange={e => onUpdate(index, 'key', e.target.value)}
+        spellCheck="false"
+      />
+      <input
+        type="text"
+        placeholder="조건 키워드"
+        value={item.value}
+        className="border px-2 py-2 rounded-lg flex-grow bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white"
+        onChange={e => onUpdate(index, 'value', e.target.value)}
+        spellCheck="false"
+      />
+    </div>
+  );
+};
+
+// 헤더 컴포넌트
+const Header: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  return (
+    <div className="flex flex-row">
+      <div className="w-[90px] cursor-pointer" onClick={onBack}>
+        이전
+      </div>
+      <div className="flex-grow text-center font-semibold">
+        <h1>자동 추가 키워드</h1>
+      </div>
+      <div className="w-[90px]"></div>
+    </div>
+  );
+};
+
+const ReplaceWordEditPage: React.FC = () => {
   const {
     userPackageData,
     userId,
@@ -29,170 +81,98 @@ const ReplaceWordEditPage: React.FC = props => {
     setIsEditMode,
   } = useGlobalStore();
   const [items, setItems] = useState<Item[]>(
-    Array.from({ length: 1 }, (_, index) => ({
+    Array.from({ length: 1 }, () => ({
       key: '',
       value: '',
     })),
   );
 
+  // 데이터 로드
   useEffect(() => {
-    async function func() {
-      const data = (await Storage.getReplaceWordData()) as { [key: string]: string[] } | null;
-      //   console.log(data);
+    const loadData = async () => {
+      const data = (await Storage.getReplaceWordData()) as ReplaceWordData | null;
+      if (!data) return;
 
-      if (!data) {
-        return;
-      }
+      const formattedData = Object.entries(data).map(([key, value]) => ({
+        key,
+        value: value.join(' '),
+      }));
 
-      let newData = {} as any;
-      for (let key in data) {
-        newData[key] = data[key].join(' ');
-      }
+      setItems(formattedData);
+    };
 
-      setItems(
-        Object.keys(newData).map(key => {
-          return {
-            key: key,
-            value: newData[key],
-          };
-        }),
-      );
-    }
-    func();
+    loadData();
   }, []);
 
-  return (
-    <div
-      className={`fixed inset-0 flex items-center justify-center pointer-events-none max-w-[800px]  mx-auto flex-col z-[999999999]
-        `}>
-      <div
-        className="bg-[rgba(246,246,246,0.75)] p-6 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4   w-[600px] max-w-[100vw]
-      text-black
-      dark:bg-[rgba(46,46,46,0.75)] dark:text-white 
-      "
-        style={{
-          backdropFilter: 'blur(15px)',
-        }}>
-        <div className="flex flex-row ">
-          <div
-            className="w-[90px] cursor-pointer"
-            onClick={() => {
-              // setUserPackageData(null);
-              setCurrentPage(Page.SETTING);
+  // 아이템 업데이트 핸들러
+  const handleItemUpdate = (index: number, field: keyof Item, value: string) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setItems(newItems);
+  };
 
-              // setIsEditMode(true);
-            }}>
-            이전
-          </div>
-          <div className="flex-grow text-center font-semibold">
-            <h1>자동 추가 키워드</h1>
-          </div>
-          <div className="w-[90px]"></div>
-        </div>
+  // 아이템 삭제 핸들러
+  const handleItemDelete = (index: number) => {
+    const newItems = [...items];
+    newItems.splice(index, 1);
+    setItems(newItems);
+  };
+
+  // 아이템 추가 핸들러
+  const handleAddItem = () => {
+    setItems([...items, { key: '', value: '' }]);
+  };
+
+  // 저장 핸들러
+  const handleSave = async () => {
+    const newItems: ReplaceWordData = {};
+
+    items.forEach(item => {
+      if (item.key && item.value) {
+        newItems[item.key] = item.value.split(' ').filter(word => word.length > 0);
+      }
+    });
+
+    chrome.storage.local.set({
+      ReplaceWordData: newItems,
+    });
+
+    chrome.runtime.sendMessage({ type: Message.CHANGED_DATA }, () => {
+      makeToast('저장 완료!');
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center pointer-events-none max-w-[800px] mx-auto flex-col z-[999999999]">
+      <div
+        className="bg-[rgba(246,246,246,0.75)] p-6 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4 w-[600px] max-w-[100vw] text-black dark:bg-[rgba(46,46,46,0.75)] dark:text-white"
+        style={{ backdropFilter: 'blur(15px)' }}>
+        <Header onBack={() => setCurrentPage(Page.SETTING)} />
+
         <div className="flex flex-col gap-1 max-h-[65vh] overflow-auto scrollbar">
-          <div className="flex flex-row gap-2 items-center ">
+          <div className="flex flex-row gap-2 items-center">
             <div className="w-4"></div>
             <div className="w-[100px] text-center text-sm font-semibold">추가 키워드(A)</div>
             <div className="flex-grow text-center text-sm font-semibold">
               조건 키워드(B) - 띄어쓰기로 구분하여 입력해주세요.
             </div>
           </div>
-          {items &&
-            items.map((item: any, idx: number) => {
-              // const item = items[idx];
-              return (
-                <div className="flex flex-row gap-2 items-center mb-1" key={idx}>
-                  <TrashIcon
-                    className="w-4 h-4 cursor-pointer
-                                        text-gray-600 dark:text-gray-400
-                                        hover:text-red-400 dark:hover:text-red-400"
-                    onClick={() => {
-                      let newItems = [...items];
-                      newItems.splice(idx, 1);
-                      setItems(newItems);
-                    }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="키워드"
-                    value={item.key}
-                    className="border px-2 py-2 rounded-lg w-[100px]
-           bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white
-           "
-                    onChange={e => {
-                      let newItems = [...items];
-                      newItems[idx].key = e.target.value;
-                      setItems(newItems);
-                    }}
-                    spellCheck="false"
-                  />
-                  <input
-                    type="text"
-                    placeholder="조건 키워드"
-                    value={item.value}
-                    className="border px-2 py-2 rounded-lg flex-grow
-           bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white
-           "
-                    onChange={e => {
-                      let newItems = [...items];
-                      newItems[idx].value = e.target.value;
-                      setItems(newItems);
-                    }}
-                    spellCheck="false"
-                  />
-                </div>
-              );
-            })}
+
+          {items.map((item, idx) => (
+            <ItemInput key={idx} item={item} index={idx} onUpdate={handleItemUpdate} onDelete={handleItemDelete} />
+          ))}
+
           <div
-            className="flex w-full justify-center gap-2
-                        items-center bg-gray-200 dark:bg-gray-800
-                        rounded-lg px-2 py-1 cursor-pointer 
-                    "
-            onClick={() => {
-              let newItems = [...items];
-              newItems.push({
-                key: '',
-                value: '',
-              });
-              setItems(newItems);
-            }}>
+            className="flex w-full justify-center gap-2 items-center bg-gray-200 dark:bg-gray-800 rounded-lg px-2 py-1 cursor-pointer"
+            onClick={handleAddItem}>
             <PlusIcon className="w-6 h-6 cursor-pointer text-blue-500" />
             추가하기
           </div>
         </div>
 
         <div
-          className="
-                    mt-3
-                    cursor-pointer
-          text-center
-          text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
-          "
-          onClick={async () => {
-            let newItems = {} as any;
-            items.forEach(item => {
-              if (item.key && item.value) {
-                newItems[item.key] = item.value.split(' ').filter((word: string) => word.length > 0);
-              }
-            });
-
-            // console.log(newItems);
-
-            chrome.storage.local.set({
-              ReplaceWordData: newItems,
-            });
-
-            chrome.runtime.sendMessage({ type: Message.CHANGED_DATA }, response => {
-              // const conSearchTmp = new ConSearch();
-              // conSearchTmp.deserialize(response.conSearch);
-
-              // setConSearch(conSearchTmp);
-
-              makeToast('저장 완료!');
-            });
-
-            // setCurrentPage(3);
-          }}>
+          className="mt-3 cursor-pointer text-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+          onClick={handleSave}>
           저장
         </div>
 
