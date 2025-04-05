@@ -5,8 +5,8 @@ const ImageWithSkeleton = ({
   alt,
   doubleConType = -1,
 }: {
-  src: string;
-  alt: string;
+  src: string | undefined;
+  alt: string | undefined;
   doubleConType: number | undefined;
 }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -14,7 +14,7 @@ const ImageWithSkeleton = ({
   useEffect(() => {
     setIsLoading(true);
     const img = new Image();
-    img.src = src;
+    img.src = src || '';
     img.onload = () => setIsLoading(false);
 
     return () => {

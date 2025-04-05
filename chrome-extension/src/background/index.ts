@@ -346,7 +346,7 @@ conTreeInit().then(res => {
 
             const result = tmpRes?.conSearchTmp.searchTrie(query);
 
-            console.log(result);
+            // console.log(result);
 
             let result2 = new Set();
             for (let additionalCategory of additionalCategoryList) {

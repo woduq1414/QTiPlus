@@ -4,24 +4,13 @@ import Modal from '@src/components/Modal';
 import ImageWithSkeleton from '@src/components/ImageWithSkeleton';
 import Storage from '@extension/shared/lib/storage';
 import makeToast from '@src/functions/toast';
+import { DetailDataDouble } from '@extension/shared/lib/models/DetailData';
 
 interface DoubleConPresetEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  doubleConPresetEditData: {
-    firstDoubleCon: any;
-    secondDoubleCon: any;
-    tag: string;
-    presetKey: string;
-  };
-  setDoubleConPresetEditData: React.Dispatch<
-    React.SetStateAction<{
-      firstDoubleCon: any;
-      secondDoubleCon: any;
-      tag: string;
-      presetKey: string;
-    }>
-  >;
+  doubleConPresetEditData: DetailDataDouble;
+  setDoubleConPresetEditData: React.Dispatch<React.SetStateAction<DetailDataDouble>>;
   setIsDoubleConPresetEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -66,6 +55,14 @@ const DoubleConPresetEditModal: React.FC<DoubleConPresetEditModalProps> = ({
     // 딕셔너리 형태로 처리
     const presetKey = doubleConPresetEditData.presetKey;
 
+    if (
+      presetKey === undefined ||
+      doubleConPresetEditData.firstDoubleCon === null ||
+      doubleConPresetEditData.secondDoubleCon === null
+    ) {
+      return;
+    }
+
     // 이미 존재하는 경우 업데이트, 없는 경우 추가
     prevCustomConList['doubleConPreset'][presetKey] = {
       presetKey: doubleConPresetEditData.presetKey,
@@ -109,7 +106,7 @@ const DoubleConPresetEditModal: React.FC<DoubleConPresetEditModalProps> = ({
           </div>
         </div>
 
-        {doubleConPresetEditData.firstDoubleCon && (
+        {doubleConPresetEditData.firstDoubleCon && doubleConPresetEditData.secondDoubleCon && (
           <div className="flex flex-row w-[200px]">
             <ImageWithSkeleton
               src={doubleConPresetEditData.firstDoubleCon.imgPath}
@@ -136,10 +133,10 @@ const DoubleConPresetEditModal: React.FC<DoubleConPresetEditModalProps> = ({
             tabIndex={0}
             value={doubleConPresetEditData.tag}
             onChange={e => {
-              setDoubleConPresetEditData({
-                ...doubleConPresetEditData,
+              setDoubleConPresetEditData(prev => ({
+                ...prev,
                 tag: e.target.value,
-              });
+              }));
             }}
             ref={inputRef}
             onKeyDown={e => {

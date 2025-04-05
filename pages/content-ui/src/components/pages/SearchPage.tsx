@@ -29,6 +29,9 @@ import Storage from '@extension/shared/lib/storage';
 import { Message } from '@extension/shared/lib/enums/Message';
 import { Page } from '@src/enums/Page';
 import DoubleConPresetEditModal from '@src/components/modals/DoubleConPresetEditModal';
+import { DetailDataDouble, DetailDataSingle } from '@extension/shared/lib/models/DetailData';
+import { RecentUsedCon } from '@extension/shared/lib/models/RecentUsedCon';
+import { RecentUsedDoubleCon } from '@extension/shared/lib/models/RecentUsedDoubleCon';
 
 const SearchPage: React.FC = () => {
   const pageSize = 16;
@@ -49,11 +52,11 @@ const SearchPage: React.FC = () => {
 
   const [isBigCon, setIsBigCon] = useState<boolean>(false);
 
-  const [firstDoubleCon, setFirstDoubleCon] = useState<any>(null);
+  const [firstDoubleCon, setFirstDoubleCon] = useState<DetailDataSingle | null>(null);
 
-  const [recentUsedConList, setRecentUsedConList] = useState<any[]>([]);
+  const [recentUsedConList, setRecentUsedConList] = useState<RecentUsedCon[]>([]);
 
-  const [recentUsedDoubleConList, setRecentUsedDoubleConList] = useState<any[]>([]);
+  const [recentUsedDoubleConList, setRecentUsedDoubleConList] = useState<RecentUsedDoubleCon[]>([]);
 
   const [queryPage, setQueryPage] = useState<number>(1);
   const [queryMaxPage, setQueryMaxPage] = useState<number>(1);
@@ -62,13 +65,13 @@ const SearchPage: React.FC = () => {
 
   const [queryDoubleConCount, setQueryDoubleConCount] = useState<number>(0);
 
-  const [favoriteConList, setFavoriteConList] = useState<any>({});
+  const [favoriteConList, setFavoriteConList] = useState<{ [key: string]: boolean }>({});
 
   const [bigConExpire, setBigConExpire] = useState<number>(0);
 
   const [isDoubleConPresetEditModalOpen, setIsDoubleConPresetEditModalOpen] = useState(false);
 
-  const [doubleConPresetEditData, setDoubleConPresetEditData] = useState<any>({
+  const [doubleConPresetEditData, setDoubleConPresetEditData] = useState<DetailDataDouble>({
     firstDoubleCon: null,
     secondDoubleCon: null,
     tag: '',
@@ -185,7 +188,6 @@ const SearchPage: React.FC = () => {
         if (isDoubleCon && !firstDoubleCon) {
           setOriginalQueryResult(res);
         } else {
-          console.log(res);
           setOriginalQueryResult(
             res.filter((con: { key: string }) => {
               return !con.key.includes('/');

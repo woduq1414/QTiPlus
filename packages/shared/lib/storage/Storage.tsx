@@ -2,8 +2,8 @@ import exp from 'constants';
 import { UserConfig } from '../models/UserConfig.js';
 import { CustomConList } from '../models/CustomConList.js';
 import { FavoriteConList } from '../models/FavoriteConList.js';
-import { RecentUsedConList } from '../models/RecentUsedConList.js';
-import { RecentUsedDoubleConList } from '../models/RecentUsedDoubleConList.js';
+import { RecentUsedCon } from '../models/RecentUsedCon.js';
+import { RecentUsedDoubleCon } from '../models/RecentUsedDoubleCon.js';
 
 const readLocalStorage = async <T,>(key: string): Promise<T | null> => {
   return new Promise<T | null>((resolve, reject) => {
@@ -158,7 +158,7 @@ class Storage {
     return this.get<any>(`RecentUsedConList_${this.userId}`, isUseCache);
   }
 
-  static async setRecentUsedConList(value: any): Promise<RecentUsedConList[] | null> {
+  static async setRecentUsedConList(value: any): Promise<RecentUsedCon[] | null> {
     await this.set(`RecentUsedConList_${this.userId}`, value);
     return value;
   }
@@ -171,7 +171,7 @@ class Storage {
     return this.get<any>(`RecentUsedDoubleConList_${this.userId}`, isUseCache);
   }
 
-  static async setRecentUsedDoubleConList(value: any): Promise<RecentUsedDoubleConList[] | null> {
+  static async setRecentUsedDoubleConList(value: any): Promise<RecentUsedDoubleCon[] | null> {
     await this.set(`RecentUsedDoubleConList_${this.userId}`, value);
     return value;
   }

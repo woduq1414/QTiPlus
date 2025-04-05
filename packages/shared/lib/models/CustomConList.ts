@@ -1,5 +1,4 @@
 import { DetailData, DetailDataSingle } from './DetailData.js';
-import { RecentUsedConList } from './RecentUsedConList.js';
 
 export interface CustomConList {
   conLabelList: ConLabelList;

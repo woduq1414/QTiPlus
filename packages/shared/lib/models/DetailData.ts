@@ -11,10 +11,10 @@ export interface DetailDataSingle {
 
 export interface DetailDataDouble {
   presetKey?: string;
-  firstDoubleCon: DetailDataSingle;
-  secondDoubleCon: DetailDataSingle;
+  firstDoubleCon: DetailDataSingle | null;
+  secondDoubleCon: DetailDataSingle | null;
   tag: string;
-  who: string[];
+  who?: string[];
   isDoubleCon?: boolean;
 }
 
