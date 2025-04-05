@@ -30,6 +30,7 @@ const ConListPage: React.FC = () => {
     conLabelList,
     doubleConPreset,
     isHideState,
+    setIsHideState,
     toggleIsHide,
     syncConList,
     saveHideState,
@@ -51,6 +52,23 @@ const ConListPage: React.FC = () => {
     };
     reader.readAsText(file);
   }, []);
+
+  useEffect(() => {
+    setIsHideState(prevState => {
+      const updatedState = { ...prevState };
+
+      // data의 key마다 state를 동기화 (새로운 key만 추가)
+      if (!userPackageData) return updatedState;
+
+      Object.entries(userPackageData).forEach(([key, value]) => {
+        if (!(key in updatedState)) {
+          updatedState[key] = (value as { isHide: boolean }).isHide;
+        }
+      });
+
+      return updatedState;
+    });
+  }, [userPackageData]); // data가 변경될 때 실행
 
   const handleSave = useCallback(async () => {
     await saveHideState(isHideState);

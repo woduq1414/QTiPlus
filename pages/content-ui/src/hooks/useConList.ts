@@ -115,6 +115,7 @@ export const useConList = (userId: string, setUserPackageData: (data: any) => vo
     conLabelList,
     doubleConPreset,
     isHideState,
+    setIsHideState,
     toggleIsHide,
     syncConList,
     saveHideState,
