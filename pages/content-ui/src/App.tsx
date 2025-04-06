@@ -69,7 +69,12 @@ function Router() {
       });
     });
 
-    chrome.runtime.sendMessage;
+    setInterval(
+      () => {
+        chrome.runtime.sendMessage({ type: Message.KEEP_ALIVE });
+      },
+      1000 * 60 * 2,
+    ); // 2분마다 ping
   }, []);
 
   useEffect(() => {

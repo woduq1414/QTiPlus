@@ -25,4 +25,7 @@ export enum Message {
 
   // 동기화 진행 상황 메시지
   SYNC_PROGRESS = 'SYNC_PROGRESS',
+
+  // 살아있게 유지하는 메시지
+  KEEP_ALIVE = 'KEEP_ALIVE',
 }

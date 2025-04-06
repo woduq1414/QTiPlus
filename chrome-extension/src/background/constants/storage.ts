@@ -43,4 +43,5 @@ export const DEFAULT_REPLACE_WORD_DATA = {
   개추: ['추천', '게추', '따봉'],
   비추: ['붐따'],
   짝짝: ['박수'],
+  충성: ['경례', '^^7'],
 } as const;

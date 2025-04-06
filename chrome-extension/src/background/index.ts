@@ -237,6 +237,7 @@ async function handleChangedData(message: any, sender: any, sendResponse: any): 
 
 async function handleSearchCon(message: any, sender: any, sendResponse: any): Promise<boolean> {
   let query = message.query as string;
+
   const userId = message.userId as string;
 
   query = query.replaceAll(' ', '');
@@ -270,7 +271,13 @@ async function handleSearchCon(message: any, sender: any, sendResponse: any): Pr
 
     let queryList = [];
 
-    let koQuery = convertQwertyToHangul(query);
+    let koQuery;
+
+    try {
+      koQuery = convertQwertyToHangul(query);
+    } catch (error) {
+      koQuery = query;
+    }
 
     if (query === koQuery) {
       queryList = [query];
@@ -311,7 +318,7 @@ async function handleSearchCon(message: any, sender: any, sendResponse: any): Pr
       if (userConfig?.isChoseongSearch) {
         result3 = conSearchManager.searchChoseongTrie(convertDoubleConsonantToSingle(query));
       }
-      console.log(userConfig, 'result3');
+      // console.log(userConfig, 'result3');
 
       let queryResult = new Set([...Array.from(result), ...Array.from(result2), ...Array.from(result3)]);
 
@@ -748,6 +755,7 @@ conTreeInit().then(res => {});
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const handler = messageHandlers[message.type];
+  console.log('Message received:', message);
   if (handler) {
     handler(message, sender, sendResponse);
     return true;
