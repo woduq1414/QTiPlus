@@ -1013,7 +1013,7 @@ const SearchPage: React.FC = () => {
 
     if (shouldReturn) {
       if (!e.ctrlKey) {
-        setQueryResult(undefined);
+        // setQueryResult(undefined);
         // setOriginalQueryResult(undefined);
         setSearchInput('');
         searchInputRef.current?.focus();
@@ -1174,7 +1174,7 @@ const SearchPage: React.FC = () => {
           )}
 
         {
-          <div className="flex flex-wrap w-[350px] gap-1">
+          <div className="flex flex-wrap w-[350px] gap-1 ">
             {debouncedSearchText !== '' &&
               queryResult &&
               Array.from(queryResult).map((detailData, index) => {

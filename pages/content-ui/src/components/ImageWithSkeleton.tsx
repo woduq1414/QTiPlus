@@ -121,7 +121,7 @@ const ImageWithSkeleton = ({
         ref={imgRef}
         src={displaySrc}
         alt={alt}
-        className={`object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'} 
+        className={`object-cover transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} 
         ${doubleConType === 0 ? 'rounded-tl-md rounded-bl-md' : ''}
         ${doubleConType === 1 ? 'rounded-tr-md rounded-br-md' : ''}
         ${doubleConType === -1 ? 'rounded-md' : ''}

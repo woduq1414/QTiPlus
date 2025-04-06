@@ -2,21 +2,16 @@ import 'webextension-polyfill';
 import { exampleThemeStorage } from '@extension/storage';
 import Storage from '@extension/shared/lib/storage';
 import { Message } from '@extension/shared/lib/enums/Message';
-
+import { convertDoubleConsonantToSingle, convertKoreanCharToChoseong } from '@extension/shared/lib/utils/korean';
+import { hashSHA256 } from '@extension/shared/lib/utils/hash';
+import { DEFAULT_USER_CONFIG, DEFAULT_REPLACE_WORD_DATA } from '@extension/shared/lib/constants/storage';
 import ConSearch from './ConSearch';
-
-import * as amplitude from '@amplitude/analytics-browser';
-
-// console.log(process.env['CEB_EXAMPLE'], 'ceb_example');
-// console.log(process.env["CEB_GA_MEASUREMENT_ID"], "ceb_ga_measurement_id");
-
 import { convertQwertyToHangul } from 'es-hangul';
-// import mixpanel from "mixpanel-browser";
-// import { track } from 'mixpanel-browser';
+
 import { v4 as uuidv4 } from 'uuid';
-import { hash } from 'crypto';
+
 import { ConLabelList, CustomConList, DoubleConPreset } from '@extension/shared/lib/models/CustomConList';
-import { DetailData, DetailDataSingle } from '@extension/shared/lib/models/DetailData';
+import { DetailData, DetailDataSingle, DetailDataDouble } from '@extension/shared/lib/models/DetailData';
 import { UserPackageConData } from '@extension/shared/lib/models/UserPackageData';
 import { FavoriteConList } from '@extension/shared/lib/models/FavoriteConList';
 
@@ -32,97 +27,71 @@ console.log(process.env['CEB_EXTENSION_VERSION'], 'version');
 
 const AMPLITUDE_KEY = process.env['CEB_AMPLITUDE_KEY'] as string;
 
-let cachedSearchResult: any = {};
+// ConSearchManager 클래스 정의
+class ConSearchManager {
+  private conSearch: ConSearch;
+  private conSearchChoseong: ConSearch;
+  private detailIdxDict: { [key: string]: DetailData };
+  private cachedSearchResult: { [key: string]: string[] };
 
-console.log('Background loaded');
-
-function convertDoubleConsonantToSingle(str: string) {
-  const doubleConsonant = {
-    ㄳ: 'ㄱㅅ',
-    ㄵ: 'ㄴㅈ',
-    ㄶ: 'ㄴㅎ',
-    ㄺ: 'ㄹㄱ',
-    ㄻ: 'ㄹㅁ',
-    ㄼ: 'ㄹㅂ',
-    ㄽ: 'ㄹㅅ',
-    ㄾ: 'ㄹㅌ',
-    ㄿ: 'ㄹㅍ',
-    ㅀ: 'ㄹㅎ',
-    ㅄ: 'ㅂㅅ',
-  } as { [key: string]: string };
-
-  let result = '';
-  for (let i = 0; i < str.length; i++) {
-    const char = str[i];
-    if (doubleConsonant[char] !== undefined) {
-      result += doubleConsonant[char];
-    } else {
-      result += char;
-    }
-  }
-  // console.log(result);
-  return result;
-}
-
-function convertKoreanCharToChoseong(str: string) {
-  const choseong = [
-    'ㄱ',
-    'ㄲ',
-    'ㄴ',
-    'ㄷ',
-    'ㄸ',
-    'ㄹ',
-    'ㅁ',
-    'ㅂ',
-    'ㅃ',
-    'ㅅ',
-    'ㅆ',
-    'ㅇ',
-    'ㅈ',
-    'ㅉ',
-    'ㅊ',
-    'ㅋ',
-    'ㅌ',
-    'ㅍ',
-    'ㅎ',
-  ] as string[];
-
-  const result = [];
-
-  const doubleChoseong = {
-    ㄳ: ['ㄱ', 'ㅅ'],
-    ㄵ: ['ㄴ', 'ㅈ'],
-    ㄶ: ['ㄴ', 'ㅎ'],
-    ㄺ: ['ㄹ', 'ㄱ'],
-    ㄻ: ['ㄹ', 'ㅁ'],
-    ㄼ: ['ㄹ', 'ㅂ'],
-    ㄽ: ['ㄹ', 'ㅅ'],
-    ㄾ: ['ㄹ', 'ㅌ'],
-    ㄿ: ['ㄹ', 'ㅍ'],
-    ㅀ: ['ㄹ', 'ㅎ'],
-    ㅄ: ['ㅂ', 'ㅅ'],
-  } as { [key: string]: string[] };
-
-  for (let i = 0; i < str.length; i++) {
-    const code = str.charCodeAt(i);
-
-    if (code >= 44032 && code <= 55203) {
-      const choseongIndex = Math.floor((code - 44032) / 588);
-      result.push(choseong[choseongIndex]);
-    } else {
-      // ㄳ, ㅄ과 같은 겹자음일 경우 두 개 초성으로 분리하여 추가
-
-      const char = str[i];
-      if (doubleChoseong[char] !== undefined) {
-        result.push(...doubleChoseong[char]);
-      }
-    }
+  constructor() {
+    this.conSearch = new ConSearch();
+    this.conSearchChoseong = new ConSearch();
+    this.detailIdxDict = {};
+    this.cachedSearchResult = {};
   }
 
-  return result.join('');
+  public getConSearch(): ConSearch {
+    return this.conSearch;
+  }
+
+  public getConSearchChoseong(): ConSearch {
+    return this.conSearchChoseong;
+  }
+
+  public getDetailIdxDict(): { [key: string]: DetailData } {
+    return this.detailIdxDict;
+  }
+
+  public setConSearch(conSearch: ConSearch): void {
+    this.conSearch = conSearch;
+  }
+
+  public setConSearchChoseong(conSearchChoseong: ConSearch): void {
+    this.conSearchChoseong = conSearchChoseong;
+  }
+
+  public setDetailIdxDict(detailIdxDict: { [key: string]: DetailData }): void {
+    this.detailIdxDict = detailIdxDict;
+  }
+
+  public searchTrie(query: string): Set<string> {
+    return this.conSearch.searchTrie(query);
+  }
+
+  public searchChoseongTrie(query: string): Set<string> {
+    return this.conSearchChoseong.searchTrie(query);
+  }
+
+  public getDetailData(key: string): DetailData | undefined {
+    return this.detailIdxDict[key];
+  }
+
+  public getCachedSearchResult(query: string): string[] | undefined {
+    return this.cachedSearchResult[query];
+  }
+
+  public setCachedSearchResult(query: string, result: string[]): void {
+    this.cachedSearchResult[query] = result;
+  }
+
+  public clearCache(): void {
+    this.cachedSearchResult = {};
+  }
 }
 
-let tmpRes: any = undefined;
+// 전역 변수로 ConSearchManager 인스턴스 생성
+let conSearchManager: ConSearchManager = new ConSearchManager();
 
 async function loadJSON() {
   try {
@@ -157,9 +126,7 @@ async function conTreeInit() {
   const startT = performance.now();
 
   const conSearchTmp = new ConSearch();
-
   const conSearchChoseongTmp = new ConSearch();
-
   let detailIdxDictTmp = {} as { [key: string]: DetailData };
 
   const conInfoData = await getConInfoData();
@@ -238,7 +205,10 @@ async function conTreeInit() {
     }
   }
 
-  tmpRes = { conSearchTmp, conSearchChoseongTmp, detailIdxDictTmp };
+  // ConSearchManager 인스턴스에 데이터 설정
+  conSearchManager.setConSearch(conSearchTmp);
+  conSearchManager.setConSearchChoseong(conSearchChoseongTmp);
+  conSearchManager.setDetailIdxDict(detailIdxDictTmp);
 
   const endT = performance.now();
 
@@ -247,660 +217,546 @@ async function conTreeInit() {
   return { conSearchTmp, conSearchChoseongTmp, detailIdxDictTmp };
 }
 
-conTreeInit().then(res => {
-  console.log(res);
+// 메시지 이벤트 핸들러 함수들
+async function handleGetInitData(message: any, sender: any, sendResponse: any): Promise<boolean> {
+  getConInfoData();
+  initUserConfigStorage();
+  initReplaceWordDataStorage();
+  return true;
+}
 
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === Message.GET_INIT_DATA) {
-      getConInfoData();
-      initUserConfigStorage();
-      initReplaceWordDataStorage();
-
-      // JSON으로 변환하여 보냄
-      return true;
-    } else if (message.type === Message.CHANGED_DATA) {
-      async function func() {
-        const res2 = await conTreeInit();
-
-        sendResponse({
-          status: 'success',
-          // conSearch: res2?.conSearchTmp.serialize(),
-        });
-      }
-
-      func();
-
-      return true;
-    } else if (message.type === Message.SEARCH_CON) {
-      async function func() {
-        let query = message.query as string;
-        const userId = message.userId as string;
-
-        query = query.replaceAll(' ', '');
-
-        let finalResult = new Set();
-        const detailIdxDict = tmpRes?.detailIdxDictTmp;
-
-        const userPackageData = await Storage.getUserPackageData(true);
-
-        if (userPackageData === null) {
-          sendResponse({
-            res: JSON.stringify([]),
-            detailRes: JSON.stringify([]),
-          });
-          return true;
-        }
-
-        if (cachedSearchResult[query] !== undefined) {
-          finalResult = new Set(cachedSearchResult[query]);
-        } else {
-          // console.log(query, '@@');
-          let who = '';
-
-          if (query.includes('#')) {
-            who = query.split('#')[1].toUpperCase();
-            who = who.replaceAll('ㅂ', 'Q').replaceAll('ㅈ', 'W').replaceAll('ㄷ', 'E').replaceAll('ㄱ', 'R');
-            who = who.replaceAll('ㅃ', 'Q').replaceAll('ㅉ', 'W').replaceAll('ㄸ', 'E').replaceAll('ㄲ', 'R');
-
-            query = query.split('#')[0];
-          }
-
-          // 만약 query가 영어로만 구성되어 있다면
-          let queryList = [];
-
-          // console.log(/^[a-zA-Z]+$/.test(query), query ,)
-          // console.log(/^[a-zA-Z]+$/.test(query), query);
-          let koQuery = convertQwertyToHangul(query);
-
-          // console.log(koQuery, '!!');
-
-          if (query === koQuery) {
-            queryList = [query];
-          } else {
-            queryList = [query, koQuery];
-          }
-
-          function includesAny(query: string, list: string[]): boolean {
-            return list.some(q => query.includes(q));
-          }
-          let additionalCategoryList = [];
-
-          let replaceWordData = await Storage.getReplaceWordData(true);
-
-          if (replaceWordData === null) {
-            replaceWordData = {};
-          }
-          // console.log(replaceWordData);
-
-          for (let i = 0; i < queryList.length; i++) {
-            const query = queryList[i] as string;
-
-            // console.log(query, '!!!');
-
-            for (let key in replaceWordData) {
-              if (includesAny(query, [key, ...replaceWordData[key]])) {
-                additionalCategoryList.push(key);
-              }
-            }
-
-            // console.log(additionalCategoryList);
-
-            const result = tmpRes?.conSearchTmp.searchTrie(query);
-
-            // console.log(result);
-
-            let result2 = new Set();
-            for (let additionalCategory of additionalCategoryList) {
-              result2 = new Set([
-                ...Array.from(result2),
-                ...Array.from(tmpRes?.conSearchTmp.searchTrie(additionalCategory)),
-              ]);
-            }
-            // const result2 = tmpRes?.conSearchTmp.searchTrie(additionalCategory);
-
-            let result3 = new Set();
-
-            // console.log(storageData['UserConfig'], '!!');
-            const userConfig = await Storage.getUserConfig(true);
-            if (userConfig?.isChoseongSearch) {
-              result3 = tmpRes?.conSearchChoseongTmp.searchTrie(convertDoubleConsonantToSingle(query));
-            } else {
-            }
-
-            let queryResult = new Set([...Array.from(result), ...Array.from(result2), ...Array.from(result3)]);
-
-            if (who !== '') {
-              for (let key of Array.from(queryResult)) {
-                let f = false;
-                for (let i = 0; i < who.length; i++) {
-                  if (detailIdxDict[key as string].who.includes(who[i])) {
-                    f = true;
-                    break;
-                  }
-                }
-                if (!f) {
-                  queryResult.delete(key);
-                }
-              }
-            }
-
-            for (let key of Array.from(queryResult)) {
-              const packageIdx = detailIdxDict[key as string].packageIdx;
-              const detailData = detailIdxDict[key as string];
-
-              if (detailData.isDoubleCon == true) {
-                const firstCon = detailData.firstDoubleCon;
-                const secondCon = detailData.secondDoubleCon;
-
-                const firstConPackageIdx = firstCon.packageIdx;
-                const secondConPackageIdx = secondCon.packageIdx;
-
-                console.log(firstCon, secondCon, '!!');
-
-                if (userPackageData[firstConPackageIdx] === undefined) {
-                  queryResult.delete(key);
-                  continue;
-                } else {
-                  if (userPackageData[firstConPackageIdx].isHide) {
-                    queryResult.delete(key);
-                    continue;
-                  }
-                }
-
-                if (userPackageData[secondConPackageIdx] === undefined) {
-                  queryResult.delete(key);
-                  continue;
-                } else {
-                  if (userPackageData[secondConPackageIdx].isHide) {
-                    queryResult.delete(key);
-                    continue;
-                  }
-                }
-              } else {
-                if (userPackageData[packageIdx] === undefined) {
-                  queryResult.delete(key);
-                  continue;
-                } else {
-                  if (userPackageData[packageIdx].isHide) {
-                    queryResult.delete(key);
-                    continue;
-                  }
-                }
-              }
-            }
-
-            finalResult = new Set([...Array.from(finalResult), ...Array.from(queryResult)]);
-          }
-        }
-
-        // for(let key of Array.from(finalResult)){
-        //   if(
-        //   }
-        // }
-        cachedSearchResult[query] = Array.from(finalResult);
-
-        const favoriteConList = (await Storage.getFavoriteConList(true)) as FavoriteConList;
-
-        // move favorite to top
-
-        let doubleConList = new Set();
-        let favoriteList = new Set();
-        let otherList = new Set();
-
-        for (let key of Array.from(finalResult)) {
-          const detailData = detailIdxDict[key as string];
-
-          if (detailData.isDoubleCon == true) {
-            doubleConList.add(key);
-          } else {
-            const detailIdx = userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx;
-
-            if (favoriteConList !== null && favoriteConList[detailIdx] !== undefined) {
-              favoriteList.add(key);
-            } else {
-              otherList.add(key);
-            }
-          }
-        }
-
-        finalResult.clear();
-
-        finalResult = new Set([
-          ...Array.from(doubleConList),
-          ...Array.from(favoriteList),
-          ...Array.from(otherList),
-        ]) as Set<string>;
-
-        console.log(finalResult, 'finalResult');
-
-        sendResponse({
-          res: JSON.stringify(Array.from(finalResult)),
-          detailRes: JSON.stringify(
-            (Array.from(finalResult) as string[]).map((key: string) => {
-              return {
-                key: key,
-                ...detailIdxDict[key],
-              };
-            }),
-          ),
-        });
-        return true;
-      }
-
-      func();
-    }
-    return true;
+async function handleChangedData(message: any, sender: any, sendResponse: any): Promise<boolean> {
+  const res2 = await conTreeInit();
+  sendResponse({
+    status: 'success',
   });
-});
+  return true;
+}
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === Message.GET_ID_COOKIE) {
-    chrome.cookies.get({ url: 'https://gall.dcinside.com', name: 'mc_enc' }, function (cookie) {
-      if (cookie) {
-        const userId = cookie.value;
-        const hashSHA256 = async (message: string) => {
-          const encoder = new TextEncoder();
-          const data = encoder.encode(message);
-          const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-          const hashArray = Array.from(new Uint8Array(hashBuffer));
-          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-          return hashHex;
-        };
+async function handleSearchCon(message: any, sender: any, sendResponse: any): Promise<boolean> {
+  let query = message.query as string;
+  const userId = message.userId as string;
 
-        hashSHA256(userId).then(hashedUserId => {
-          Storage.setUserId(hashedUserId);
-          Storage.saveCurrentUserId(hashedUserId);
+  query = query.replaceAll(' ', '');
 
-          sendResponse({ userId: hashedUserId });
-        });
-      } else {
-        sendResponse({ userId: null });
-      }
+  let finalResult = new Set();
+  const detailIdxDict = conSearchManager.getDetailIdxDict();
+
+  const userPackageData = await Storage.getUserPackageData(true);
+
+  if (userPackageData === null) {
+    sendResponse({
+      res: JSON.stringify([]),
+      detailRes: JSON.stringify([]),
     });
-
     return true;
-  } else if (message.type === Message.SYNC_CON_LIST) {
-    async function func() {
-      const ci_t = message.data.ci_t;
+  }
 
-      const oldUserPackageData = await Storage.getUserPackageData(false);
+  const cachedResult = conSearchManager.getCachedSearchResult(query);
+  if (cachedResult !== undefined) {
+    finalResult = new Set(cachedResult);
+  } else {
+    let who = '';
 
-      async function fetchList(page: number) {
-        // document.cookie = cookies;
-        async function fetchWithRetry(ci_t: string, page: number, maxRetries = 5) {
-          let attempts = 0;
+    if (query.includes('#')) {
+      who = query.split('#')[1].toUpperCase();
+      who = who.replaceAll('ㅂ', 'Q').replaceAll('ㅈ', 'W').replaceAll('ㄷ', 'E').replaceAll('ㄱ', 'R');
+      who = who.replaceAll('ㅃ', 'Q').replaceAll('ㅉ', 'W').replaceAll('ㄸ', 'E').replaceAll('ㄲ', 'R');
 
-          while (attempts < maxRetries) {
-            const response = await fetch('https://gall.dcinside.com/dccon/lists', {
-              headers: {
-                accept: '*/*',
-                'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
-                'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"Windows"',
-                'sec-fetch-dest': 'empty',
-                'sec-fetch-mode': 'cors',
-                'sec-fetch-site': 'same-origin',
-                'x-requested-with': 'XMLHttpRequest',
-              },
-              referrer: 'https://gall.dcinside.com/mgallery/board/view',
-              referrerPolicy: 'unsafe-url',
-              body: `&target=icon&page=${page}`,
-              method: 'POST',
-              mode: 'cors',
-              credentials: 'same-origin',
-            });
+      query = query.split('#')[0];
+    }
 
-            const responseText = await response.text();
+    let queryList = [];
 
-            function IsJsonString(str: string) {
-              try {
-                var json = JSON.parse(str);
-                return typeof json === 'object';
-              } catch (e) {
-                return false;
+    let koQuery = convertQwertyToHangul(query);
+
+    if (query === koQuery) {
+      queryList = [query];
+    } else {
+      queryList = [query, koQuery];
+    }
+
+    function includesAny(query: string, list: string[]): boolean {
+      return list.some(q => query.includes(q));
+    }
+    let additionalCategoryList = [];
+
+    let replaceWordData = await Storage.getReplaceWordData(true);
+
+    if (replaceWordData === null) {
+      replaceWordData = {};
+    }
+
+    for (let i = 0; i < queryList.length; i++) {
+      const query = queryList[i] as string;
+
+      for (let key in replaceWordData) {
+        if (includesAny(query, [key, ...replaceWordData[key]])) {
+          additionalCategoryList.push(key);
+        }
+      }
+
+      const result = conSearchManager.searchTrie(query);
+
+      let result2 = new Set();
+      for (let additionalCategory of additionalCategoryList) {
+        result2 = new Set([...Array.from(result2), ...Array.from(conSearchManager.searchTrie(additionalCategory))]);
+      }
+
+      let result3 = new Set();
+
+      const userConfig = await Storage.getUserConfig(true);
+      if (userConfig?.isChoseongSearch) {
+        result3 = conSearchManager.searchChoseongTrie(convertDoubleConsonantToSingle(query));
+      }
+
+      let queryResult = new Set([...Array.from(result), ...Array.from(result2), ...Array.from(result3)]);
+
+      if (who !== '') {
+        for (let key of Array.from(queryResult)) {
+          let f = false;
+          const detailData = detailIdxDict[key as string];
+          if (detailData && detailData.who) {
+            for (let i = 0; i < who.length; i++) {
+              if (detailData.who.includes(who[i])) {
+                f = true;
+                break;
               }
             }
+          }
+          if (!f) {
+            queryResult.delete(key);
+          }
+        }
+      }
 
-            if (response.status === 302 || IsJsonString(responseText) === false) {
-              console.warn(`Request redirected (302), retrying... (${attempts + 1}/${maxRetries})`);
-              attempts++;
-              await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기 후 재시도
+      for (let key of Array.from(queryResult)) {
+        const detailData = detailIdxDict[key as string];
+        if (!detailData) continue;
+
+        if (detailData.isDoubleCon === true) {
+          // DetailDataDouble 타입으로 처리
+          const doubleData = detailData as DetailDataDouble;
+          if (!doubleData.firstDoubleCon || !doubleData.secondDoubleCon) continue;
+
+          const firstCon = doubleData.firstDoubleCon;
+          const secondCon = doubleData.secondDoubleCon;
+
+          const firstConPackageIdx = firstCon.packageIdx;
+          const secondConPackageIdx = secondCon.packageIdx;
+
+          if (userPackageData[firstConPackageIdx] === undefined) {
+            queryResult.delete(key);
+            continue;
+          } else {
+            if (userPackageData[firstConPackageIdx].isHide) {
+              queryResult.delete(key);
               continue;
             }
-
-            return responseText; // 정상 응답 반환
           }
 
-          throw new Error('Max retries reached for fetching data.');
-        }
+          if (userPackageData[secondConPackageIdx] === undefined) {
+            queryResult.delete(key);
+            continue;
+          } else {
+            if (userPackageData[secondConPackageIdx].isHide) {
+              queryResult.delete(key);
+              continue;
+            }
+          }
+        } else {
+          // DetailDataSingle 타입으로 처리
+          const singleData = detailData as DetailDataSingle;
+          const packageIdx = singleData.packageIdx;
 
-        const response = await fetchWithRetry(ci_t, page);
-        const data = JSON.parse(response);
-
-        if (sender.tab) {
-          if (sender.tab?.id !== undefined) {
-            chrome.tabs.sendMessage(sender.tab.id, {
-              type: 'SYNC_PROGRESS',
-              data: {
-                page: page,
-                maxPage: data.max_page,
-              },
-            });
+          if (userPackageData[packageIdx] === undefined) {
+            queryResult.delete(key);
+            continue;
+          } else {
+            if (userPackageData[packageIdx].isHide) {
+              queryResult.delete(key);
+              continue;
+            }
           }
         }
-
-        // 500 밀리 초 후에 리턴
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return data;
       }
 
-      let data = await fetchList(0);
+      finalResult = new Set([...Array.from(finalResult), ...Array.from(queryResult)]);
+    }
+  }
 
-      if (data.bigcon === undefined) {
-        sendResponse({ data: {}, error: '로그인이 필요합니다.' });
+  const resultArray = Array.from(finalResult) as string[];
+  conSearchManager.setCachedSearchResult(query, resultArray);
+
+  const favoriteConList = (await Storage.getFavoriteConList(true)) as FavoriteConList;
+
+  let doubleConList = new Set();
+  let favoriteList = new Set();
+  let otherList = new Set();
+
+  for (let key of Array.from(finalResult)) {
+    const detailData = detailIdxDict[key as string];
+    if (!detailData) continue;
+
+    if (detailData.isDoubleCon === true) {
+      doubleConList.add(key);
+    } else {
+      // DetailDataSingle 타입으로 처리
+      const singleData = detailData as DetailDataSingle;
+      const packageIdx = singleData.packageIdx;
+      const sort = singleData.sort;
+
+      if (
+        userPackageData[packageIdx] &&
+        userPackageData[packageIdx].conList &&
+        userPackageData[packageIdx].conList[sort] &&
+        userPackageData[packageIdx].conList[sort].detailIdx
+      ) {
+        const detailIdx = userPackageData[packageIdx].conList[sort].detailIdx;
+
+        if (favoriteConList !== null && favoriteConList[detailIdx] !== undefined) {
+          favoriteList.add(key);
+        } else {
+          otherList.add(key);
+        }
+      } else {
+        otherList.add(key);
+      }
+    }
+  }
+
+  finalResult.clear();
+
+  finalResult = new Set([
+    ...Array.from(doubleConList),
+    ...Array.from(favoriteList),
+    ...Array.from(otherList),
+  ]) as Set<string>;
+
+  sendResponse({
+    res: JSON.stringify(Array.from(finalResult)),
+    detailRes: JSON.stringify(
+      (Array.from(finalResult) as string[]).map((key: string) => {
+        return {
+          key: key,
+          ...detailIdxDict[key],
+        };
+      }),
+    ),
+  });
+  return true;
+}
+
+async function handleGetIdCookie(message: any, sender: any, sendResponse: any): Promise<boolean> {
+  chrome.cookies.get({ url: 'https://gall.dcinside.com', name: 'mc_enc' }, function (cookie) {
+    if (cookie) {
+      const userId = cookie.value;
+      hashSHA256(userId).then(hashedUserId => {
+        Storage.setUserId(hashedUserId);
+        Storage.saveCurrentUserId(hashedUserId);
+
+        sendResponse({ userId: hashedUserId });
+      });
+    } else {
+      sendResponse({ userId: null });
+    }
+  });
+  return true;
+}
+
+async function handleSyncConList(message: any, sender: any, sendResponse: any): Promise<boolean> {
+  const ci_t = message.data.ci_t;
+  const oldUserPackageData = await Storage.getUserPackageData(false);
+
+  async function fetchList(page: number) {
+    async function fetchWithRetry(ci_t: string, page: number, maxRetries = 5) {
+      let attempts = 0;
+
+      while (attempts < maxRetries) {
+        const response = await fetch('https://gall.dcinside.com/dccon/lists', {
+          headers: {
+            accept: '*/*',
+            'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'x-requested-with': 'XMLHttpRequest',
+          },
+          referrer: 'https://gall.dcinside.com/mgallery/board/view',
+          referrerPolicy: 'unsafe-url',
+          body: `&target=icon&page=${page}`,
+          method: 'POST',
+          mode: 'cors',
+          credentials: 'same-origin',
+        });
+
+        const responseText = await response.text();
+
+        function IsJsonString(str: string) {
+          try {
+            var json = JSON.parse(str);
+            return typeof json === 'object';
+          } catch (e) {
+            return false;
+          }
+        }
+
+        if (response.status === 302 || IsJsonString(responseText) === false) {
+          console.warn(`Request redirected (302), retrying... (${attempts + 1}/${maxRetries})`);
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
+
+        return responseText;
+      }
+
+      throw new Error('Max retries reached for fetching data.');
+    }
+
+    const response = await fetchWithRetry(ci_t, page);
+    const data = JSON.parse(response);
+
+    if (sender.tab) {
+      if (sender.tab?.id !== undefined) {
+        chrome.tabs.sendMessage(sender.tab.id, {
+          type: 'SYNC_PROGRESS',
+          data: {
+            page: page,
+            maxPage: data.max_page,
+          },
+        });
+      }
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return data;
+  }
+
+  let data = await fetchList(0);
+
+  if (data.bigcon === undefined) {
+    sendResponse({ data: {}, error: '로그인이 필요합니다.' });
+    return true;
+  }
+
+  if (data.bigcon.status == 'enabled') {
+    const bigConExpire = data.bigcon.expire;
+    await Storage.setBigConExpire(bigConExpire);
+  }
+
+  const maxPage = data.max_page + 1;
+
+  function processData(data: any) {
+    const list = data.list;
+
+    const result: {
+      [key: number]: { packageIdx: number; conList: { [key: string]: any }; title: string; mainImg: string };
+    } = {};
+    list.forEach((item: any) => {
+      const detailList = item.detail;
+
+      if (detailList.length === 0) {
         return;
       }
 
-      if (data.bigcon.status == 'enabled') {
-        const bigConExpire = data.bigcon.expire;
-        await Storage.setBigConExpire(bigConExpire);
-      }
+      const packageIdx = detailList[0].package_idx;
 
-      const maxPage = data.max_page + 1;
-      // const maxPage = 1;
+      let isHide = false;
 
-      function processData(data: any) {
-        const list = data.list;
-
-        const result: {
-          [key: number]: { packageIdx: number; conList: { [key: string]: any }; title: string; mainImg: string };
-        } = {};
-        list.forEach((item: any) => {
-          const detailList = item.detail;
-
-          if (detailList.length === 0) {
-            return;
-          }
-
-          const packageIdx = detailList[0].package_idx;
-
-          let isHide = false;
-
-          if (oldUserPackageData !== null && oldUserPackageData[packageIdx] !== undefined) {
-            if (oldUserPackageData[packageIdx].isHide) {
-              isHide = true;
-            }
-          }
-
-          let packageResult: {
-            packageIdx: number;
-            conList: { [key: string]: UserPackageConData };
-            title: string;
-            mainImg: string;
-            isHide: boolean;
-          } = {
-            packageIdx: packageIdx,
-            conList: {},
-            title: item.title,
-            mainImg: item.main_img_url,
-            isHide: isHide,
-          };
-          detailList.forEach((detailItem: any) => {
-            const detailIdx = detailItem.detail_idx;
-            const sort = detailItem.sort;
-            packageResult.conList[sort] = {
-              detailIdx: detailIdx,
-              title: detailItem.title,
-              imgPath: detailItem.list_img,
-            };
-          });
-
-          result[packageIdx] = packageResult;
-        });
-
-        return result;
-      }
-
-      let allResult = {} as any;
-
-      for (let i = 0; i < maxPage; i++) {
-        if (i === 0) {
-          Object.assign(allResult, processData(data));
-        } else {
-          data = await fetchList(i);
-          Object.assign(allResult, processData(data));
+      if (oldUserPackageData !== null && oldUserPackageData[packageIdx] !== undefined) {
+        if (oldUserPackageData[packageIdx].isHide) {
+          isHide = true;
         }
       }
 
-      await Storage.setUserPackageData(allResult);
+      let packageResult: {
+        packageIdx: number;
+        conList: { [key: string]: UserPackageConData };
+        title: string;
+        mainImg: string;
+        isHide: boolean;
+      } = {
+        packageIdx: packageIdx,
+        conList: {},
+        title: item.title,
+        mainImg: item.main_img_url,
+        isHide: isHide,
+      };
+      detailList.forEach((detailItem: any) => {
+        const detailIdx = detailItem.detail_idx;
+        const sort = detailItem.sort;
+        packageResult.conList[sort] = {
+          detailIdx: detailIdx,
+          title: detailItem.title,
+          imgPath: detailItem.list_img,
+        };
+      });
 
-      sendResponse({ data: allResult });
-    }
-
-    func();
-  } else if (message.type === Message.UPDATE_HIDE_STATE) {
-    async function func() {
-      const userId = Storage.getUserId(true);
-      const hideState = message.data.hideState;
-
-      const storageKey = `UserPackageData_${userId}`;
-
-      console.log(await Storage.getUserId(true), 'userId');
-
-      let oldUserPackageData = await Storage.getUserPackageData(false);
-
-      for (let packageIdx in oldUserPackageData) {
-        oldUserPackageData[packageIdx].isHide = hideState[packageIdx];
-      }
-
-      await Storage.setUserPackageData(oldUserPackageData);
-
-      console.log(oldUserPackageData, 'oldUserPackageData');
-
-      sendResponse({ data: oldUserPackageData });
-    }
-
-    func();
-  } else if (message.type === Message.UPDATE_FAVORITE_CON_LIST) {
-    async function func() {
-      const favoriteConList = message.data.favoriteConList;
-
-      await Storage.setFavoriteConList(favoriteConList);
-
-      sendResponse({ success: true });
-    }
-
-    func();
-  } else if (message.type === Message.TRIGGER_EVENT) {
-    const action = message.action;
-    const data = message.data;
-
-    // amplitude.logEvent(action, data);
-
-    // console.log('trigger event', action, data);
-
-    const hashSHA256 = async (message: string) => {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(message);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      return hashHex;
-    };
-
-    Storage.getUserId(true).then(async (userId: any) => {
-      if (userId) {
-        const hashedInsertId = (await hashSHA256(`${JSON.stringify(data)}${action}${userId}`)).slice(0, 10);
-
-        Storage.getDeviceId(true).then(async (deviceId: any) => {
-          if (deviceId === null || deviceId === undefined) {
-            // set new deviceId
-
-            const newDeviceId = uuidv4();
-            await Storage.setDeviceId(newDeviceId);
-
-            deviceId = newDeviceId;
-          }
-
-          let now = Date.now();
-          let trackData = {
-            api_key: AMPLITUDE_KEY,
-            events: [
-              {
-                user_id: userId,
-                device_id: `${deviceId}`,
-                session_id: now,
-                time: now,
-                platform: 'Web',
-                language: 'ko',
-                insert_id: hashedInsertId,
-                event_type: action,
-                event_properties: {
-                  ...data,
-                  extensionVersion: process.env['CEB_EXTENSION_VERSION'] as string,
-                },
-
-                library: 'amplitude-ts/2.9.2',
-                user_agent: browserInfo.userAgent,
-              },
-            ],
-            options: {},
-            // "client_upload_time": now.toString(),
-          };
-
-          fetch('https://api2.amplitude.com/2/httpapi', {
-            method: 'POST',
-            body: JSON.stringify(trackData),
-            headers: {
-              accept: '*/*',
-              'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
-              'content-type': 'application/json',
-              priority: 'u=1, i',
-              'sec-fetch-dest': 'empty',
-              'sec-fetch-mode': 'cors',
-              'sec-fetch-site': 'cross-site',
-            },
-            mode: 'cors',
-            credentials: 'omit',
-            referrerPolicy: 'strict-origin-when-cross-origin',
-          })
-            .then(response => response.json())
-            .then(data => console.log('Success:', data))
-            .catch(error => console.error('Error:', error));
-        });
-
-        // let trackData = [
-        //   {
-        //     event: action,
-        //     properties: {
-        //       ...data,
-        //       $browser_version: browserInfo.userAgent,
-
-        //       extensionVersion: process.env['CEB_EXTENSION_VERSION'] as string,
-        //       $screen_height: 0,
-        //       $screen_width: 0,
-        //       mp_lib: 'web',
-        //       $lib_version: '2.62.0',
-        //       $insert_id: hashedInsertId,
-        //       time: new Date().getTime() / 1000,
-        //       distinct_id: userId,
-        //       $device_id: deviceId,
-        //       $initial_referrer: '$direct',
-        //       $initial_referring_domain: '$direct',
-        //       $user_id: userId,
-        //       token: MIXPANEL_KEY,
-        //     },
-        //   },
-        // ];
-
-        // fetch('https://api.mixpanel.com/import', {
-        //   method: 'POST',
-        //   // mode: "no-cors",
-        //   body: JSON.stringify(trackData),
-
-        //   // 인증 정보는 Authorization 헤더를 통해 전달
-        //   headers: {
-        //     Authorization: 'Basic ' + btoa(MIXPANEL_KEY + ':'),
-        //     'Content-Type': 'application/json',
-        //     priority: 'u=1, i',
-        //     'sec-fetch-dest': 'empty',
-        //     'sec-fetch-mode': 'cors',
-        //     'sec-fetch-site': 'none',
-        //     'sec-fetch-storage-access': 'active',
-        //     accept: '*/*',
-        //   },
-        //   mode: 'cors',
-        //   credentials: 'include',
-        //   referrerPolicy: 'strict-origin-when-cross-origin',
-        // })
-        //   .then(response => response.json())
-        //   .then(data => console.log('Success:', data))
-        //   .catch(error => console.error('Error:', error));
-
-        sendResponse({ data: 'success' });
-      }
+      result[packageIdx] = packageResult;
     });
+
+    return result;
   }
 
+  let allResult = {} as any;
+
+  for (let i = 0; i < maxPage; i++) {
+    if (i === 0) {
+      Object.assign(allResult, processData(data));
+    } else {
+      data = await fetchList(i);
+      Object.assign(allResult, processData(data));
+    }
+  }
+
+  await Storage.setUserPackageData(allResult);
+
+  sendResponse({ data: allResult });
+  return true;
+}
+
+async function handleUpdateHideState(message: any, sender: any, sendResponse: any): Promise<boolean> {
+  const userId = Storage.getUserId(true);
+  const hideState = message.data.hideState;
+
+  const storageKey = `UserPackageData_${userId}`;
+
+  console.log(await Storage.getUserId(true), 'userId');
+
+  let oldUserPackageData = await Storage.getUserPackageData(false);
+
+  for (let packageIdx in oldUserPackageData) {
+    oldUserPackageData[packageIdx].isHide = hideState[packageIdx];
+  }
+
+  await Storage.setUserPackageData(oldUserPackageData);
+
+  console.log(oldUserPackageData, 'oldUserPackageData');
+
+  sendResponse({ data: oldUserPackageData });
+  return true;
+}
+
+async function handleUpdateFavoriteConList(message: any, sender: any, sendResponse: any): Promise<boolean> {
+  const favoriteConList = message.data.favoriteConList;
+
+  await Storage.setFavoriteConList(favoriteConList);
+
+  sendResponse({ success: true });
+  return true;
+}
+
+async function handleTriggerEvent(message: any, sender: any, sendResponse: any): Promise<boolean> {
+  const action = message.action;
+  const data = message.data;
+
+  Storage.getUserId(true).then(async (userId: any) => {
+    if (userId) {
+      const hashedInsertId = (await hashSHA256(`${JSON.stringify(data)}${action}${userId}`)).slice(0, 10);
+
+      Storage.getDeviceId(true).then(async (deviceId: any) => {
+        if (deviceId === null || deviceId === undefined) {
+          const newDeviceId = uuidv4();
+          await Storage.setDeviceId(newDeviceId);
+          deviceId = newDeviceId;
+        }
+
+        let now = Date.now();
+        let trackData = {
+          api_key: AMPLITUDE_KEY,
+          events: [
+            {
+              user_id: userId,
+              device_id: `${deviceId}`,
+              session_id: now,
+              time: now,
+              platform: 'Web',
+              language: 'ko',
+              insert_id: hashedInsertId,
+              event_type: action,
+              event_properties: {
+                ...data,
+                extensionVersion: process.env['CEB_EXTENSION_VERSION'] as string,
+              },
+              library: 'amplitude-ts/2.9.2',
+              user_agent: browserInfo.userAgent,
+            },
+          ],
+          options: {},
+        };
+
+        fetch('https://api2.amplitude.com/2/httpapi', {
+          method: 'POST',
+          body: JSON.stringify(trackData),
+          headers: {
+            accept: '*/*',
+            'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+            'content-type': 'application/json',
+            priority: 'u=1, i',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'cross-site',
+          },
+          mode: 'cors',
+          credentials: 'omit',
+          referrerPolicy: 'strict-origin-when-cross-origin',
+        })
+          .then(response => response.json())
+          .then(data => console.log('Success:', data))
+          .catch(error => console.error('Error:', error));
+      });
+
+      sendResponse({ data: 'success' });
+    }
+  });
+  return true;
+}
+
+// 메시지 이벤트 핸들러 매핑
+const messageHandlers: { [key: string]: (message: any, sender: any, sendResponse: any) => Promise<boolean> } = {
+  [Message.GET_INIT_DATA]: handleGetInitData,
+  [Message.CHANGED_DATA]: handleChangedData,
+  [Message.SEARCH_CON]: handleSearchCon,
+  [Message.GET_ID_COOKIE]: handleGetIdCookie,
+  [Message.SYNC_CON_LIST]: handleSyncConList,
+  [Message.UPDATE_HIDE_STATE]: handleUpdateHideState,
+  [Message.UPDATE_FAVORITE_CON_LIST]: handleUpdateFavoriteConList,
+  [Message.TRIGGER_EVENT]: handleTriggerEvent,
+};
+
+conTreeInit().then(res => {});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  const handler = messageHandlers[message.type];
+  if (handler) {
+    handler(message, sender, sendResponse);
+    return true;
+  }
   return true;
 });
 
 function initUserConfigStorage() {
-  const storageKey = `UserConfig`;
   Storage.getUserConfig().then((data: any) => {
-    // console.log(data);
     if (data) {
     } else {
-      Storage.setUserConfig({
-        isDarkMode: false,
-        isShowRightBottomButton: true,
-        isDefaultBigCon: true,
-        isChoseongSearch: true,
-      });
+      Storage.setUserConfig(DEFAULT_USER_CONFIG);
     }
   });
 }
 
 function initReplaceWordDataStorage() {
-  const storageKey2 = `ReplaceWordData`;
   Storage.getReplaceWordData().then((data: any) => {
-    // console.log(data);
     if (data) {
     } else {
-      Storage.setReplaceWordData({
-        웃음: ['ㅋㅋ', '웃겨', '낄낄'],
-        슬픔: ['ㅠ', '슬퍼', '슬프', '울었'],
-        하이: ['ㅎㅇ', '안녕'],
-        바이: ['잘가', '빠이'],
-        미안: ['ㅈㅅ', '죄송'],
-        놀람: ['ㄴㅇㄱ', '헉'],
-        감사: ['ㄳ', 'ㄱㅅ'],
-        덜덜: ['ㄷㄷ', 'ㅎㄷㄷ', '후덜덜', '두렵', '무섭', '무서', '두려'],
-        신남: ['행복', '신나', '기뻐', '신났'],
-        화남: ['화났', '화나', '분노'],
-        커: ['커여', '커엽', '귀여', '귀엽'],
-        떽: ['섹시', '떽띠'],
-        굿: ['따봉', '좋'],
-        크아악: ['크아', '완장'],
-        댄스: ['춤'],
-        개추: ['추천', '게추', '따봉'],
-        비추: ['붐따'],
-        짝짝: ['박수'],
-      });
+      Storage.setReplaceWordData(DEFAULT_REPLACE_WORD_DATA);
     }
   });
 }
 
 initUserConfigStorage();
 initReplaceWordDataStorage();
-
-// chrome.downloads.onChanged.addListener((downloadDelta) => {
-//   if (downloadDelta.state && downloadDelta.state.current === "complete") {
-//     console.log("다운로드 완료:", downloadDelta, tabId);
-//     // chrome.runtime.sendMessage({ action: "downloadComplete", id: downloadDelta.id });
-
-//     chrome.tabs.remove(tabId);
-//   }
-// });

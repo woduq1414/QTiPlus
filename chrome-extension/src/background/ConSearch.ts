@@ -37,17 +37,6 @@ class ConSearch {
     this.insertSuffixes(name, con);
 
     tags.forEach(tag => this.insertSuffixes(tag, con));
-
-    // tags.forEach(tag => this.insertSuffixes(tag, con));
-
-    // 역색인 저장
-    // if (!this.invertedIndex[name]) this.invertedIndex[name] = new Set();
-    // this.invertedIndex[name].add(con);
-
-    // tags.forEach(tag => {
-    //   if (!this.invertedIndex[tag]) this.invertedIndex[tag] = new Set();
-    //   this.invertedIndex[tag].add(con);
-    // });
   }
 
   // 📌 접미사 트라이 검색 (부분 문자열 검색 가능)
@@ -87,9 +76,6 @@ class ConSearch {
   serialize(): string {
     return JSON.stringify({
       trieRoot: this.serializeTrie(this.root),
-      // invertedIndex: Object.fromEntries(
-      //   Object.entries(this.invertedIndex).map(([key, cons]) => [key, Array.from(cons)]),
-      // ),
     });
   }
 
@@ -97,9 +83,6 @@ class ConSearch {
   deserialize(json: string): void {
     const data = JSON.parse(json);
     this.root = this.deserializeTrie(data.trieRoot);
-    // this.invertedIndex = Object.fromEntries(
-    //   Object.entries(data.invertedIndex).map(([key, cons]) => [key, new Set(cons as any)]),
-    // );
   }
 }
 
