@@ -32,6 +32,17 @@ import DoubleConPresetEditModal from '@src/components/modals/DoubleConPresetEdit
 import { DetailDataDouble, DetailDataSingle } from '@extension/shared/lib/models/DetailData';
 import { RecentUsedCon } from '@extension/shared/lib/models/RecentUsedCon';
 import { RecentUsedDoubleCon } from '@extension/shared/lib/models/RecentUsedDoubleCon';
+import { FavoriteConList } from '@extension/shared/lib/models/FavoriteConList';
+
+interface SearchResultItem extends DetailDataSingle {
+  key: string;
+}
+
+interface SearchResultDoubleItem extends DetailDataDouble {
+  key: string;
+}
+
+type SearchResult = SearchResultItem | SearchResultDoubleItem;
 
 const SearchPage: React.FC = () => {
   const pageSize = 16;
@@ -41,7 +52,7 @@ const SearchPage: React.FC = () => {
   const [searchInput, setSearchInput] = useState<string>('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const [queryResult, setQueryResult] = useState<Set<any>>();
+  const [queryResult, setQueryResult] = useState<Set<SearchResult>>();
 
   const debouncedSearchText = useDebounce(searchInput, 250);
 
@@ -61,11 +72,11 @@ const SearchPage: React.FC = () => {
   const [queryPage, setQueryPage] = useState<number>(1);
   const [queryMaxPage, setQueryMaxPage] = useState<number>(1);
 
-  const [originalQueryResult, setOriginalQueryResult] = useState<any>();
+  const [originalQueryResult, setOriginalQueryResult] = useState<SearchResult[]>();
 
   const [queryDoubleConCount, setQueryDoubleConCount] = useState<number>(0);
 
-  const [favoriteConList, setFavoriteConList] = useState<{ [key: string]: boolean }>({});
+  const [favoriteConList, setFavoriteConList] = useState<FavoriteConList>({});
 
   const [bigConExpire, setBigConExpire] = useState<number>(0);
 
@@ -380,7 +391,7 @@ const SearchPage: React.FC = () => {
     } else {
       const detailIdx = userPackageData[detailData.packageIdx].conList[detailData.sort].detailIdx;
 
-      let prevfavoriteConList = await Storage.getFavoriteConList();
+      let prevfavoriteConList = (await Storage.getFavoriteConList()) as FavoriteConList;
 
       if (prevfavoriteConList === null) {
         prevfavoriteConList = {};

@@ -18,6 +18,7 @@ import { hash } from 'crypto';
 import { ConLabelList, CustomConList, DoubleConPreset } from '@extension/shared/lib/models/CustomConList';
 import { DetailData, DetailDataSingle } from '@extension/shared/lib/models/DetailData';
 import { UserPackageConData } from '@extension/shared/lib/models/UserPackageData';
+import { FavoriteConList } from '@extension/shared/lib/models/FavoriteConList';
 
 const userAgent = navigator.userAgent as any;
 
@@ -438,7 +439,7 @@ conTreeInit().then(res => {
         // }
         cachedSearchResult[query] = Array.from(finalResult);
 
-        const favoriteConList = await Storage.getFavoriteConList(true);
+        const favoriteConList = (await Storage.getFavoriteConList(true)) as FavoriteConList;
 
         // move favorite to top
 

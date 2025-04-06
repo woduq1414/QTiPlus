@@ -38,7 +38,7 @@ class Storage {
     const result = await readLocalStorage<T>(key);
     this.cache[key] = result;
 
-    console.log(`${key} get to ${result}, isUseCache: ${isUseCache}`);
+    // console.log(`${key} get to ${result}, isUseCache: ${isUseCache}`);
     return result;
   }
 
@@ -46,7 +46,7 @@ class Storage {
     await chrome.storage.local.set({ [key]: value });
     this.cache[key] = value;
 
-    console.log(`${key} set to ${value}`);
+    // console.log(`${key} set to ${value}`);
   }
 
   private static async clearCache(key: string) {

@@ -5,8 +5,8 @@ const ImageWithSkeleton = ({
   alt,
 
   doubleConType = -1,
-  maxRetries = 3,
-  retryDelay = 1000,
+  maxRetries = 5,
+  retryDelay = 2000,
 
   setIsImageLoaded,
 }: {
@@ -53,6 +53,11 @@ const ImageWithSkeleton = ({
     imgRef.current = img;
 
     img.onload = () => {
+      if (retryCount > 0) {
+        // console.log('이미지 로드 성공:', retryCount);
+        // console.log(imgRef.current);
+      }
+
       setIsLoading(false);
       setRetryCount(0);
       setError(false);
@@ -63,7 +68,7 @@ const ImageWithSkeleton = ({
 
     img.onerror = () => {
       if (retryCount < maxRetries) {
-        const delay = retryDelay * Math.pow(2, retryCount);
+        const delay = retryDelay * retryCount;
 
         timeoutRef.current = setTimeout(() => {
           setRetryCount(prev => prev + 1);
@@ -98,7 +103,7 @@ const ImageWithSkeleton = ({
   // 재시도 횟수 변경 시 이미지 다시 로드
   useEffect(() => {
     if (retryCount > 0) {
-      console.log('재시도 횟수 변경:', retryCount);
+      // console.log('재시도 횟수 변경:', retryCount);
       loadImage();
     }
   }, [retryCount]);
@@ -111,6 +116,7 @@ const ImageWithSkeleton = ({
       <img
         ref={imgRef}
         src={currentSrc}
+        // src={currentSrc}
         alt={alt}
         className={`object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'} 
         ${doubleConType === 0 ? 'rounded-tl-md rounded-bl-md' : ''}
