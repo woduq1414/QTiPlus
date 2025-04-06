@@ -111,7 +111,7 @@ function Router() {
 
         setSetting(newSetting);
 
-        console.log('alt + shift + d');
+        // console.log('alt + shift + d');
       }
     };
 
