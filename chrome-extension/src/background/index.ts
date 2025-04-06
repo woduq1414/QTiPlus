@@ -308,7 +308,7 @@ conTreeInit().then(res => {
           let queryList = [];
 
           // console.log(/^[a-zA-Z]+$/.test(query), query ,)
-          console.log(/^[a-zA-Z]+$/.test(query), query);
+          // console.log(/^[a-zA-Z]+$/.test(query), query);
           let koQuery = convertQwertyToHangul(query);
 
           // console.log(koQuery, '!!');
@@ -699,6 +699,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       console.log(oldUserPackageData, 'oldUserPackageData');
 
       sendResponse({ data: oldUserPackageData });
+    }
+
+    func();
+  } else if (message.type === Message.UPDATE_FAVORITE_CON_LIST) {
+    async function func() {
+      const favoriteConList = message.data.favoriteConList;
+
+      await Storage.setFavoriteConList(favoriteConList);
+
+      sendResponse({ success: true });
     }
 
     func();

@@ -230,7 +230,7 @@ const SearchPage: React.FC = () => {
       setIsDoubleCon(false);
 
       setFirstDoubleCon(null);
-      Storage.getRecentUsedConList().then(data => {
+      Storage.getRecentUsedConList(true).then(data => {
         if (data === null) {
           setRecentUsedConList([]);
         } else {
@@ -238,7 +238,7 @@ const SearchPage: React.FC = () => {
         }
       });
 
-      Storage.getRecentUsedDoubleConList().then(data => {
+      Storage.getRecentUsedDoubleConList(true).then(data => {
         if (data === null) {
           setRecentUsedDoubleConList([]);
         } else {
@@ -246,7 +246,7 @@ const SearchPage: React.FC = () => {
         }
       });
 
-      Storage.getFavoriteConList().then(data => {
+      Storage.getFavoriteConList(false).then(data => {
         if (data === null) {
           setFavoriteConList({});
         } else {
@@ -254,7 +254,7 @@ const SearchPage: React.FC = () => {
         }
       });
 
-      Storage.getBigConExpire().then(data => {
+      Storage.getBigConExpire(true).then(data => {
         if (data === null) {
           setBigConExpire(0);
           setIsBigCon(false);
@@ -392,9 +392,18 @@ const SearchPage: React.FC = () => {
         delete prevfavoriteConList[detailIdx];
       }
 
-      await Storage.setFavoriteConList(prevfavoriteConList);
-
-      setFavoriteConList(prevfavoriteConList);
+      // background script로 메시지 전송
+      chrome.runtime.sendMessage(
+        {
+          type: Message.UPDATE_FAVORITE_CON_LIST,
+          data: { favoriteConList: prevfavoriteConList },
+        },
+        response => {
+          if (response && response.success) {
+            setFavoriteConList(prevfavoriteConList);
+          }
+        },
+      );
     }
   }
 

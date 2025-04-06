@@ -101,16 +101,7 @@ const Header: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 };
 
 const DoubleConPresetEditPage: React.FC = () => {
-  const {
-    userPackageData,
-    userId,
-    setUserPackageData,
-    setCurrentPage,
-    conSearch,
-    setConSearch,
-    setDetailIdxDict,
-    setIsEditMode,
-  } = useGlobalStore();
+  const { userPackageData, setCurrentPage } = useGlobalStore();
   const [items, setItems] = useState<Item[]>([]);
 
   // 데이터 로드

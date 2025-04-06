@@ -15,6 +15,7 @@ export enum Message {
   // 콘 리스트 관련 메시지
   SYNC_CON_LIST = 'SYNC_CON_LIST',
   UPDATE_HIDE_STATE = 'UPDATE_HIDE_STATE',
+  UPDATE_FAVORITE_CON_LIST = 'UPDATE_FAVORITE_CON_LIST',
 
   // 이벤트 관련 메시지
   TRIGGER_EVENT = 'TRIGGER_EVENT',
