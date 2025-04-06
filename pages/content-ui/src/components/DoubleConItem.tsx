@@ -90,12 +90,4 @@ const DoubleConItem: React.FC<DoubleConItemProps> = ({
   );
 };
 
-export default React.memo(DoubleConItem, (prevProps, nextProps) => {
-  return (
-    prevProps.index === nextProps.index &&
-    prevProps.focusedIndex === nextProps.focusedIndex &&
-    prevProps.detailData === nextProps.detailData &&
-    prevProps.tabIndex === nextProps.tabIndex &&
-    prevProps.horizontalItemCount === nextProps.horizontalItemCount
-  );
-});
+export default DoubleConItem;

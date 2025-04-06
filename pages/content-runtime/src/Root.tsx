@@ -4,7 +4,7 @@ import injectedStyle from '@src/index.css?inline';
 
 export function mount() {
   const root = document.createElement('div');
-  root.id = 'chrome-extension-qticon-plus-root';
+  root.id = 'chrome-extension-qtiplus-root';
 
   document.body.append(root);
 

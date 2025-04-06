@@ -5,11 +5,7 @@
   "compilerOptions": {
     "noImplicitAny": false,
     "noEmit": false,
-    "target": "ESNext",
-    "baseUrl": ".",
-    "paths": {
-      "@extension/*": ["packages/*/src"]
-    }
+    "target": "ESNext"
   },
-  "include": ["packages/**/*.ts", "packages/**/*.tsx"]
+  "include": ["eslint.config.ts"]
 }

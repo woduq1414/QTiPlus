@@ -23,6 +23,8 @@ import { Message } from '@extension/shared/lib/enums/Message';
 
 function Router() {
   useEffect(() => {
+    Storage.init();
+
     // console.log('content ui loaded');
 
     // conTreeInit();

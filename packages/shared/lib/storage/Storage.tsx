@@ -4,6 +4,7 @@ import { CustomConList } from '../models/CustomConList.js';
 import { FavoriteConList } from '../models/FavoriteConList.js';
 import { RecentUsedCon } from '../models/RecentUsedCon.js';
 import { RecentUsedDoubleCon } from '../models/RecentUsedDoubleCon.js';
+import { Message } from '../enums/Message.js';
 
 const readLocalStorage = async <T,>(key: string): Promise<T | null> => {
   return new Promise<T | null>((resolve, reject) => {
@@ -21,6 +22,19 @@ const readLocalStorage = async <T,>(key: string): Promise<T | null> => {
 class Storage {
   private static userId: string | null = null;
   private static cache: { [key: string]: any } = {};
+
+  static isContentScript = false;
+
+  static init() {
+    // detect if the current script is running in the content script
+    try {
+      if (document) {
+        Storage.isContentScript = true;
+      }
+    } catch (error) {
+      Storage.isContentScript = false;
+    }
+  }
 
   static saveCurrentUserId(userId: string) {
     this.userId = userId;
@@ -46,7 +60,23 @@ class Storage {
     await chrome.storage.local.set({ [key]: value });
     this.cache[key] = value;
 
+    if (this.isContentScript) {
+      chrome.runtime.sendMessage({
+        type: Message.UPDATE_STORAGE,
+        data: {
+          key,
+          value,
+        },
+      });
+    }
+
     // console.log(`${key} set to ${value}`);
+  }
+
+  static async updateCache(key: string, value: any) {
+    this.cache[key] = value;
+
+    console.log(this.cache['UserConfig'], 'cache');
   }
 
   private static async clearCache(key: string) {

@@ -2,9 +2,9 @@ import 'webextension-polyfill';
 import { exampleThemeStorage } from '@extension/storage';
 import Storage from '@extension/shared/lib/storage';
 import { Message } from '@extension/shared/lib/enums/Message';
-import { convertDoubleConsonantToSingle, convertKoreanCharToChoseong } from '@extension/shared/lib/utils/korean';
-import { hashSHA256 } from '@extension/shared/lib/utils/hash';
-import { DEFAULT_USER_CONFIG, DEFAULT_REPLACE_WORD_DATA } from '@extension/shared/lib/constants/storage';
+import { convertDoubleConsonantToSingle, convertKoreanCharToChoseong } from './utils/korean';
+import { hashSHA256 } from './utils/hash';
+import { DEFAULT_USER_CONFIG, DEFAULT_REPLACE_WORD_DATA } from './constants/storage';
 import ConSearch from './ConSearch';
 import { convertQwertyToHangul } from 'es-hangul';
 
@@ -16,6 +16,8 @@ import { UserPackageConData } from '@extension/shared/lib/models/UserPackageData
 import { FavoriteConList } from '@extension/shared/lib/models/FavoriteConList';
 
 const userAgent = navigator.userAgent as any;
+
+Storage.init();
 
 // 브라우저 정보와 OS 정보 추출
 const browserInfo = {
@@ -309,6 +311,7 @@ async function handleSearchCon(message: any, sender: any, sendResponse: any): Pr
       if (userConfig?.isChoseongSearch) {
         result3 = conSearchManager.searchChoseongTrie(convertDoubleConsonantToSingle(query));
       }
+      console.log(userConfig, 'result3');
 
       let queryResult = new Set([...Array.from(result), ...Array.from(result2), ...Array.from(result3)]);
 
@@ -717,6 +720,17 @@ async function handleTriggerEvent(message: any, sender: any, sendResponse: any):
   return true;
 }
 
+async function handleUpdateStorage(message: any, sender: any, sendResponse: any): Promise<boolean> {
+  const key = message.data.key;
+  const value = message.data.value;
+  await Storage.updateCache(key, value);
+
+  conSearchManager.clearCache();
+
+  sendResponse({ success: true });
+  return true;
+}
+
 // 메시지 이벤트 핸들러 매핑
 const messageHandlers: { [key: string]: (message: any, sender: any, sendResponse: any) => Promise<boolean> } = {
   [Message.GET_INIT_DATA]: handleGetInitData,
@@ -726,6 +740,7 @@ const messageHandlers: { [key: string]: (message: any, sender: any, sendResponse
   [Message.SYNC_CON_LIST]: handleSyncConList,
   [Message.UPDATE_HIDE_STATE]: handleUpdateHideState,
   [Message.UPDATE_FAVORITE_CON_LIST]: handleUpdateFavoriteConList,
+  [Message.UPDATE_STORAGE]: handleUpdateStorage,
   [Message.TRIGGER_EVENT]: handleTriggerEvent,
 };
 

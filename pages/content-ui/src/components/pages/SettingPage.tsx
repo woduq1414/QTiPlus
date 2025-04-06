@@ -28,9 +28,7 @@ const SettingPage: React.FC = () => {
   } = useGlobalStore();
 
   useEffect(() => {
-    chrome.storage.local.set({
-      UserConfig: setting,
-    });
+    Storage.setUserConfig(setting);
   }, [setting]);
 
   return (

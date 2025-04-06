@@ -1,9 +1,9 @@
 import { select } from '@inquirer/prompts';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import manifest from '../../../chrome-extension/manifest.js';
+import manifest from '../../../chrome-extension/manifest.ts';
 import deleteModules from './deleteModules.js';
-import recoverModules from './recoverModules.js';
+import recoverModules from './recoverModules.ts';
 import { execSync } from 'node:child_process';
 
 const manifestPath = path.resolve(import.meta.dirname, '..', '..', '..', 'chrome-extension', 'manifest.ts');

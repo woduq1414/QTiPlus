@@ -31,8 +31,8 @@ const WhoSelector: React.FC<WhoSelectorProps> = ({ who, onChange, itemId }) => {
           `}
           onClick={e => handleClick(e, idx)}
           role="button"
-          aria-pressed={who[idx]}
-          tabIndex={0}
+          // aria-pressed={who[idx]}
+          // tabIndex={0}
         />
       ))}
     </div>

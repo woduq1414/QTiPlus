@@ -4,7 +4,7 @@ import App from '@src/App';
 import tailwindcssOutput from '../dist/tailwind-output.css?inline';
 
 const root = document.createElement('div');
-root.id = 'chrome-extension-qticon-plus-root';
+root.id = 'chrome-extension-qtiplus-root';
 
 document.body.append(root);
 
