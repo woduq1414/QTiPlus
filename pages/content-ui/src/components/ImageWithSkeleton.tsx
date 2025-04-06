@@ -23,6 +23,7 @@ const ImageWithSkeleton = ({
   const [retryCount, setRetryCount] = useState(0);
   const [error, setError] = useState(false);
   const [currentSrc, setCurrentSrc] = useState<string | undefined>(src);
+  const [displaySrc, setDisplaySrc] = useState<string | undefined>(src);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
@@ -53,11 +54,6 @@ const ImageWithSkeleton = ({
     imgRef.current = img;
 
     img.onload = () => {
-      if (retryCount > 0) {
-        // console.log('이미지 로드 성공:', retryCount);
-        // console.log(imgRef.current);
-      }
-
       setIsLoading(false);
       setRetryCount(0);
       setError(false);
@@ -79,12 +75,21 @@ const ImageWithSkeleton = ({
       }
     };
 
-    img.src = currentSrc;
+    // 재시도 시 타임스탬프를 쿼리스트링에 추가하여 캐시 문제 해결
+    let imageSrc = currentSrc;
+    if (retryCount > 0) {
+      const timestamp = new Date().getTime();
+      const separator = currentSrc.includes('?') ? '&' : '?';
+      imageSrc = `${currentSrc}${separator}t=${timestamp}`;
+    }
+
+    // displaySrc 상태 업데이트
+    setDisplaySrc(imageSrc);
+    img.src = imageSrc;
   };
 
   // src 변경 시 이미지 다시 로드
   useEffect(() => {
-    // console.log('src 변경됨:', src);
     setCurrentSrc(src);
     setRetryCount(0);
     loadImage();
@@ -103,7 +108,6 @@ const ImageWithSkeleton = ({
   // 재시도 횟수 변경 시 이미지 다시 로드
   useEffect(() => {
     if (retryCount > 0) {
-      // console.log('재시도 횟수 변경:', retryCount);
       loadImage();
     }
   }, [retryCount]);
@@ -115,8 +119,7 @@ const ImageWithSkeleton = ({
 
       <img
         ref={imgRef}
-        src={currentSrc}
-        // src={currentSrc}
+        src={displaySrc}
         alt={alt}
         className={`object-cover transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'} 
         ${doubleConType === 0 ? 'rounded-tl-md rounded-bl-md' : ''}
