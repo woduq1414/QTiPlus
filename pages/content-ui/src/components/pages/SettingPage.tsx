@@ -143,7 +143,7 @@ const SettingPage: React.FC = () => {
           />
           <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
             큐티플 - QWER(큐떱이알)콘 검색기 v{process.env['CEB_EXTENSION_VERSION']} <br />
-            By 깔깔새우 (qwer.shrimp@gmail.com)
+            qwer.shrimp@gmail.com
           </div>
         </div>
       </div>

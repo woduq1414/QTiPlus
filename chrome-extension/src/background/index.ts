@@ -520,12 +520,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   } else if (message.type === Message.SYNC_CON_LIST) {
     async function func() {
-      const userId = message.data.userId;
       const ci_t = message.data.ci_t;
 
-      const storageKey = `UserPackageData_${userId}`;
-
-      const oldUserPackageData = await Storage.getUserPackageData(true);
+      const oldUserPackageData = await Storage.getUserPackageData(false);
 
       async function fetchList(page: number) {
         // document.cookie = cookies;
@@ -630,7 +627,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           let isHide = false;
 
-          if (oldUserPackageData !== undefined && oldUserPackageData[packageIdx] !== undefined) {
+          if (oldUserPackageData !== null && oldUserPackageData[packageIdx] !== undefined) {
             if (oldUserPackageData[packageIdx].isHide) {
               isHide = true;
             }
