@@ -1,5 +1,9 @@
 ### 큐티플 - QWER(큐떱이알)콘 검색기 익스텐션
 
+빌드 : 
+
+pnpm install -> .env 파일 생성 후 수정 -> pnpm dev 또는 pnpm build
+
 ## 단축키
 
 **Alt + Q** : 검색창 열고 닫기
