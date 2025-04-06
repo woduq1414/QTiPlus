@@ -58,6 +58,9 @@ const SingleConItem: React.FC<SingleConItemProps> = ({
         doubleConType={-1}
         setIsImageLoaded={setIsImageLoaded}
       />
+      {/* <div className=" animate-pulse bg-gray-300 w-full aspect-square">
+      dummy
+      </div> */}
 
       {isImageLoaded &&
         favoriteConList &&
@@ -84,4 +87,13 @@ const SingleConItem: React.FC<SingleConItemProps> = ({
   );
 };
 
-export default SingleConItem;
+export default React.memo(SingleConItem, (prevProps, nextProps) => {
+  return (
+    prevProps.index === nextProps.index &&
+    prevProps.focusedIndex === nextProps.focusedIndex &&
+    prevProps.detailData === nextProps.detailData &&
+    prevProps.favoriteConList === nextProps.favoriteConList &&
+    prevProps.userPackageData === nextProps.userPackageData &&
+    prevProps.tabIndex === nextProps.tabIndex
+  );
+});

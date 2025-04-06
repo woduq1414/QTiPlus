@@ -115,19 +115,21 @@ const ImageWithSkeleton = ({
   return (
     <div className="relative w-full h-full">
       {/* 스켈레톤 UI */}
-      {isLoading && <div className="absolute inset-0 animate-pulse bg-gray-300"></div>}
+      {isLoading && <div className="animate-pulse bg-gray-300 w-full aspect-square"></div>}
 
-      <img
-        ref={imgRef}
-        src={displaySrc}
-        alt={alt}
-        className={`object-cover transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'} 
-        ${doubleConType === 0 ? 'rounded-tl-md rounded-bl-md' : ''}
-        ${doubleConType === 1 ? 'rounded-tr-md rounded-br-md' : ''}
-        ${doubleConType === -1 ? 'rounded-md' : ''}
-        ${error ? 'hidden' : ''}
-        `}
-      />
+      {
+        <img
+          ref={imgRef}
+          src={displaySrc}
+          alt={alt}
+          className={`object-cover transition-opacity duration-300 ${isLoading ? 'opacity-0 absolute top-0 left-0' : 'opacity-100'} 
+          ${doubleConType === 0 ? 'rounded-tl-md rounded-bl-md' : ''}
+          ${doubleConType === 1 ? 'rounded-tr-md rounded-br-md' : ''}
+          ${doubleConType === -1 ? 'rounded-md' : ''}
+          ${error ? 'hidden' : ''}
+          `}
+        />
+      }
     </div>
   );
 };
