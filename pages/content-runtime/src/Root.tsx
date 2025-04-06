@@ -4,7 +4,7 @@ import injectedStyle from '@src/index.css?inline';
 
 export function mount() {
   const root = document.createElement('div');
-  root.id = 'chrome-extension-boilerplate-react-vite-runtime-content-view-root';
+  root.id = 'chrome-extension-qticon-plus-root';
 
   document.body.append(root);
 
