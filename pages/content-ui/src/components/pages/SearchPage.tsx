@@ -433,6 +433,8 @@ const SearchPage: React.FC = () => {
     let packageIdx = detailData.packageIdx;
     let detailIdx = userPackageData[packageIdx].conList[detailData.sort].detailIdx;
 
+    let originalDetailIdx = detailIdx;
+
     if (isDoubleCon) {
       if (firstDoubleCon2 === null) {
         recentUsedConList = recentUsedConList.filter((con: any) => {
@@ -535,7 +537,7 @@ const SearchPage: React.FC = () => {
       shouldReturn: false,
       packageIdx,
       detailIdx,
-      originalDetailIdx: detailIdx,
+      originalDetailIdx: originalDetailIdx,
     };
   }
 
@@ -998,6 +1000,10 @@ const SearchPage: React.FC = () => {
     let firstDoubleCon2 = null;
     if (manualFirstDoubleCon) {
       firstDoubleCon2 = manualFirstDoubleCon;
+      let packageIdx = firstDoubleCon2.packageIdx;
+      let detailIdx = userPackageData[packageIdx].conList[firstDoubleCon2.sort].detailIdx;
+
+      firstDoubleCon2.detailIdx = detailIdx;
     } else {
       firstDoubleCon2 = firstDoubleCon;
     }
