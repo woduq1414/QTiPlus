@@ -20,6 +20,7 @@ export default defineConfig({
       '@root': rootDir,
       '@src': srcDir,
       '@assets': resolve(srcDir, 'assets'),
+      '@extension/shared': resolve(rootDir, '..', 'packages', 'shared'),
     },
   },
   plugins: [
