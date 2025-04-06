@@ -58,16 +58,20 @@ const PresetItem: React.FC<{
         onClick={() => onDelete(index)}
       />
       <div className="flex flex-row w-[140px]">
-        <img
-          src={item.firstDoubleCon?.imgPath}
-          alt="첫 번째 콘 이미지"
-          className="w-[70px] h-[70px] rounded-tl-md rounded-bl-md"
-        />
-        <img
-          src={item.secondDoubleCon?.imgPath}
-          alt="두 번째 콘 이미지"
-          className="w-[70px] h-[70px] rounded-tr-md rounded-br-md"
-        />
+        <div className="w-[70px] h-[70px]">
+          <ImageWithSkeleton
+            src={item.firstDoubleCon?.imgPath}
+            alt={item.firstDoubleCon?.title || '첫 번째 콘'}
+            doubleConType={0}
+          />
+        </div>
+        <div className="w-[70px] h-[70px]">
+          <ImageWithSkeleton
+            src={item.secondDoubleCon?.imgPath}
+            alt={item.secondDoubleCon?.title || '두 번째 콘'}
+            doubleConType={1}
+          />
+        </div>
       </div>
       <input
         type="text"

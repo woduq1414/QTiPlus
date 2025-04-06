@@ -1,6 +1,7 @@
 import React from 'react';
 import { ConItem as ConItemType } from '@src/types/conInfo';
 import WhoSelector from './WhoSelector';
+import ImageWithSkeleton from './ImageWithSkeleton';
 
 interface ConItemProps {
   item: ConItemType;
@@ -15,7 +16,9 @@ const ConItem: React.FC<ConItemProps> = ({ item, imgPath, onItemChange }) => {
 
   return (
     <div className="flex flex-row gap-2 items-center sm:flex-col sm:gap-2">
-      <img src={imgPath} alt="" className="w-[70px] h-[70px]" />
+      <div className="w-[70px] h-[70px]">
+        <ImageWithSkeleton src={imgPath} alt={item.title || ''} doubleConType={-1} />
+      </div>
       <input
         type="text"
         placeholder="이름"
