@@ -31,7 +31,6 @@ const manifest = {
   description: '__MSG_extensionDescription__',
   host_permissions: ['*://*.dcinside.com/*'],
   permissions: ['storage', 'cookies'],
-  options_page: 'options/index.html',
   background: {
     service_worker: 'background.js',
     type: 'module',
