@@ -3,15 +3,21 @@ import { useEffect, useState, useRef } from 'react';
 const ImageWithSkeleton = ({
   src,
   alt,
+
   doubleConType = -1,
   maxRetries = 3,
   retryDelay = 1000,
+
+  setIsImageLoaded,
 }: {
   src: string | undefined;
   alt: string | undefined;
+
   doubleConType: number | undefined;
   maxRetries?: number;
   retryDelay?: number;
+
+  setIsImageLoaded?: (isImageLoaded: boolean) => void;
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
@@ -50,6 +56,9 @@ const ImageWithSkeleton = ({
       setIsLoading(false);
       setRetryCount(0);
       setError(false);
+      if (setIsImageLoaded) {
+        setIsImageLoaded(true);
+      }
     };
 
     img.onerror = () => {

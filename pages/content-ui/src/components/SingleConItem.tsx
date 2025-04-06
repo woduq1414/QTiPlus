@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ImageWithSkeleton from './ImageWithSkeleton';
 
 interface SingleConItemProps {
@@ -30,6 +30,8 @@ const SingleConItem: React.FC<SingleConItemProps> = ({
   onFocus,
   onBlur,
 }) => {
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+
   return (
     <div
       key={detailData.detailIdx}
@@ -50,8 +52,15 @@ const SingleConItem: React.FC<SingleConItemProps> = ({
       onContextMenu={e => {
         onConRightClick({ detailData, e });
       }}>
-      <ImageWithSkeleton src={detailData.imgPath} alt={detailData.title} doubleConType={-1} />
-      {favoriteConList &&
+      <ImageWithSkeleton
+        src={detailData.imgPath}
+        alt={detailData.title}
+        doubleConType={-1}
+        setIsImageLoaded={setIsImageLoaded}
+      />
+
+      {isImageLoaded &&
+        favoriteConList &&
         favoriteConList[userPackageData[detailData.packageIdx]?.conList?.[detailData.sort]?.detailIdx] && (
           <div className="absolute top-0 right-0">
             <svg

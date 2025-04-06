@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ImageWithSkeleton from './ImageWithSkeleton';
 import { Square2StackIcon } from '@heroicons/react/16/solid';
 
@@ -37,6 +37,9 @@ const DoubleConItem: React.FC<DoubleConItemProps> = ({
   const firstDoubleCon = detailData.firstDoubleCon;
   const secondDoubleCon = detailData.secondDoubleCon;
 
+  const [isImageLoaded1, setIsImageLoaded1] = useState(false);
+  const [isImageLoaded2, setIsImageLoaded2] = useState(false);
+
   return (
     <div
       tabIndex={tabIndex}
@@ -65,11 +68,20 @@ const DoubleConItem: React.FC<DoubleConItemProps> = ({
         });
       }}>
       <div className="flex flex-row gap-[0em]">
-        <ImageWithSkeleton src={firstDoubleCon.imgPath} alt={firstDoubleCon.title} doubleConType={0} />
-        <ImageWithSkeleton src={secondDoubleCon.imgPath} alt={secondDoubleCon.title} doubleConType={1} />
+        <ImageWithSkeleton
+          src={firstDoubleCon.imgPath}
+          alt={firstDoubleCon.title}
+          doubleConType={0}
+          setIsImageLoaded={setIsImageLoaded1}
+        />
+        <ImageWithSkeleton
+          src={secondDoubleCon.imgPath}
+          alt={secondDoubleCon.title}
+          doubleConType={1}
+          setIsImageLoaded={setIsImageLoaded2}
+        />
       </div>
-
-      {true && (
+      {isImageLoaded1 && isImageLoaded2 && (
         <div className="absolute top-0 right-0">
           <Square2StackIcon className="w-5 h-5 text-white stroke-[0.9] stroke-gray-300" />
         </div>
