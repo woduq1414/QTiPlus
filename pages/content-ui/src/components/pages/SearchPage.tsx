@@ -265,13 +265,13 @@ const SearchPage: React.FC = () => {
         }
       });
 
-      Storage.getBigConExpire(true).then(data => {
+      Storage.getBigConExpire(false).then(data => {
         if (data === null) {
           setBigConExpire(0);
           setIsBigCon(false);
         } else {
           setBigConExpire(data);
-          setIsBigCon(data > Date.now());
+          setIsBigCon(data > Date.now() / 1000);
         }
       });
 
