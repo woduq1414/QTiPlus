@@ -715,10 +715,9 @@ async function handleTriggerEvent(message: any, sender: any, sendResponse: any):
           mode: 'cors',
           credentials: 'omit',
           referrerPolicy: 'strict-origin-when-cross-origin',
-        })
-          .then(response => response.json())
-          .then(data => console.log('Success:', data))
-          .catch(error => console.error('Error:', error));
+        }).then(response => response.json());
+        // .then(data => console.log('Success:', data))
+        // .catch(error => console.error('Error:', error));
       });
 
       sendResponse({ data: 'success' });

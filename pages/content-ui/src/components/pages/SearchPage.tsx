@@ -98,15 +98,18 @@ const SearchPage: React.FC = () => {
     if (isDoubleConPresetEditModalOpen) return;
 
     if (!horizontalItemCount) horizontalItemCount = 4;
-    let targetResultSize = undefined;
-    if (queryResult === undefined) {
+    let targetResultSize = 0;
+
+    if (debouncedSearchText === '') {
       if (isDoubleCon && !firstDoubleCon) {
         targetResultSize = recentUsedDoubleConList.length;
       } else {
         targetResultSize = recentUsedConList.length;
       }
     } else {
-      targetResultSize = queryResult.size;
+      if (queryResult) {
+        targetResultSize = queryResult.size;
+      }
     }
 
     targetResultSize = Math.min(targetResultSize, horizontalItemCount * 4);
