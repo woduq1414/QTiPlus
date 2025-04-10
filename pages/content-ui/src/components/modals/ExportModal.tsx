@@ -19,7 +19,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, userPackageD
   const [isExportIncludeDoubleConPreset, setIsExportIncludeDoubleConPreset] = useState(true);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} isRound={false}>
       <div
         className="flex flex-col gap-2 items-center 
         text-black dark:text-white/90">

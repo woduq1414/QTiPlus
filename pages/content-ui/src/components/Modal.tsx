@@ -4,9 +4,10 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  isRound?: boolean;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, isRound = true }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -25,7 +26,9 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[999999999] rounded-2xl"
+      className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[999999999] ${
+        isRound ? 'rounded-2xl' : 'rounded-none'
+      }`}
       onClick={onClose}>
       <div
         className="bg-white dark:bg-black/90 p-6 rounded-lg shadow-lg w-96"

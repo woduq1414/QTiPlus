@@ -48,7 +48,6 @@ const ConListPage: React.FC = () => {
       const content = e.target?.result as string;
       const data = JSON.parse(content);
       setImportedFileData(data);
-      setIsImportModalOpen(true);
     };
     reader.readAsText(file);
   }, []);
@@ -177,16 +176,7 @@ const ConListPage: React.FC = () => {
                 className="cursor-pointer flex-grow text-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 
                   focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 
                   dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 w-full"
-                onClick={() => {
-                  const input = document.createElement('input');
-                  input.type = 'file';
-                  input.accept = '.json';
-                  input.onchange = e => {
-                    const file = (e.target as HTMLInputElement).files?.[0];
-                    if (file) handleFileImport(file);
-                  };
-                  input.click();
-                }}>
+                onClick={() => setIsImportModalOpen(true)}>
                 불러오기
               </div>
               <div
@@ -220,10 +210,14 @@ const ConListPage: React.FC = () => {
 
       <ImportModal
         isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
+        onClose={() => {
+          setIsImportModalOpen(false);
+          setImportedFileData(null);
+        }}
         importedFileData={importedFileData}
         setConLabelList={setConLabelList}
         setDoubleConPreset={setDoubleConPreset}
+        onFileSelect={handleFileImport}
       />
       <ExportModal
         isOpen={isExportModalOpen}
