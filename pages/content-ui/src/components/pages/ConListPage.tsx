@@ -43,6 +43,12 @@ const ConListPage: React.FC = () => {
   const [importedFileData, setImportedFileData] = useState<any>(null);
 
   const handleFileImport = useCallback(async (file: File) => {
+    // if file is empty, set importedFileData to null
+    if (file.size === 0) {
+      setImportedFileData(null);
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = async e => {
       const content = e.target?.result as string;

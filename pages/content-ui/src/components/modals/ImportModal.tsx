@@ -141,6 +141,10 @@ const ImportModal: React.FC<ImportModalProps> = ({
                 setUseDefaultData(!useDefaultData);
                 if (!useDefaultData) {
                   setSelectedFileName(null);
+                } else {
+                  setSelectedFileName(null);
+                  onFileSelect(new File([], '', { type: 'application/json' }));
+                  setFileStats(null);
                 }
               }}
               onColor="#a7b4db"
@@ -262,7 +266,7 @@ const ImportModal: React.FC<ImportModalProps> = ({
 
               for (let key of Object.keys(importedConLabelList)) {
                 if (!conLabelList[key]) {
-                  conLabelList[key] = JSON.parse(JSON.stringify(importedFileData[key]));
+                  conLabelList[key] = JSON.parse(JSON.stringify(importedConLabelList[key]));
                   conLabelList[key].conList = {};
                 }
 
