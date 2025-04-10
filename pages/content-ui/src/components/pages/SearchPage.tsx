@@ -629,12 +629,49 @@ const SearchPage: React.FC = () => {
     return true;
   }
 
+  // fetch 요청에 대한 retry 로직을 구현한 함수
+  async function fetchWithRetry(
+    url: string,
+    options: RequestInit,
+    maxRetries = 5,
+    retryDelay = 1000,
+  ): Promise<Response> {
+    let attempts = 0;
+
+    while (attempts < maxRetries) {
+      try {
+        const response = await fetch(url, options);
+
+        if (response.status === 200) {
+          return response;
+        }
+
+        console.warn(`Request failed with status ${response.status}, retrying... (${attempts + 1}/${maxRetries})`);
+        attempts++;
+
+        if (attempts < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+        }
+      } catch (error) {
+        console.error(`Request error: ${error}, retrying... (${attempts + 1}/${maxRetries})`);
+        attempts++;
+
+        if (attempts < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+        }
+      }
+    }
+
+    // throw new Error(`Failed after ${maxRetries} attempts`);
+    return new Response('Failed after ${maxRetries} attempts');
+  }
+
   // 대왕콘 체크 함수
   async function checkBigCon(galleryId: string, ci_t: string, isMobileVersion: boolean) {
     if (!isBigCon) return;
 
     if (isMobileVersion) {
-      await fetch('https://m.dcinside.com/ajax/chk_bigdccon', {
+      await fetchWithRetry('https://m.dcinside.com/ajax/chk_bigdccon', {
         headers: {
           accept: 'application/json, text/javascript, */*; q=0.01',
           'accept-language': 'ko',
@@ -655,7 +692,7 @@ const SearchPage: React.FC = () => {
         credentials: 'include',
       });
     } else {
-      await fetch('https://gall.dcinside.com/dccon/lists', {
+      await fetchWithRetry('https://gall.dcinside.com/dccon/lists', {
         headers: {
           accept: '*/*',
           'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
@@ -721,7 +758,7 @@ const SearchPage: React.FC = () => {
     const comment_no = document.getElementById('comment_no')?.getAttribute('value');
     const csrfToken = document.getElementsByName('csrf-token')[0]?.getAttribute('content') as string;
 
-    const accessResponse = await fetch('https://m.dcinside.com/ajax/access', {
+    const accessResponse = await fetchWithRetry('https://m.dcinside.com/ajax/access', {
       headers: {
         accept: '*/*',
         'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
@@ -757,7 +794,7 @@ const SearchPage: React.FC = () => {
 
     setIsModalOpen(false);
 
-    const writeCommentResponse = await fetch('https://m.dcinside.com/ajax/comment-write', {
+    const writeCommentResponse = await fetchWithRetry('https://m.dcinside.com/ajax/comment-write', {
       headers: {
         accept: '*/*',
         'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
@@ -892,7 +929,7 @@ const SearchPage: React.FC = () => {
     setIsModalOpen(false);
 
     if (isBigCon) {
-      await fetch('https://gall.dcinside.com/dccon/lists', {
+      await fetchWithRetry('https://gall.dcinside.com/dccon/lists', {
         headers: {
           accept: '*/*',
           'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
@@ -914,7 +951,7 @@ const SearchPage: React.FC = () => {
       });
     }
 
-    const response = await fetch('https://gall.dcinside.com/dccon/insert_icon', {
+    const response = await fetchWithRetry('https://gall.dcinside.com/dccon/insert_icon', {
       headers: {
         accept: '*/*',
         'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
