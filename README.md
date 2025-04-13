@@ -1,8 +1,20 @@
-### 큐티플 - QWER(큐떱이알)콘 검색기 익스텐션
+## 큐티플 - QWER(큐떱이알)콘 검색기 익스텐션
 
-빌드 : 
+### 빌드
 
 pnpm install -> .env 파일 생성 후 수정 -> pnpm dev 또는 pnpm build
+
+
+### 사용 설명서
+
+[https://adaptive-bovid-12e.notion.site/1beee4e2dbd98077996fdececf9c0b9a](https://adaptive-bovid-12e.notion.site/1beee4e2dbd98077996fdececf9c0b9a)
+
+### 스토어 링크 
+
+[크롬 웹스토어](https://chromewebstore.google.com/detail/%ED%81%90%ED%8B%B0%ED%94%8C-qwer%ED%81%90%EB%96%B1%EC%9D%B4%EC%95%8C%EC%BD%98-%EA%B2%80%EC%83%89%EA%B8%B0/giddjchbbilkdiicffndjkgdajcmnbgo?hl=ko)
+
+[파이어폭스 애드온 스토어](https://addons.mozilla.org/ko/firefox/addon/qwer-%ED%81%90%EB%96%B1%EC%9D%B4%EC%95%8C-%EC%BD%98-%EA%B2%80%EC%83%89%EA%B8%B0/)
+
 
 ## 단축키
 
