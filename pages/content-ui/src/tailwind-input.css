@@ -6,4 +6,8 @@
     z-index: 99999999998 !important;
 }
 
+.alarmPopup {
+    z-index: 9999999999 !important;
+}
+
 /* 스크롤바 스타일 */

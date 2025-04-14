@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ImageWithSkeleton from './ImageWithSkeleton';
+import { Z_INDEX } from '../../../../src/constants/zIndex';
 
 interface SingleConItemProps {
   detailData: any;
@@ -37,8 +38,9 @@ const SingleConItem: React.FC<SingleConItemProps> = ({
       key={detailData.detailIdx}
       className={`flex cursor-pointer w-[calc(25%-0.2em)] rounded-md
         transition-all duration-200
-        ${focusedIndex === index ? ' border-0 scale-125  z-[9999999999]' : 'scale-100 z-[9999999]'}
+        ${focusedIndex === index ? ' border-0 scale-125' : 'scale-100'}
       `}
+      style={{ zIndex: focusedIndex === index ? Z_INDEX.FOCUSED_ITEM : Z_INDEX.BASE }}
       ref={el => {
         imageRefs.current[index] = el;
       }}

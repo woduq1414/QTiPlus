@@ -12,12 +12,13 @@ import Storage from '@extension/shared/lib/storage';
 import ConInfoEditPage from './components/pages/ConInfoEditPage';
 
 import { Toaster } from 'react-hot-toast';
-import { ChatBubbleBottomCenterIcon, XMarkIcon } from '@heroicons/react/16/solid';
+import { ChatBubbleBottomCenterIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import SettingPage from './components/pages/SettingPage';
 import ReplaceWordEditPage from './components/pages/ReplaceWordEditPage';
 import { hash } from 'crypto';
 import DoubleConPresetEditPage from './components/pages/DoubleConPresetEditPage';
 import { Message } from '@extension/shared/lib/enums/Message';
+import { Z_INDEX } from '../../../src/constants/zIndex';
 
 // import "../public/style.css";
 
@@ -125,10 +126,7 @@ function Router() {
 
   return (
     <div className={`${setting.isDarkMode ? 'dark' : 'light'}`}>
-      <div
-        className={`z-[999999999]
-      ${isModalOpen ? 'unset' : 'hidden'}
-    `}>
+      <div className={`${isModalOpen ? 'unset' : 'hidden'}`} style={{ zIndex: Z_INDEX.MODAL }}>
         {currentPage === Page.SEARCH ? (
           <SearchPage />
         ) : currentPage === Page.CON_LIST ? (
@@ -145,10 +143,11 @@ function Router() {
       </div>
       {!setting.isShowRightBottomButton ? null : (
         <div
-          className=" bg-gradient-to-b from-blue-400 to-blue-600 fixed right-[20px] bottom-[20px] flex px-3 py-3 rounded-[19px] cursor-pointer shadow-xl
+          className={` bg-gradient-to-b from-blue-400 to-blue-600 fixed right-[20px] bottom-[20px] flex px-3 py-3 rounded-[19px] cursor-pointer shadow-xl
             dark:from-gray-800 dark:to-gray-900 dark:border-2 dark:border-blue-600/50 dark:px-[0.58rem] dark:py-[0.58rem] 
-            z-[1999999990] sm:right-[13px] sm:bottom-[13px] 
-            "
+            sm:right-[13px] sm:bottom-[13px] 
+            `}
+          style={{ zIndex: Z_INDEX.FLOATING_BUTTON }}
           onClick={() => {
             setIsModalOpen((prev: any) => !prev);
             setCurrentPage(Page.SEARCH);

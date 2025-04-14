@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Z_INDEX } from '../../../../src/constants/zIndex';
 
 interface ModalProps {
   isOpen: boolean;
@@ -26,9 +27,10 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, isRound = true
 
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[999999999] ${
+      className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 ${
         isRound ? 'rounded-2xl' : 'rounded-none'
       }`}
+      style={{ zIndex: Z_INDEX.MODAL }}
       onClick={onClose}>
       <div
         className="bg-white dark:bg-black/90 p-6 rounded-lg shadow-lg w-96"

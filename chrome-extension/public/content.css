@@ -32,3 +32,7 @@
     font-family: 'Pretendard', sans-serif;
 
 }
+
+.alarmPopup {
+    z-index: 9999999999 !important;
+}
