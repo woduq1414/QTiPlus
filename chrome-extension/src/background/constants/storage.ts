@@ -20,6 +20,7 @@ export const DEFAULT_USER_CONFIG = {
   isDefaultBigCon: true,
   isChoseongSearch: true,
   isAutoLabelingUpdate: true,
+  lastUpdateTime: -1,
 } as const;
 
 /**

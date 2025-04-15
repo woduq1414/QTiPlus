@@ -12,6 +12,7 @@ import SettingItem from '@src/components/SettingItem';
 
 import Storage from '@extension/shared/lib/storage';
 import { Page } from '@src/enums/Page';
+import { time } from 'console';
 
 const SettingPage: React.FC = () => {
   const {
@@ -27,37 +28,48 @@ const SettingPage: React.FC = () => {
     setSetting,
   } = useGlobalStore();
 
-  const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isToastOpen, setIsToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
-  useEffect(() => {
-    Storage.setUserConfig(setting);
-  }, [setting]);
+  useEffect(() => {}, [setting]);
 
   const handleRefreshLabeling = async () => {
     try {
-      // URL에서 데이터 가져오기
+      setIsLoading(true);
       const response = await fetch('https://qtiplus.vercel.app/data.json');
-      const importedFileData = await response.json();
+      const data = await response.json();
 
-      // service worker로 데이터 import 이벤트 전송
-      chrome.runtime.sendMessage({
-        type: 'IMPORT_DATA',
-        data: {
-          importedFileData,
-          isImportOverwrite: false,
-          isImportIncludeDoubleConPreset: true,
+      // 서비스 워커에 데이터 전송
+      chrome.runtime.sendMessage(
+        {
+          type: 'IMPORT_DATA',
+          data: {
+            importedFileData: data,
+            isImportOverwrite: false,
+            isImportIncludeDoubleConPreset: true,
+          },
         },
-      });
+        async response => {
+          if (response.success) {
+            // 성공 시 lastUpdateTime 업데이트
+            const now = new Date();
+            const timestamp = Math.floor(now.getTime() / 1000);
+            // storage에 저장
+            await chrome.storage.local.set({ lastUpdateTime: timestamp });
+            // global store 업데이트
+            setSetting({ ...setting, lastUpdateTime: timestamp });
 
-      // 시간 업데이트
-      const now = new Date();
-      const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      setLastUpdateTime(formattedDate);
-
-      makeToast('라벨링 업데이트가 시작되었습니다.');
+            makeToast('라벨링 업데이트가 완료되었습니다.');
+          }
+          setIsToastOpen(true);
+          setIsLoading(false);
+        },
+      );
     } catch (error) {
-      console.error('라벨링 업데이트 중 오류 발생:', error);
-      makeToast('라벨링 업데이트 중 오류가 발생했습니다.');
+      // console.error('Error fetching data:', error);
+      makeToast('데이터를 불러오는데 실패했습니다.');
     }
   };
 
@@ -135,7 +147,17 @@ const SettingPage: React.FC = () => {
 
           <SettingItem
             title="자동 라벨링 업데이트"
-            description={`최근 업데이트 시각 : ${lastUpdateTime || '-'}`}
+            description={`최근 : ${
+              setting.lastUpdateTime
+                ? new Date(setting.lastUpdateTime * 1000).toLocaleString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : '-'
+            }`}
             isChecked={setting.isAutoLabelingUpdate}
             onChange={() => {
               setSetting({

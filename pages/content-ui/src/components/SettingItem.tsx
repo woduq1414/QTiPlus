@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Switch from 'react-switch';
 import { ArrowPathIcon } from '@heroicons/react/16/solid';
 
@@ -10,7 +10,7 @@ interface SettingItemProps {
   showEditButton?: boolean;
   onEditClick?: () => void;
   showRefreshButton?: boolean;
-  onRefreshClick?: () => void;
+  onRefreshClick?: () => Promise<void>;
 }
 
 const SettingItem: React.FC<SettingItemProps> = ({
@@ -23,6 +23,8 @@ const SettingItem: React.FC<SettingItemProps> = ({
   showRefreshButton = false,
   onRefreshClick,
 }) => {
+  const [onRefreshing, setOnRefreshing] = useState(false);
+
   return (
     <div className="flex flex-row gap-4 items-center">
       <div className="flex-grow font-semibold text-lg">
@@ -32,10 +34,15 @@ const SettingItem: React.FC<SettingItemProps> = ({
             {description}
             {showRefreshButton && (
               <ArrowPathIcon
-                className="ml-2 w-4 h-4 cursor-pointer text-blue-500 hover:text-blue-700 dark:hover:text-blue-400"
-                onClick={e => {
+                className={`ml-2 w-4 h-4 cursor-pointer text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 ${onRefreshing ? 'invisible' : 'visible'}`}
+                onClick={async e => {
                   e.stopPropagation();
-                  onRefreshClick && onRefreshClick();
+
+                  if (!onRefreshing) {
+                    setOnRefreshing(true);
+                    onRefreshClick && (await onRefreshClick());
+                    setOnRefreshing(false);
+                  }
                 }}
               />
             )}

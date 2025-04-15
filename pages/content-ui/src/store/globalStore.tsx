@@ -32,6 +32,7 @@ interface GlobalStore {
     isDefaultBigCon: boolean;
     isChoseongSearch: boolean;
     isAutoLabelingUpdate: boolean;
+    lastUpdateTime: number | null;
   };
   setSetting: (newSettings: any) => void;
 }
@@ -70,8 +71,8 @@ const useGlobalStore = create<GlobalStore>(set => ({
     isDefaultBigCon: true,
     isChoseongSearch: true,
     isAutoLabelingUpdate: true,
+    lastUpdateTime: -1,
   },
-  // setSetting 메서드 구현
   setSetting: newSettings =>
     set(state => ({
       setting: { ...state.setting, ...newSettings },

@@ -805,6 +805,8 @@ async function handleImportData(message: any, sender: any, sendResponse: any): P
       chrome.tabs.sendMessage(sender.tab.id, { type: Message.CHANGED_DATA });
     }
 
+    await conTreeInit();
+
     sendResponse({ success: true });
     return true;
   } catch (error) {
@@ -812,6 +814,7 @@ async function handleImportData(message: any, sender: any, sendResponse: any): P
     sendResponse({ success: false, error: '데이터 임포트 중 오류가 발생했습니다.' });
     return true;
   }
+  return true;
 }
 
 // 메시지 이벤트 핸들러 매핑
