@@ -847,6 +847,7 @@ function initUserConfigStorage() {
   Storage.getUserConfig().then((data: any) => {
     if (data) {
     } else {
+      console.log('setUserConfig', DEFAULT_USER_CONFIG);
       Storage.setUserConfig(DEFAULT_USER_CONFIG);
     }
   });

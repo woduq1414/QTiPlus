@@ -3,4 +3,6 @@ export interface UserConfig {
   isShowRightBottomButton: boolean;
   isDefaultBigCon: boolean;
   isChoseongSearch: boolean;
+  lastUpdateTime: number | null;
+  isAutoLabelingUpdate: boolean;
 }

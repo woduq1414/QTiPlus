@@ -13,6 +13,7 @@ import SettingItem from '@src/components/SettingItem';
 import Storage from '@extension/shared/lib/storage';
 import { Page } from '@src/enums/Page';
 import { time } from 'console';
+import { refreshLabeling } from '@src/functions/refreshLabeling';
 
 const SettingPage: React.FC = () => {
   const {
@@ -36,42 +37,21 @@ const SettingPage: React.FC = () => {
   useEffect(() => {}, [setting]);
 
   const handleRefreshLabeling = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('https://qtiplus.vercel.app/data.json');
-      const data = await response.json();
+    setIsLoading(true);
+    const success = await refreshLabeling();
 
-      // 서비스 워커에 데이터 전송
-      chrome.runtime.sendMessage(
-        {
-          type: 'IMPORT_DATA',
-          data: {
-            importedFileData: data,
-            isImportOverwrite: false,
-            isImportIncludeDoubleConPreset: true,
-          },
-        },
-        async response => {
-          if (response.success) {
-            // 성공 시 lastUpdateTime 업데이트
-            const now = new Date();
-            const timestamp = Math.floor(now.getTime() / 1000);
-            // storage에 저장
-            await chrome.storage.local.set({ lastUpdateTime: timestamp });
-            // global store 업데이트
-            setSetting({ ...setting, lastUpdateTime: timestamp });
-
-            makeToast('라벨링 업데이트가 완료되었습니다.');
-          }
-          setIsToastOpen(true);
-          setIsLoading(false);
-        },
-      );
-    } catch (error) {
-      // console.error('Error fetching data:', error);
-      makeToast('데이터를 불러오는데 실패했습니다.');
+    if (success) {
+      setSetting({
+        ...setting,
+        lastUpdateTime: Math.floor(Date.now() / 1000),
+      });
     }
+    setIsLoading(false);
   };
+
+  useEffect(() => {
+    Storage.setUserConfig(setting);
+  }, [setting]);
 
   return (
     <div

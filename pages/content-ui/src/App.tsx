@@ -3,6 +3,7 @@ import { ToggleButton } from '@extension/ui';
 import { exampleThemeStorage } from '@extension/storage';
 import { t } from '@extension/i18n';
 import { Page } from './enums/Page';
+import { refreshLabeling } from './functions/refreshLabeling';
 
 import SearchPage from './components/pages/SearchPage';
 import ConListPage from './components/pages/ConListPage';
@@ -24,6 +25,39 @@ import { useConList } from './hooks/useConList';
 // import "../public/style.css";
 
 function Router() {
+  const { setting, setSetting } = useGlobalStore();
+
+  useEffect(() => {
+    // 자동 업데이트 체크
+    const checkAutoUpdate = async () => {
+      const now = Math.floor(Date.now() / 1000);
+      // const twelveHoursInSeconds = 12 * 60 * 60;
+      const twelveHoursInSeconds = 12 * 60 * 60;
+      const prevSetting = await Storage.getUserConfig();
+
+      if (!prevSetting) return;
+      if (!prevSetting.isAutoLabelingUpdate) return;
+      if (
+        !prevSetting.lastUpdateTime ||
+        prevSetting.lastUpdateTime === -1 ||
+        now - prevSetting.lastUpdateTime > twelveHoursInSeconds
+      ) {
+        // alert('refresh labeling');
+        const success = await refreshLabeling();
+
+        console.log(prevSetting, 'prevSetting');
+        // console.log(success, 'success');
+        if (success) {
+          Storage.setUserConfig({ ...prevSetting, lastUpdateTime: Math.floor(Date.now() / 1000) });
+          setSetting({ ...prevSetting, lastUpdateTime: Math.floor(Date.now() / 1000) });
+        }
+      }
+    };
+
+    checkAutoUpdate();
+    // 1시간마다 체크
+  }, [setting.isAutoLabelingUpdate]);
+
   useEffect(() => {
     Storage.init();
 
@@ -52,8 +86,6 @@ function Router() {
     setDetailIdxDict,
     isModalOpen,
     setIsModalOpen,
-    setting,
-    setSetting,
     userPackageData,
     userId,
   } = useGlobalStore();
