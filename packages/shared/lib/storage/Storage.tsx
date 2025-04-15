@@ -76,7 +76,7 @@ class Storage {
   static async updateCache(key: string, value: any) {
     this.cache[key] = value;
 
-    console.log(this.cache['UserConfig'], 'cache');
+    // console.log(this.cache['UserConfig'], 'cache');
   }
 
   private static async clearCache(key: string) {

@@ -27,9 +27,39 @@ const SettingPage: React.FC = () => {
     setSetting,
   } = useGlobalStore();
 
+  const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
+
   useEffect(() => {
     Storage.setUserConfig(setting);
   }, [setting]);
+
+  const handleRefreshLabeling = async () => {
+    try {
+      // URL에서 데이터 가져오기
+      const response = await fetch('https://qtiplus.vercel.app/data.json');
+      const importedFileData = await response.json();
+
+      // service worker로 데이터 import 이벤트 전송
+      chrome.runtime.sendMessage({
+        type: 'IMPORT_DATA',
+        data: {
+          importedFileData,
+          isImportOverwrite: false,
+          isImportIncludeDoubleConPreset: true,
+        },
+      });
+
+      // 시간 업데이트
+      const now = new Date();
+      const formattedDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      setLastUpdateTime(formattedDate);
+
+      makeToast('라벨링 업데이트가 시작되었습니다.');
+    } catch (error) {
+      console.error('라벨링 업데이트 중 오류 발생:', error);
+      makeToast('라벨링 업데이트 중 오류가 발생했습니다.');
+    }
+  };
 
   return (
     <div
@@ -101,6 +131,20 @@ const SettingPage: React.FC = () => {
                 isDefaultBigCon: !setting.isDefaultBigCon,
               });
             }}
+          />
+
+          <SettingItem
+            title="자동 라벨링 업데이트"
+            description={`최근 업데이트 시각 : ${lastUpdateTime || '-'}`}
+            isChecked={setting.isAutoLabelingUpdate}
+            onChange={() => {
+              setSetting({
+                ...setting,
+                isAutoLabelingUpdate: !setting.isAutoLabelingUpdate,
+              });
+            }}
+            showRefreshButton={true}
+            onRefreshClick={handleRefreshLabeling}
           />
 
           <SettingItem

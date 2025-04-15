@@ -31,6 +31,7 @@ interface GlobalStore {
     isShowRightBottomButton: boolean;
     isDefaultBigCon: boolean;
     isChoseongSearch: boolean;
+    isAutoLabelingUpdate: boolean;
   };
   setSetting: (newSettings: any) => void;
 }
@@ -68,6 +69,7 @@ const useGlobalStore = create<GlobalStore>(set => ({
     isShowRightBottomButton: true,
     isDefaultBigCon: true,
     isChoseongSearch: true,
+    isAutoLabelingUpdate: true,
   },
   // setSetting 메서드 구현
   setSetting: newSettings =>

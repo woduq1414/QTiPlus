@@ -737,6 +737,83 @@ async function handleUpdateStorage(message: any, sender: any, sendResponse: any)
   return true;
 }
 
+async function handleImportData(message: any, sender: any, sendResponse: any): Promise<boolean> {
+  try {
+    const { importedFileData, isImportOverwrite, isImportIncludeDoubleConPreset } = message.data;
+
+    const customConList = await Storage.getCustomConList();
+
+    if (!customConList) {
+      sendResponse({ success: false, error: '콘 목록을 불러오지 못했습니다.' });
+      return true;
+    }
+
+    const conLabelList = customConList['conLabelList'];
+    const doubleConPreset = customConList['doubleConPreset'];
+
+    let importedConLabelList = importedFileData['conLabelList'];
+
+    if (!importedConLabelList) {
+      sendResponse({ success: false, error: '콘 목록을 불러오지 못했습니다.' });
+      return true;
+    }
+
+    for (let key of Object.keys(importedConLabelList)) {
+      if (!conLabelList[key]) {
+        conLabelList[key] = JSON.parse(JSON.stringify(importedConLabelList[key]));
+        conLabelList[key].conList = {};
+      }
+
+      for (let conKey of Object.keys(importedConLabelList[key].conList)) {
+        if (isImportOverwrite) {
+          conLabelList[key].conList[conKey] = importedConLabelList[key].conList[conKey];
+        } else {
+          if (
+            conLabelList[key] !== undefined &&
+            conLabelList[key].conList[conKey] !== undefined &&
+            (conLabelList[key].conList[conKey].title !== '' || conLabelList[key].conList[conKey].tag !== '')
+          ) {
+            continue;
+          } else {
+            conLabelList[key].conList[conKey] = importedConLabelList[key].conList[conKey];
+          }
+        }
+      }
+    }
+
+    if (doubleConPreset && isImportIncludeDoubleConPreset && importedFileData['doubleConPreset']) {
+      if (isImportOverwrite) {
+        for (const key in importedFileData['doubleConPreset']) {
+          doubleConPreset[key] = importedFileData['doubleConPreset'][key];
+        }
+      } else {
+        for (const key in importedFileData['doubleConPreset']) {
+          if (!(key in doubleConPreset)) {
+            doubleConPreset[key] = importedFileData['doubleConPreset'][key];
+          }
+        }
+      }
+    }
+
+    await Storage.setCustomConList({
+      conLabelList,
+      doubleConPreset,
+    });
+
+    // sender에게만 데이터 변경 알림 메시지 전송
+    if (sender.tab?.id) {
+      chrome.tabs.sendMessage(sender.tab.id, { type: Message.CHANGED_DATA });
+    }
+
+    sendResponse({ success: true });
+    return true;
+  } catch (error) {
+    console.error('데이터 임포트 중 오류 발생:', error);
+    sendResponse({ success: false, error: '데이터 임포트 중 오류가 발생했습니다.' });
+    return true;
+  }
+}
+
 // 메시지 이벤트 핸들러 매핑
 const messageHandlers: { [key: string]: (message: any, sender: any, sendResponse: any) => Promise<boolean> } = {
   [Message.GET_INIT_DATA]: handleGetInitData,
@@ -748,6 +825,7 @@ const messageHandlers: { [key: string]: (message: any, sender: any, sendResponse
   [Message.UPDATE_FAVORITE_CON_LIST]: handleUpdateFavoriteConList,
   [Message.UPDATE_STORAGE]: handleUpdateStorage,
   [Message.TRIGGER_EVENT]: handleTriggerEvent,
+  [Message.IMPORT_DATA]: handleImportData,
 };
 
 conTreeInit().then(res => {});

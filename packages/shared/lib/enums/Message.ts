@@ -28,4 +28,7 @@ export enum Message {
 
   // 살아있게 유지하는 메시지
   KEEP_ALIVE = 'KEEP_ALIVE',
+
+  // 데이터 임포트 관련 메시지
+  IMPORT_DATA = 'IMPORT_DATA',
 }

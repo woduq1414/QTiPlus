@@ -1,5 +1,6 @@
 import React from 'react';
 import Switch from 'react-switch';
+import { ArrowPathIcon } from '@heroicons/react/16/solid';
 
 interface SettingItemProps {
   title: string;
@@ -8,6 +9,8 @@ interface SettingItemProps {
   onChange: (checked: boolean) => void;
   showEditButton?: boolean;
   onEditClick?: () => void;
+  showRefreshButton?: boolean;
+  onRefreshClick?: () => void;
 }
 
 const SettingItem: React.FC<SettingItemProps> = ({
@@ -17,12 +20,27 @@ const SettingItem: React.FC<SettingItemProps> = ({
   onChange,
   showEditButton = false,
   onEditClick,
+  showRefreshButton = false,
+  onRefreshClick,
 }) => {
   return (
     <div className="flex flex-row gap-4 items-center">
       <div className="flex-grow font-semibold text-lg">
         <div>{title}</div>
-        {description && <div className="text-sm text-gray-600 dark:text-gray-400">{description}</div>}
+        {description && (
+          <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
+            {description}
+            {showRefreshButton && (
+              <ArrowPathIcon
+                className="ml-2 w-4 h-4 cursor-pointer text-blue-500 hover:text-blue-700 dark:hover:text-blue-400"
+                onClick={e => {
+                  e.stopPropagation();
+                  onRefreshClick && onRefreshClick();
+                }}
+              />
+            )}
+          </div>
+        )}
       </div>
       {showEditButton ? (
         <div

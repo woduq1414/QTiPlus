@@ -98,6 +98,8 @@ const ImportModal: React.FC<ImportModalProps> = ({
     }
   }, [useDefaultData, onFileSelect]);
 
+  // CHANGED_DATA 메시지 리스너 추가
+
   const handleFileSelect = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -247,72 +249,30 @@ const ImportModal: React.FC<ImportModalProps> = ({
               text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800
               w-full"
             onClick={async () => {
-              const customConList = (await Storage.getCustomConList()) as any;
-
-              if (!customConList) {
-                makeToast('콘 목록을 불러오지 못했습니다.');
-                return;
-              }
-
-              const conLabelList = customConList['conLabelList'];
-              const doubleConPreset = customConList['doubleConPreset'];
-
-              let importedConLabelList = importedFileData['conLabelList'];
-
-              if (!importedConLabelList) {
-                makeToast('콘 목록을 불러오지 못했습니다.');
-                return;
-              }
-
-              for (let key of Object.keys(importedConLabelList)) {
-                if (!conLabelList[key]) {
-                  conLabelList[key] = JSON.parse(JSON.stringify(importedConLabelList[key]));
-                  conLabelList[key].conList = {};
-                }
-
-                for (let conKey of Object.keys(importedConLabelList[key].conList)) {
-                  if (isImportOverwrite) {
-                    conLabelList[key].conList[conKey] = importedConLabelList[key].conList[conKey];
-                  } else {
-                    if (
-                      conLabelList[key] !== undefined &&
-                      conLabelList[key].conList[conKey] !== undefined &&
-                      (conLabelList[key].conList[conKey].title !== '' || conLabelList[key].conList[conKey].tag !== '')
-                    ) {
-                      continue;
+              try {
+                // background.js로 데이터 임포트 요청 보내기
+                chrome.runtime.sendMessage(
+                  {
+                    type: Message.IMPORT_DATA,
+                    data: {
+                      importedFileData,
+                      isImportOverwrite,
+                      isImportIncludeDoubleConPreset,
+                    },
+                  },
+                  response => {
+                    if (response && response.success) {
+                      makeToast('저장 완료!');
+                      handleClose();
                     } else {
-                      conLabelList[key].conList[conKey] = importedConLabelList[key].conList[conKey];
+                      makeToast(response?.error || '데이터 임포트 중 오류가 발생했습니다.');
                     }
-                  }
-                }
+                  },
+                );
+              } catch (error) {
+                console.error('데이터 임포트 중 오류 발생:', error);
+                makeToast('데이터 임포트 중 오류가 발생했습니다.');
               }
-
-              if (doubleConPreset && isImportIncludeDoubleConPreset && importedFileData['doubleConPreset']) {
-                if (isImportOverwrite) {
-                  for (const key in importedFileData['doubleConPreset']) {
-                    doubleConPreset[key] = importedFileData['doubleConPreset'][key];
-                  }
-                } else {
-                  for (const key in importedFileData['doubleConPreset']) {
-                    if (!(key in doubleConPreset)) {
-                      doubleConPreset[key] = importedFileData['doubleConPreset'][key];
-                    }
-                  }
-                }
-              }
-
-              setConLabelList(conLabelList);
-              setDoubleConPreset(doubleConPreset);
-
-              Storage.setCustomConList({
-                conLabelList,
-                doubleConPreset,
-              }).then(() => {
-                chrome.runtime.sendMessage({ type: Message.CHANGED_DATA }, response => {
-                  makeToast('저장 완료!');
-                  handleClose();
-                });
-              });
             }}>
             확인
           </div>

@@ -19,6 +19,7 @@ import { hash } from 'crypto';
 import DoubleConPresetEditPage from './components/pages/DoubleConPresetEditPage';
 import { Message } from '@extension/shared/lib/enums/Message';
 import { Z_INDEX } from '../../../src/constants/zIndex';
+import { useConList } from './hooks/useConList';
 
 // import "../public/style.css";
 
@@ -54,7 +55,14 @@ function Router() {
     setting,
     setSetting,
     userPackageData,
+    userId,
   } = useGlobalStore();
+
+  const {
+    setConLabelList,
+
+    setDoubleConPreset,
+  } = useConList(userId, setUserPackageData);
 
   useEffect(() => {
     chrome.runtime.sendMessage({ type: Message.GET_ID_COOKIE }, response => {
@@ -123,6 +131,26 @@ function Router() {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  useEffect(() => {
+    const messageListener = (message: any) => {
+      if (message.type === Message.CHANGED_DATA) {
+        // 데이터가 변경되었을 때 Storage에서 최신 데이터를 가져와 UI 업데이트
+        Storage.getCustomConList().then(customConList => {
+          if (customConList) {
+            setConLabelList(customConList.conLabelList);
+            setDoubleConPreset(customConList.doubleConPreset);
+          }
+        });
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(messageListener);
+
+    return () => {
+      chrome.runtime.onMessage.removeListener(messageListener);
+    };
+  }, [setConLabelList, setDoubleConPreset]);
 
   return (
     <div className={`${setting.isDarkMode ? 'dark' : 'light'}`}>

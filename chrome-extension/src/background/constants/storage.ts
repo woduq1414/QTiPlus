@@ -19,6 +19,7 @@ export const DEFAULT_USER_CONFIG = {
   isShowRightBottomButton: true,
   isDefaultBigCon: true,
   isChoseongSearch: true,
+  isAutoLabelingUpdate: true,
 } as const;
 
 /**
