@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { Page } from '../enums/Page';
 
+import Storage from '@extension/shared/lib/storage';
+
 interface GlobalStore {
   currentPage: Page;
   setCurrentPage: (currentPage: Page) => void;
@@ -27,7 +29,7 @@ interface GlobalStore {
   setIsEditMode: (isEditMode: boolean) => void;
 
   setting: {
-    isDarkMode: boolean;
+    isDarkMode: boolean | undefined;
     isShowRightBottomButton: boolean;
     isDefaultBigCon: boolean;
     isChoseongSearch: boolean;
@@ -37,46 +39,49 @@ interface GlobalStore {
   setSetting: (newSettings: any) => void;
 }
 
-const useGlobalStore = create<GlobalStore>(set => ({
-  currentPage: Page.SEARCH,
-  setCurrentPage: currentPage => set({ currentPage }),
+const useGlobalStore = create<GlobalStore>(set => {
+  const setting = Storage.getUserConfig();
+  return {
+    currentPage: Page.SEARCH,
+    setCurrentPage: currentPage => set({ currentPage }),
 
-  userId: '',
-  setUserId: userId => set({ userId: userId }),
+    userId: '',
+    setUserId: userId => set({ userId: userId }),
 
-  userPackageData: null,
-  setUserPackageData: userPackageData => set({ userPackageData }),
+    userPackageData: null,
+    setUserPackageData: userPackageData => set({ userPackageData }),
 
-  currentPackageIdx: 0,
-  setCurrentPackageIdx: currentPackageIdx => set({ currentPackageIdx }),
+    currentPackageIdx: 0,
+    setCurrentPackageIdx: currentPackageIdx => set({ currentPackageIdx }),
 
-  conSearch: null,
-  setConSearch: conSearch => set({ conSearch }),
+    conSearch: null,
+    setConSearch: conSearch => set({ conSearch }),
 
-  detailIdxDict: null,
-  setDetailIdxDict: detailIdxDict => set({ detailIdxDict }),
+    detailIdxDict: null,
+    setDetailIdxDict: detailIdxDict => set({ detailIdxDict }),
 
-  isModalOpen: false,
-  setIsModalOpen: toggle =>
-    set(state => ({
-      isModalOpen: typeof toggle === 'function' ? toggle(state.isModalOpen) : !!toggle,
-    })),
+    isModalOpen: false,
+    setIsModalOpen: toggle =>
+      set(state => ({
+        isModalOpen: typeof toggle === 'function' ? toggle(state.isModalOpen) : !!toggle,
+      })),
 
-  isEditMode: false,
-  setIsEditMode: isEditMode => set({ isEditMode }),
+    isEditMode: false,
+    setIsEditMode: isEditMode => set({ isEditMode }),
 
-  setting: {
-    isDarkMode: false,
-    isShowRightBottomButton: true,
-    isDefaultBigCon: true,
-    isChoseongSearch: true,
-    isAutoLabelingUpdate: true,
-    lastUpdateTime: -1,
-  },
-  setSetting: newSettings =>
-    set(state => ({
-      setting: { ...state.setting, ...newSettings },
-    })),
-}));
+    setting: {
+      isDarkMode: undefined,
+      isShowRightBottomButton: true,
+      isDefaultBigCon: true,
+      isChoseongSearch: true,
+      isAutoLabelingUpdate: true,
+      lastUpdateTime: -1,
+    },
+    setSetting: newSettings =>
+      set(state => ({
+        setting: { ...state.setting, ...newSettings },
+      })),
+  };
+});
 
 export default useGlobalStore;

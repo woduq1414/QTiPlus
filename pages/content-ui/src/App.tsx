@@ -185,7 +185,7 @@ function Router() {
   }, [setConLabelList, setDoubleConPreset]);
 
   return (
-    <div className={`${setting.isDarkMode ? 'dark' : 'light'}`}>
+    <div className={`${setting.isDarkMode === undefined ? 'hidden' : setting.isDarkMode ? 'dark' : 'light'}`}>
       <div className={`${isModalOpen ? 'unset' : 'hidden'}`} style={{ zIndex: Z_INDEX.MODAL }}>
         {currentPage === Page.SEARCH ? (
           <SearchPage />
