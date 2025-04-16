@@ -2,7 +2,7 @@ import makeToast from '../functions/toast';
 import useGlobalStore from '../store/globalStore';
 import Storage from '@extension/shared/lib/storage';
 
-export const refreshLabeling = async (): Promise<boolean> => {
+export const refreshLabeling = async (isShowToast: boolean = true): Promise<boolean> => {
   try {
     const response = await fetch('https://qtiplus.vercel.app/data.json');
     const data = await response.json();
@@ -20,18 +20,23 @@ export const refreshLabeling = async (): Promise<boolean> => {
         async response => {
           if (response.success) {
             // storage에 저장
-
-            makeToast('라벨링 업데이트가 완료되었습니다.');
+            if (isShowToast) {
+              makeToast('라벨링 업데이트가 완료되었습니다.');
+            }
             resolve(true);
           } else {
-            makeToast('라벨링 업데이트에 실패했습니다.');
+            if (isShowToast) {
+              makeToast('라벨링 업데이트에 실패했습니다.');
+            }
             resolve(false);
           }
         },
       );
     });
   } catch (error) {
-    makeToast('데이터를 불러오는데 실패했습니다.');
+    if (isShowToast) {
+      makeToast('데이터를 불러오는데 실패했습니다.');
+    }
     return false;
   }
 };

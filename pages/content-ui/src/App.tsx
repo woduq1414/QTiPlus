@@ -43,7 +43,7 @@ function Router() {
         now - prevSetting.lastUpdateTime > twelveHoursInSeconds
       ) {
         // alert('refresh labeling');
-        const success = await refreshLabeling();
+        const success = await refreshLabeling(false);
 
         console.log(prevSetting, 'prevSetting');
         // console.log(success, 'success');
