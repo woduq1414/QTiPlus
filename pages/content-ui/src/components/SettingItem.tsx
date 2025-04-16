@@ -5,7 +5,7 @@ import { ArrowPathIcon } from '@heroicons/react/16/solid';
 interface SettingItemProps {
   title: string;
   description?: string;
-  isChecked: boolean;
+  isChecked: boolean | undefined;
   onChange: (checked: boolean) => void;
   showEditButton?: boolean;
   onEditClick?: () => void;
@@ -69,7 +69,7 @@ const SettingItem: React.FC<SettingItemProps> = ({
       ) : (
         <div>
           <Switch
-            checked={isChecked}
+            checked={isChecked === undefined ? false : isChecked}
             onChange={onChange}
             onColor="#a7b4db"
             onHandleColor="#456bd8"
