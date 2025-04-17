@@ -45,7 +45,7 @@ function Router() {
         // alert('refresh labeling');
         const success = await refreshLabeling(false);
 
-        console.log(prevSetting, 'prevSetting');
+        // console.log(prevSetting, 'prevSetting');
         // console.log(success, 'success');
         if (success) {
           Storage.setUserConfig({ ...prevSetting, lastUpdateTime: Math.floor(Date.now() / 1000) });
@@ -208,7 +208,9 @@ function Router() {
             sm:right-[13px] sm:bottom-[13px] 
             `}
           style={{ zIndex: Z_INDEX.FLOATING_BUTTON }}
-          onClick={() => {
+          onClick={e => {
+            e.stopPropagation();
+            e.preventDefault();
             setIsModalOpen((prev: any) => !prev);
             setCurrentPage(Page.SEARCH);
           }}>

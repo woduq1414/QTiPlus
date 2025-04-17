@@ -1,5 +1,6 @@
 import useGlobalStore from '@src/store/globalStore';
 import { useEffect, useState, useRef, MouseEventHandler } from 'react';
+import { useSwipeable } from 'react-swipeable';
 
 import parseCookies from '@src/functions/cookies';
 
@@ -87,6 +88,23 @@ const SearchPage: React.FC = () => {
     secondDoubleCon: null,
     tag: '',
     presetKey: '',
+  });
+
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (queryPage < queryMaxPage) {
+        setQueryPage(prev => prev + 1);
+        setFocusedIndex(0);
+      }
+    },
+    onSwipedRight: () => {
+      if (queryPage > 1) {
+        setQueryPage(prev => prev - 1);
+        setFocusedIndex(0);
+      }
+    },
+    preventScrollOnSwipe: true,
+    trackMouse: true,
   });
 
   const handleImageKeyDown = (
@@ -1220,7 +1238,7 @@ const SearchPage: React.FC = () => {
           )}
 
         {
-          <div className="flex flex-wrap w-[350px] gap-1 ">
+          <div className="flex flex-wrap w-[350px] gap-1" {...swipeHandlers}>
             {debouncedSearchText !== '' &&
               queryResult &&
               Array.from(queryResult).map((detailData, index) => {

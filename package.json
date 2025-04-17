@@ -47,6 +47,8 @@
     "react-dom": "19.0.0",
     "react-hot-toast": "^2.5.2",
     "react-simple-toasts": "^6.1.0",
+    "react-swipeable": "^7.0.2",
+    "react-swipeable-views": "^0.14.0",
     "react-switch": "^7.1.0",
     "react-tag-input": "^6.10.6",
     "react-toast-notifications": "^2.5.1",
