@@ -440,7 +440,22 @@ async function handleSearchCon(message: any, sender: any, sendResponse: any): Pr
   finalResult = new Set([
     ...Array.from(doubleConList),
     ...Array.from(favoriteList),
-    ...Array.from(otherList),
+    ...Array.from(otherList).sort((a, b) => {
+      // who의 length가 0인 경우 뒤로 보내기
+
+      const aDetail = detailIdxDict[a as string];
+      const bDetail = detailIdxDict[b as string];
+
+      if (!aDetail.who || aDetail.who.length === 0) {
+        return 1;
+      }
+
+      if (!bDetail.who || bDetail.who.length === 0) {
+        return -1;
+      }
+
+      return 0;
+    }),
   ]) as Set<string>;
 
   sendResponse({
