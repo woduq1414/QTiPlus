@@ -61,6 +61,7 @@ const SettingPage: React.FC = () => {
         className="bg-[rgba(246,246,246,0.75)] pl-6 pr-6 pt-6 pb-3 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-4 w-[480px]
         text-black
       dark:bg-[rgba(46,46,46,0.75)] dark:text-white/90
+     
       "
         style={{
           backdropFilter: 'blur(15px)',
@@ -79,7 +80,7 @@ const SettingPage: React.FC = () => {
           <div className="w-[90px] "></div>
         </div>
 
-        <div className="flex flex-col gap-4 py-3">
+        <div className="flex flex-col gap-4 py-3 max-h-[85dvh] sm:max-h-[70dvh] overflow-auto scrollbar">
           <SettingItem
             title="다크 모드"
             isChecked={setting.isDarkMode}
@@ -170,24 +171,25 @@ const SettingPage: React.FC = () => {
               setCurrentPage(Page.DOUBLE_CON_PRESET_EDIT);
             }}
           />
-        </div>
-        <div
-          className="mb-4 text-lg flex flex-row cursor-pointer text-gray-900  dark:text-gray-100 hover:text-blue-500 dark:hover:text-blue-400 items-center mx-auto"
-          onClick={() => {
-            window.open('https://adaptive-bovid-12e.notion.site/1beee4e2dbd98077996fdececf9c0b9a?pvs=73', '_blank');
-          }}>
-          <PaperClipIcon strokeWidth={1} className="mr-0.5 w-[1em] h-[1em]" />
-          사용 설명서
-        </div>
-        <div className="flex flex-col gap-1 mt-1 items-center w-full">
-          <img
-            src={chrome.runtime.getURL('iconOriginal.png')}
-            alt=""
-            className="rounded-lg w-[50px] h-[50px] opacity-80"
-          />
-          <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-            큐티플 - QWER(큐떱이알)콘 검색기 v{process.env['CEB_EXTENSION_VERSION']} <br />
-            qwer.shrimp@gmail.com
+
+          <div
+            className="mb-4 text-lg flex flex-row cursor-pointer text-gray-900  dark:text-gray-100 hover:text-blue-500 dark:hover:text-blue-400 items-center mx-auto"
+            onClick={() => {
+              window.open('https://adaptive-bovid-12e.notion.site/1beee4e2dbd98077996fdececf9c0b9a?pvs=73', '_blank');
+            }}>
+            <PaperClipIcon strokeWidth={1} className="mr-0.5 w-[1em] h-[1em]" />
+            사용 설명서
+          </div>
+          <div className="flex flex-col gap-1 mt-1 items-center w-full">
+            <img
+              src={chrome.runtime.getURL('iconOriginal.png')}
+              alt=""
+              className="rounded-lg w-[50px] h-[50px] opacity-80"
+            />
+            <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              큐티플 - QWER(큐떱이알)콘 검색기 v{process.env['CEB_EXTENSION_VERSION']} <br />
+              qwer.shrimp@gmail.com
+            </div>
           </div>
         </div>
       </div>

@@ -8,6 +8,8 @@ import { DEFAULT_USER_CONFIG, DEFAULT_REPLACE_WORD_DATA } from './constants/stor
 import ConSearch from './ConSearch';
 import { convertQwertyToHangul } from 'es-hangul';
 
+import { unserialize } from 'php-serialize';
+
 import { v4 as uuidv4 } from 'uuid';
 
 import { ConLabelList, CustomConList, DoubleConPreset } from '@extension/shared/lib/models/CustomConList';
@@ -491,59 +493,62 @@ async function handleGetIdCookie(message: any, sender: any, sendResponse: any): 
 
 async function handleSyncConList(message: any, sender: any, sendResponse: any): Promise<boolean> {
   const ci_t = message.data.ci_t;
-  const oldUserPackageData = await Storage.getUserPackageData(false);
+  let oldUserPackageData = await Storage.getUserPackageData(false);
 
-  async function fetchList(page: number) {
-    async function fetchWithRetry(ci_t: string, page: number, maxRetries = 5) {
-      let attempts = 0;
+  if (oldUserPackageData === null) {
+    oldUserPackageData = {};
+  }
 
-      while (attempts < maxRetries) {
-        const response = await fetch('https://gall.dcinside.com/dccon/lists', {
-          headers: {
-            accept: '*/*',
-            'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
-            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Windows"',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'x-requested-with': 'XMLHttpRequest',
-          },
-          referrer: 'https://gall.dcinside.com/mgallery/board/view',
-          referrerPolicy: 'unsafe-url',
-          body: `&target=icon&page=${page}`,
-          method: 'POST',
-          mode: 'cors',
-          credentials: 'same-origin',
-        });
+  async function fetchWithRetry(url: string, body: string, maxRetries = 5) {
+    let attempts = 0;
 
-        const responseText = await response.text();
+    while (attempts < maxRetries) {
+      const response = await fetch(url, {
+        headers: {
+          accept: '*/*',
+          'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+          'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+          'sec-ch-ua-mobile': '?0',
+          'sec-ch-ua-platform': '"Windows"',
+          'sec-fetch-dest': 'empty',
+          'sec-fetch-mode': 'cors',
+          'sec-fetch-site': 'same-origin',
+          'x-requested-with': 'XMLHttpRequest',
+        },
+        referrer: 'https://gall.dcinside.com/mgallery/board/view',
+        referrerPolicy: 'unsafe-url',
+        body: body,
+        method: 'POST',
+        mode: 'cors',
+        credentials: 'same-origin',
+      });
 
-        function IsJsonString(str: string) {
-          try {
-            var json = JSON.parse(str);
-            return typeof json === 'object';
-          } catch (e) {
-            return false;
-          }
+      const responseText = await response.text();
+
+      function IsJsonString(str: string) {
+        try {
+          var json = JSON.parse(str);
+          return typeof json === 'object';
+        } catch (e) {
+          return false;
         }
-
-        if (response.status === 302 || IsJsonString(responseText) === false) {
-          console.warn(`Request redirected (302), retrying... (${attempts + 1}/${maxRetries})`);
-          attempts++;
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          continue;
-        }
-
-        return responseText;
       }
 
-      throw new Error('Max retries reached for fetching data.');
+      if (response.status === 302 || IsJsonString(responseText) === false) {
+        console.warn(`Request redirected (302), retrying... (${attempts + 1}/${maxRetries})`);
+        attempts++;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+
+      return responseText;
     }
 
-    const response = await fetchWithRetry(ci_t, page);
+    throw new Error('Max retries reached for fetching data.');
+  }
+  async function fetchList(page: number, maxPage: number) {
+    const response = await fetchWithRetry('https://gall.dcinside.com/dccon/lists', `&target=icon&page=${page}`);
     const data = JSON.parse(response);
 
     if (sender.tab) {
@@ -552,7 +557,7 @@ async function handleSyncConList(message: any, sender: any, sendResponse: any): 
           type: 'SYNC_PROGRESS',
           data: {
             page: page,
-            maxPage: data.max_page,
+            maxPage: maxPage,
           },
         });
       }
@@ -562,7 +567,15 @@ async function handleSyncConList(message: any, sender: any, sendResponse: any): 
     return data;
   }
 
-  let data = await fetchList(0);
+  async function fetchAllList() {
+    const response = await fetchWithRetry('https://gall.dcinside.com/dccon/lists', `&target=all`);
+    const data = JSON.parse(response);
+    return data;
+  }
+
+  let data = await fetchAllList();
+
+  // let data = await fetchList(0);
 
   if (data.bigcon === undefined) {
     sendResponse({ data: {}, error: '로그인이 필요합니다.' });
@@ -574,7 +587,17 @@ async function handleSyncConList(message: any, sender: any, sendResponse: any): 
     await Storage.setBigConExpire(bigConExpire);
   }
 
-  const maxPage = data.max_page + 1;
+  let object = data['list'].replace(/\\/g, '');
+
+  let jsonObject = unserialize(object);
+  if (!jsonObject.package_sort) {
+    sendResponse({ data: {}, error: '로그인이 필요합니다.' });
+    return true;
+  }
+
+  const maxPage = Math.ceil(jsonObject.package_sort.length / 5);
+
+  const packageIdxList = jsonObject.package_sort.map((item: any) => item.package_idx);
 
   function processData(data: any) {
     const list = data.list;
@@ -628,20 +651,32 @@ async function handleSyncConList(message: any, sender: any, sendResponse: any): 
     return result;
   }
 
-  let allResult = {} as any;
-
+  let isNeedFetchList = [];
   for (let i = 0; i < maxPage; i++) {
-    if (i === 0) {
-      Object.assign(allResult, processData(data));
-    } else {
-      data = await fetchList(i);
-      Object.assign(allResult, processData(data));
+    let isNeedFetch = false;
+    for (let j = 0; j < 5; j++) {
+      if (packageIdxList[i * 5 + j] === undefined) {
+        break;
+      }
+      if (oldUserPackageData[packageIdxList[i * 5 + j]] === undefined) {
+        isNeedFetch = true;
+        break;
+      }
+    }
+
+    if (isNeedFetch) {
+      isNeedFetchList.push(i);
     }
   }
 
-  await Storage.setUserPackageData(allResult);
+  for (let i of isNeedFetchList) {
+    let data = await fetchList(i, isNeedFetchList.length);
+    Object.assign(oldUserPackageData, processData(data));
+  }
 
-  sendResponse({ data: allResult });
+  await Storage.setUserPackageData(oldUserPackageData);
+
+  sendResponse({ data: oldUserPackageData });
   return true;
 }
 

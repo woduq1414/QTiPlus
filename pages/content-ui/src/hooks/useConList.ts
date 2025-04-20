@@ -102,7 +102,7 @@ export const useConList = (userId: string, setUserPackageData: (data: any) => vo
   useEffect(() => {
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       if (request.type === 'SYNC_PROGRESS') {
-        setSyncProgress(` (${request.data.page + 1}/${request.data.maxPage + 1})`);
+        setSyncProgress(` (${request.data.page + 1}/${request.data.maxPage})`);
       }
     });
 

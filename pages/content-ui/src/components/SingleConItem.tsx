@@ -63,7 +63,7 @@ const SingleConItem: React.FC<SingleConItemProps> = ({
 
       {isImageLoaded &&
         favoriteConList &&
-        favoriteConList[userPackageData[detailData.packageIdx]?.conList?.[detailData.sort]?.detailIdx] && (
+        favoriteConList[userPackageData?.[detailData.packageIdx]?.conList?.[detailData.sort]?.detailIdx] && (
           <div className="absolute top-0 right-0">
             <svg
               xmlns="http://www.w3.org/2000/svg"
