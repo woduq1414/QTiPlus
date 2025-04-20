@@ -133,11 +133,11 @@ const ReplaceWordEditPage: React.FC = () => {
       }
     });
 
-    chrome.storage.local.set({
-      ReplaceWordData: newItems,
-    });
+    // chrome.storage.local.set({
+    //   ReplaceWordData: newItems,
+    // });
 
-    chrome.runtime.sendMessage({ type: Message.CHANGED_DATA }, () => {
+    chrome.runtime.sendMessage({ type: Message.UPDATE_REPLACE_WORD_DATA, data: { replaceWordData: newItems } }, () => {
       makeToast('저장 완료!');
     });
   };

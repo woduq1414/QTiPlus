@@ -868,6 +868,14 @@ async function handleImportData(message: any, sender: any, sendResponse: any): P
   return true;
 }
 
+async function handleUpdateReplaceWordData(message: any, sender: any, sendResponse: any): Promise<boolean> {
+  const replaceWordData = message.data.replaceWordData;
+  await Storage.setReplaceWordData(replaceWordData);
+
+  sendResponse({ success: true });
+  return true;
+}
+
 // 메시지 이벤트 핸들러 매핑
 const messageHandlers: { [key: string]: (message: any, sender: any, sendResponse: any) => Promise<boolean> } = {
   [Message.GET_INIT_DATA]: handleGetInitData,
@@ -877,6 +885,7 @@ const messageHandlers: { [key: string]: (message: any, sender: any, sendResponse
   [Message.SYNC_CON_LIST]: handleSyncConList,
   [Message.UPDATE_HIDE_STATE]: handleUpdateHideState,
   [Message.UPDATE_FAVORITE_CON_LIST]: handleUpdateFavoriteConList,
+  [Message.UPDATE_REPLACE_WORD_DATA]: handleUpdateReplaceWordData,
   [Message.UPDATE_STORAGE]: handleUpdateStorage,
   [Message.TRIGGER_EVENT]: handleTriggerEvent,
   [Message.IMPORT_DATA]: handleImportData,
