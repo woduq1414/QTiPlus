@@ -547,7 +547,7 @@ async function handleSyncConList(message: any, sender: any, sendResponse: any): 
 
     throw new Error('Max retries reached for fetching data.');
   }
-  async function fetchList(page: number, maxPage: number) {
+  async function fetchList(page: number, maxPage: number, idx: number) {
     const response = await fetchWithRetry('https://gall.dcinside.com/dccon/lists', `&target=icon&page=${page}`);
     const data = JSON.parse(response);
 
@@ -556,7 +556,7 @@ async function handleSyncConList(message: any, sender: any, sendResponse: any): 
         chrome.tabs.sendMessage(sender.tab.id, {
           type: 'SYNC_PROGRESS',
           data: {
-            page: page,
+            page: idx,
             maxPage: maxPage,
           },
         });
@@ -669,8 +669,9 @@ async function handleSyncConList(message: any, sender: any, sendResponse: any): 
     }
   }
 
-  for (let i of isNeedFetchList) {
-    let data = await fetchList(i, isNeedFetchList.length);
+  for (let page of isNeedFetchList) {
+    let idx = isNeedFetchList.indexOf(page);
+    let data = await fetchList(page, isNeedFetchList.length, idx);
     Object.assign(oldUserPackageData, processData(data));
   }
 
