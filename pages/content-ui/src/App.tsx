@@ -252,6 +252,15 @@ function Router() {
 
 export default function App() {
   // console.log('App');
+  useEffect(() => {
+    let script = document.createElement('script');
+    script.src = chrome.runtime.getURL('inject.js'); // 확장 프로그램 내부의 inject.js 로드
+    script.onload = function () {
+      script.remove(); // 스크립트 실행 후 제거 (DOM 오염 방지)
+    };
+    (document.head || document.documentElement).appendChild(script);
+  }, []);
+
   return (
     <div
       className={`App

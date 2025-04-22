@@ -45,6 +45,13 @@ interface SearchResultDoubleItem extends DetailDataDouble {
 
 type SearchResult = SearchResultItem | SearchResultDoubleItem;
 
+// window.insert_icon 타입 정의
+declare global {
+  interface Window {
+    insert_icon(html: string): void;
+  }
+}
+
 const SearchPage: React.FC = () => {
   const pageSize = 16;
   const { currentPage, setCurrentPage, userPackageData, setIsModalOpen, isModalOpen, userId, setIsEditMode, setting } =
@@ -562,7 +569,25 @@ const SearchPage: React.FC = () => {
     };
   }
 
-  // 에디터에 콘 삽입 함수
+  function insertHTML(conList: any, isBigCon: boolean) {
+    // document.execCommand('insertHTML', false, html);
+
+    // window.insert_icon(html);
+
+    window.postMessage(
+      {
+        type: 'INSERT_DCCON_EDITOR',
+        data: {
+          conList: conList,
+          isBigCon: isBigCon,
+        },
+      },
+      '*',
+    );
+
+    return true;
+  }
+
   function insertConToEditor(
     detailData: any,
     firstDoubleCon2: any,
@@ -570,78 +595,73 @@ const SearchPage: React.FC = () => {
     isBigCon: boolean,
     originalDetailIdx: string,
   ) {
-    const noteEditableDom = document.getElementsByClassName('note-editable')[0];
-    if (!noteEditableDom) return false;
-
-    const memo = document.getElementById('memo');
-    if (!memo) return false;
-
-    const prevSelection = window.getSelection();
-    let savedRange;
-    if (prevSelection && prevSelection.rangeCount > 0) {
-      savedRange = prevSelection.getRangeAt(0); // 현재 커서 위치 저장
-    }
-
-    // 현재 선택된 위치에 HTML 삽입
-    (noteEditableDom as HTMLElement).focus();
-    const range = document.createRange();
-    const selection = window.getSelection();
-
-    range.selectNodeContents(noteEditableDom); // 전체 내용을 범위로 설정
-    range.collapse(false); // 범위를 끝으로 이동
-
-    if (selection) {
-      selection.removeAllRanges(); // 기존 선택 해제
-      selection.addRange(range); // 새로운 범위 설정
-    }
-
     const isMobileVersion = window.location.host === 'm.dcinside.com';
 
     if (isMobileVersion) {
-      if (isDoubleCon) {
-        document.execCommand(
-          'insertHTML',
-          false,
-          `
-            <div class="block dccon" contenteditable="false"><span class="cont dccon"><span class="cont-inr"><button type="button"
-            class="sp-imgclose con-close"><span class="blind">삭제</span></button><img class="written_dccon dccon-img ${isBigCon ? 'bigdccon' : ''}"
-            src="https:${firstDoubleCon2.imgPath}"
-            alt="1" detail="${firstDoubleCon2.detailIdx}"></span><span class="cont-inr"><span class="pos"><span
-                class="order-handle"></span></span><img class="written_dccon dccon-img ${isBigCon ? 'bigdccon' : ''}"
-            src="https:${detailData.imgPath}"
-            alt="2" detail="${originalDetailIdx}"></span></span></div>
-               <p><br></p>
-          `,
-        );
-      } else {
-        document.execCommand(
-          'insertHTML',
-          false,
-          `
-            <div class="block dccon" contenteditable="false"><span class="cont dccon"><span class="cont-inr"><button type="button"
-            class="sp-imgclose con-close"><span class="blind">삭제</span></button><img class="written_dccon dccon-img ${isBigCon ? 'bigdccon' : ''}"
-            src="https:${detailData.imgPath}"
-            alt="0" detail="${originalDetailIdx}"></span></span></div>
+      let html = '';
 
-            <p><br></p>
-          `,
-        );
-      }
-    } else {
+      let conList = [];
       if (isDoubleCon) {
-        document.execCommand(
-          'insertHTML',
-          false,
-          `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${firstDoubleCon2.imgPath}" conalt="0" alt="0" con_alt="0" title="0" detail="${firstDoubleCon2.detailIdx}">
-         
-          `,
-        );
+        conList = [
+          {
+            imgPath: firstDoubleCon2.imgPath,
+            detailIdx: firstDoubleCon2.detailIdx,
+          },
+          {
+            imgPath: detailData.imgPath,
+            detailIdx: originalDetailIdx,
+          },
+        ];
+        // html = `
+        //   <div class="block dccon" contenteditable="false"><span class="cont dccon"><span class="cont-inr"><button type="button"
+        //   class="sp-imgclose con-close"><span class="blind">삭제</span></button><img class="written_dccon dccon-img ${isBigCon ? 'bigdccon' : ''}"
+        //   src="https:${firstDoubleCon2.imgPath}"
+        //   alt="1" detail="${firstDoubleCon2.detailIdx}"></span><span class="cont-inr"><span class="pos"><span
+        //       class="order-handle"></span></span><img class="written_dccon dccon-img ${isBigCon ? 'bigdccon' : ''}"
+        //   src="https:${detailData.imgPath}"
+        //   alt="2" detail="${originalDetailIdx}"></span></span></div>
+        //      <p><br></p>
+        // `;
+      } else {
+        conList = [
+          {
+            imgPath: detailData.imgPath,
+            detailIdx: originalDetailIdx,
+          },
+        ];
+        // html = `
+        //   <div class="block dccon" contenteditable="false"><span class="cont dccon"><span class="cont-inr"><button type="button"
+        //   class="sp-imgclose con-close"><span class="blind">삭제</span></button><img class="written_dccon dccon-img ${isBigCon ? 'bigdccon' : ''}"
+        //   src="https:${detailData.imgPath}"
+        //   alt="0" detail="${originalDetailIdx}"></span></span></div>
+        //   <p><br></p>
+        //   `;
       }
-      document.execCommand(
-        'insertHTML',
-        false,
-        `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${detailData.imgPath}" conalt="0" alt="0" con_alt="0" title=0" detail="${originalDetailIdx}">`,
-      );
+      insertHTML(conList, isBigCon);
+    } else {
+      let conList = [];
+      if (isDoubleCon) {
+        conList = [
+          {
+            imgPath: firstDoubleCon2.imgPath,
+            detailIdx: firstDoubleCon2.detailIdx,
+          },
+          {
+            imgPath: detailData.imgPath,
+            detailIdx: originalDetailIdx,
+          },
+        ];
+        // html = `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${firstDoubleCon2.imgPath}" conalt="0" alt="0" con_alt="0" title="0" detail="${firstDoubleCon2.detailIdx}">`;
+      } else {
+        conList = [
+          {
+            imgPath: detailData.imgPath,
+            detailIdx: originalDetailIdx,
+          },
+        ];
+      }
+      // html += `<img class="written_dccon ${isBigCon ? 'bigdccon' : ''}" src="https:${detailData.imgPath}" conalt="0" alt="0" con_alt="0" title=0" detail="${originalDetailIdx}">`;
+      insertHTML(conList, isBigCon);
     }
 
     return true;
