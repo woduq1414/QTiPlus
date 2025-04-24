@@ -61,8 +61,10 @@ const SearchPage: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [queryResult, setQueryResult] = useState<Set<SearchResult>>();
+  const queryResultRef = useRef<Set<SearchResult>>(new Set());
 
   const debouncedSearchText = useDebounce(searchInput, 250);
+  const debouncedSearchTextRef = useRef(debouncedSearchText);
 
   const imageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
@@ -97,6 +99,11 @@ const SearchPage: React.FC = () => {
     presetKey: '',
   });
 
+  const [recentConPage, setRecentConPage] = useState<number>(1);
+  const [recentConMaxPage, setRecentConMaxPage] = useState<number>(1);
+  const recentConPageRef = useRef(recentConPage);
+  const recentConMaxPageRef = useRef(recentConMaxPage);
+
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => {
       if (queryPage < queryMaxPage) {
@@ -127,9 +134,9 @@ const SearchPage: React.FC = () => {
 
     if (debouncedSearchText === '') {
       if (isDoubleCon && !firstDoubleCon) {
-        targetResultSize = recentUsedDoubleConList.length;
+        targetResultSize = Math.min(recentUsedDoubleConList.length, pageSize / 2);
       } else {
-        targetResultSize = recentUsedConList.length;
+        targetResultSize = Math.min(recentUsedConList.length, pageSize);
       }
     } else {
       if (queryResult) {
@@ -238,8 +245,27 @@ const SearchPage: React.FC = () => {
       });
     } else {
       setQueryResult(undefined);
+
+      if (isDoubleCon && !firstDoubleCon) {
+        setQueryPage(1);
+        setQueryMaxPage(Math.ceil(recentUsedDoubleConList.length / (pageSize / 2)));
+
+        setRecentConPage(1);
+      } else {
+        setQueryPage(1);
+        setQueryMaxPage(Math.ceil(recentUsedConList.length / pageSize));
+
+        setRecentConPage(1);
+      }
     }
   }, [debouncedSearchText, isDoubleCon, firstDoubleCon]);
+
+  useEffect(() => {
+    debouncedSearchTextRef.current = debouncedSearchText;
+  }, [debouncedSearchText]);
+  useEffect(() => {
+    queryResultRef.current = queryResult ?? new Set();
+  }, [queryResult]);
 
   useEffect(() => {
     // double con 은 2만큼 길이 차지
@@ -272,14 +298,21 @@ const SearchPage: React.FC = () => {
       Storage.getRecentUsedConList(true).then(data => {
         if (data === null) {
           setRecentUsedConList([]);
+          setRecentConMaxPage(1);
         } else {
           setRecentUsedConList(data);
+
+          if (Math.ceil(data.length / pageSize) >= 1) {
+            setRecentConMaxPage(Math.ceil(data.length / pageSize));
+          }
+          // console.log(Math.ceil(data.length / pageSize), "!!");
         }
       });
 
       Storage.getRecentUsedDoubleConList(true).then(data => {
         if (data === null) {
           setRecentUsedDoubleConList([]);
+          // setRecentConMaxPage(1);
         } else {
           setRecentUsedDoubleConList(data);
         }
@@ -309,6 +342,9 @@ const SearchPage: React.FC = () => {
         setIsDoubleCon(false);
         setFirstDoubleCon(null);
 
+        setRecentConMaxPage(1);
+        setRecentConPage(1);
+
         setFocusedIndex(null);
       };
     }
@@ -332,12 +368,29 @@ const SearchPage: React.FC = () => {
       searchInputRef.current?.focus();
     } else {
     }
-  }, [isDoubleCon]);
+
+    if (isDoubleCon && !firstDoubleCon) {
+      setRecentConMaxPage(prev => {
+        // console.log(Math.ceil(recentUsedDoubleConList.length / (pageSize / 2)), recentUsedDoubleConList.length, "!!445");
+        return Math.ceil(recentUsedDoubleConList.length / (pageSize / 2));
+      });
+    } else {
+      setRecentConMaxPage(prev => {
+        console.log(Math.ceil(recentUsedConList.length / pageSize), recentUsedConList.length, '!!44');
+        return Math.ceil(recentUsedConList.length / pageSize);
+      });
+    }
+  }, [isDoubleCon, firstDoubleCon, recentUsedDoubleConList, recentUsedConList]);
 
   useEffect(() => {
     queryPageRef.current = queryPage;
     queryMaxPageRef.current = queryMaxPage;
   }, [queryPage, queryMaxPage]);
+
+  useEffect(() => {
+    recentConPageRef.current = recentConPage;
+    recentConMaxPageRef.current = recentConMaxPage;
+  }, [recentConPage, recentConMaxPage]);
 
   useEffect(() => {
     const handleKeyDown = (event: { altKey: any; shiftKey: any; key: string; preventDefault: () => void }) => {
@@ -354,17 +407,39 @@ const SearchPage: React.FC = () => {
         const queryPage = queryPageRef.current;
         const queryMaxPage = queryMaxPageRef.current;
 
-        if (queryPage < queryMaxPage) {
+        const recentConPage = recentConPageRef.current;
+        const recentConMaxPage = recentConMaxPageRef.current;
+
+        const debouncedSearchText = debouncedSearchTextRef.current;
+
+        if (debouncedSearchText === '') {
+          if (recentConPage < recentConMaxPage) {
+            setRecentConPage(prev => prev + 1);
+            setFocusedIndex(0);
+          }
+
+          console.log(recentConPage, recentConMaxPage);
+        } else if (queryPage < queryMaxPage) {
           setQueryPage(prev => prev + 1);
           setFocusedIndex(0);
         }
+
         // console.log('alt + ArrowRight');
       } else if (event.shiftKey && event.key === 'ArrowLeft') {
         event.preventDefault(); // 기본 동작 방지
 
         const queryPage = queryPageRef.current;
+        const queryMaxPage = queryMaxPageRef.current;
 
-        if (queryPage > 1) {
+        const recentConPage = recentConPageRef.current;
+        const debouncedSearchText = debouncedSearchTextRef.current;
+
+        if (debouncedSearchText === '') {
+          if (recentConPage > 1) {
+            setRecentConPage(prev => prev - 1);
+            setFocusedIndex(0);
+          }
+        } else if (queryPage > 1) {
           setQueryPage(prev => prev - 1);
           setFocusedIndex(0);
         }
@@ -511,7 +586,7 @@ const SearchPage: React.FC = () => {
           },
         });
 
-        recentUsedDoubleConList = recentUsedDoubleConList.slice(-10);
+        recentUsedDoubleConList = recentUsedDoubleConList.slice(-64);
         await Storage.setRecentUsedDoubleConList(recentUsedDoubleConList);
       }
     }
@@ -558,7 +633,7 @@ const SearchPage: React.FC = () => {
       });
     }
 
-    recentUsedConList = recentUsedConList.slice(-20);
+    recentUsedConList = recentUsedConList.slice(-128);
     await Storage.setRecentUsedConList(recentUsedConList);
 
     return {
@@ -1323,7 +1398,7 @@ const SearchPage: React.FC = () => {
               (!(isDoubleCon && !firstDoubleCon)
                 ? Array.from(recentUsedConList)
                     .reverse()
-                    .slice(0, 16)
+                    .slice((recentConPage - 1) * pageSize, recentConPage * pageSize)
                     .map((detailData, index) => {
                       const detailIdx = detailData.detailIdx;
 
@@ -1352,7 +1427,7 @@ const SearchPage: React.FC = () => {
                     })
                 : Array.from(recentUsedDoubleConList)
                     .reverse()
-                    .slice(0, 8)
+                    .slice((recentConPage - 1) * (pageSize / 2), recentConPage * (pageSize / 2))
                     .map((detailData, index) => {
                       // console.log(detailData, 'detailData212');
 
@@ -1384,38 +1459,44 @@ const SearchPage: React.FC = () => {
                     }))}
           </div>
         }
-        {debouncedSearchText !== '' && queryResult && queryMaxPageRef.current > 1 && (
+
+        {(debouncedSearchText !== '' && queryResult && queryMaxPage > 1) ||
+        (debouncedSearchText === '' && recentConMaxPage > 1) ? (
           <div className="flex flex-row gap-2 justify-center items-center">
             <div
-              className={`cursor-pointer
-          text-center
-         hover:text-blue-700
-         text-gray-600 dark:text-gray-400
-         pl-5
-         ${queryPage === 1 ? 'opacity-50 dark:opacity-25' : ''}
-          `}
+              className={`cursor-pointer text-center hover:text-blue-700 text-gray-600 dark:text-gray-400 pl-5 ${
+                (debouncedSearchText === '' ? recentConPage === 1 : queryPage === 1) ? 'opacity-50 dark:opacity-25' : ''
+              }`}
               onClick={async () => {
-                if (queryPage === 1) return;
-                setQueryPage(prev => prev - 1);
+                if (debouncedSearchText === '') {
+                  if (recentConPage === 1) return;
+                  setRecentConPage(prev => prev - 1);
+                } else {
+                  if (queryPage === 1) return;
+                  setQueryPage(prev => prev - 1);
+                }
               }}>
               <ChevronLeftIcon className="h-6 w-6" />
             </div>
             <div
-              className={`cursor-pointer
-          text-center
-         hover:text-blue-700
-         text-gray-600 dark:text-gray-400
-         pr-5
-         ${queryPage === queryMaxPage ? 'opacity-50 dark:opacity-25' : ''}
-          `}
+              className={`cursor-pointer text-center hover:text-blue-700 text-gray-600 dark:text-gray-400 pr-5 ${
+                (debouncedSearchText === '' ? recentConPage === recentConMaxPage : queryPage === queryMaxPage)
+                  ? 'opacity-50 dark:opacity-25'
+                  : ''
+              }`}
               onClick={async () => {
-                if (queryPage === queryMaxPage) return;
-                setQueryPage(prev => prev + 1);
+                if (debouncedSearchText === '') {
+                  if (recentConPage === recentConMaxPage) return;
+                  setRecentConPage(prev => prev + 1);
+                } else {
+                  if (queryPage === queryMaxPage) return;
+                  setQueryPage(prev => prev + 1);
+                }
               }}>
               <ChevronRightIcon className="h-6 w-6" />
             </div>
           </div>
-        )}
+        ) : null}
 
         <div
           className="cursor-pointer
