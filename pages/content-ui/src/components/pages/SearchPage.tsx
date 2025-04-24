@@ -106,13 +106,23 @@ const SearchPage: React.FC = () => {
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => {
-      if (queryPage < queryMaxPage) {
+      if (debouncedSearchText === '') {
+        if (recentConPage < recentConMaxPage) {
+          setRecentConPage(prev => prev + 1);
+          setFocusedIndex(0);
+        }
+      } else if (queryPage < queryMaxPage) {
         setQueryPage(prev => prev + 1);
         setFocusedIndex(0);
       }
     },
     onSwipedRight: () => {
-      if (queryPage > 1) {
+      if (debouncedSearchText === '') {
+        if (recentConPage > 1) {
+          setRecentConPage(prev => prev - 1);
+          setFocusedIndex(0);
+        }
+      } else if (queryPage > 1) {
         setQueryPage(prev => prev - 1);
         setFocusedIndex(0);
       }
@@ -134,9 +144,17 @@ const SearchPage: React.FC = () => {
 
     if (debouncedSearchText === '') {
       if (isDoubleCon && !firstDoubleCon) {
-        targetResultSize = Math.min(recentUsedDoubleConList.length, pageSize / 2);
+        if (recentConPage >= recentConMaxPage) {
+          targetResultSize = recentUsedDoubleConList.length % (pageSize / 2);
+        } else {
+          targetResultSize = pageSize / 2;
+        }
       } else {
-        targetResultSize = Math.min(recentUsedConList.length, pageSize);
+        if (recentConPage >= recentConMaxPage) {
+          targetResultSize = recentUsedConList.length % pageSize;
+        } else {
+          targetResultSize = pageSize;
+        }
       }
     } else {
       if (queryResult) {
