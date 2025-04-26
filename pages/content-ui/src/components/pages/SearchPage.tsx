@@ -394,7 +394,7 @@ const SearchPage: React.FC = () => {
       });
     } else {
       setRecentConMaxPage(prev => {
-        console.log(Math.ceil(recentUsedConList.length / pageSize), recentUsedConList.length, '!!44');
+        // console.log(Math.ceil(recentUsedConList.length / pageSize), recentUsedConList.length, '!!44');
         return Math.ceil(recentUsedConList.length / pageSize);
       });
     }

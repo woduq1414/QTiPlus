@@ -50,6 +50,7 @@ export interface ExportModalProps {
 }
 
 export interface ConListItemProps {
+  who: string;
   packageData: ConPackage;
   customConData: ConLabel | null;
   isEditMode: boolean;

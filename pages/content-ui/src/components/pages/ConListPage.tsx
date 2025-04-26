@@ -24,6 +24,56 @@ const ConListPage: React.FC = () => {
     setIsEditMode,
   } = useGlobalStore();
 
+  const [userPackageDataWithWho, setUserPackageDataWithWho] = useState<any>(null);
+
+  useEffect(() => {
+    if (!userPackageData) return;
+
+    const newUserPackageData: Record<string, Record<string, any>> = {
+      Q: {},
+      W: {},
+      E: {},
+      R: {},
+      QWER: {},
+      unknown: {},
+    };
+
+    const whoLabelTable = {
+      Q: ['쵸단', '지혜'],
+      W: ['젠타', '아희'],
+      E: ['냥뇽', '히나', '나영'],
+      R: ['밍', '시연'],
+      QWER: ['QWER', '큐떱'],
+    };
+
+    // console.log(newUserPackageData);
+
+    Object.keys(userPackageData).forEach(key => {
+      const title = userPackageData[key].title;
+
+      let tmpName = 'unknown';
+      for (const [name, query] of Object.entries(whoLabelTable)) {
+        for (const queryItem of query) {
+          if (title.includes(queryItem)) {
+            newUserPackageData[name as keyof typeof newUserPackageData][key] = userPackageData[key];
+            tmpName = name;
+            break;
+          }
+        }
+        if (tmpName !== 'unknown') break;
+      }
+
+      if (tmpName === 'unknown') {
+        newUserPackageData['unknown'][key] = userPackageData[key];
+      }
+
+      // console.log(newUserPackageData[key].who);
+    });
+    setUserPackageDataWithWho(newUserPackageData);
+
+    // console.log(newUserPackageData);
+  }, [userPackageData]);
+
   const {
     isSyncing,
     syncProgress,
@@ -80,16 +130,16 @@ const ConListPage: React.FC = () => {
     setIsEditMode(false);
   }, [isHideState, saveHideState, setIsEditMode]);
 
-  const sortedPackageKeys = userPackageData
-    ? Object.keys(userPackageData).sort((a, b) => {
-        const hideA = userPackageData[a].isHide ? 1 : 0;
-        const hideB = userPackageData[b].isHide ? 1 : 0;
-        if (hideA !== hideB) return hideA - hideB;
-        return userPackageData[a].title
-          .replaceAll(' ', '')
-          .localeCompare(userPackageData[b].title.replaceAll(' ', ''), 'ko');
-      })
-    : [];
+  // const sortedPackageKeys = userPackageDataWithWho
+  //   ? Object.keys(userPackageDataWithWho).sort((a, b) => {
+  //     const hideA = userPackageDataWithWho[a].isHide ? 1 : 0;
+  //     const hideB = userPackageDataWithWho[b].isHide ? 1 : 0;
+  //     if (hideA !== hideB) return hideA - hideB;
+  //     return userPackageDataWithWho[a].title
+  //       .replaceAll(' ', '')
+  //       .localeCompare(userPackageDataWithWho[b].title.replaceAll(' ', ''), 'ko');
+  //   })
+  //   : [];
 
   return (
     <>
@@ -123,27 +173,50 @@ const ConListPage: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-2 overflow-auto scrollbar max-h-[50dvh] px-1">
-            {userPackageData ? (
-              sortedPackageKeys.map(key => {
-                if (userPackageData[key].isHide && !isEditMode) return null;
+            {userPackageDataWithWho ? (
+              Object.keys(userPackageDataWithWho).map(who => {
+                if (Object.keys(userPackageDataWithWho[who]).length === 0) {
+                  return null;
+                }
 
-                const packageData = userPackageData[key];
-                const customConData = conLabelList ? conLabelList[packageData.packageIdx] : null;
+                const sortedPackageKeys = Object.keys(userPackageDataWithWho[who]).sort((a, b) => {
+                  const hideA = userPackageDataWithWho[who][a].isHide ? 1 : 0;
+                  const hideB = userPackageDataWithWho[who][b].isHide ? 1 : 0;
+                  if (hideA !== hideB) return hideA - hideB;
+                  return userPackageDataWithWho[who][a].title
+                    .replaceAll(' ', '')
+                    .localeCompare(userPackageDataWithWho[who][b].title.replaceAll(' ', ''), 'ko');
+                });
 
                 return (
-                  <ConListItem
-                    key={key}
-                    packageData={packageData}
-                    customConData={customConData}
-                    isEditMode={isEditMode}
-                    isHideState={isHideState}
-                    onToggleHide={toggleIsHide}
-                    onClick={() => {
-                      if (!isEditMode) return;
-                      setCurrentPackageIdx(packageData.packageIdx);
-                      setCurrentPage(Page.CON_INFO_EDIT);
-                    }}
-                  />
+                  <div className="flex flex-col gap-2">
+                    {who !== 'Q' && (
+                      <div className="mt-2 mb-2 border-t-2 border-dashed border-gray-300 dark:border-gray-500 w-full" />
+                    )}
+                    {sortedPackageKeys.map(key => {
+                      if (userPackageData[key].isHide && !isEditMode) return null;
+
+                      const packageData = userPackageData[key];
+                      const customConData = conLabelList ? conLabelList[packageData.packageIdx] : null;
+
+                      return (
+                        <ConListItem
+                          key={key}
+                          who={who}
+                          packageData={packageData}
+                          customConData={customConData}
+                          isEditMode={isEditMode}
+                          isHideState={isHideState}
+                          onToggleHide={toggleIsHide}
+                          onClick={() => {
+                            if (!isEditMode) return;
+                            setCurrentPackageIdx(packageData.packageIdx);
+                            setCurrentPage(Page.CON_INFO_EDIT);
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
                 );
               })
             ) : (

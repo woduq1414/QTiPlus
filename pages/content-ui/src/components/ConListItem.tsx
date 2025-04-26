@@ -3,6 +3,7 @@ import Switch from 'react-switch';
 import { ConListItemProps } from '@src/types/conList';
 
 const ConListItem: React.FC<ConListItemProps> = ({
+  who,
   packageData,
   customConData,
   isEditMode,
@@ -17,6 +18,17 @@ const ConListItem: React.FC<ConListItemProps> = ({
 
   const customConCount = getCustomConCount();
   const totalConCount = Object.keys(packageData.conList).length;
+
+  const colorTable = {
+    Q: 'border-[rgba(190,190,190,1)]',
+    W: 'border-[rgba(239,135,181,1)]',
+    E: 'border-[rgba(6,189,237,1)]',
+    R: 'border-[rgba(195,215,115,1)]',
+    QWER: 'border-[rgba(160,160,160,1)]',
+    unknown: 'border-[rgba(160,160,160,1)]',
+  };
+
+  const borderColor = colorTable[who as keyof typeof colorTable];
 
   return (
     <div className="flex flex-row w-full items-center">
@@ -44,7 +56,7 @@ const ConListItem: React.FC<ConListItemProps> = ({
           <img
             src={packageData.mainImg}
             alt={packageData.title}
-            className="w-[3em] h-[3em] rounded-lg border-2 border-gray-600 dark:border-gray-400"
+            className={`w-[3em] h-[3em] rounded-lg border-2 ${borderColor}`}
           />
         </div>
         <div
