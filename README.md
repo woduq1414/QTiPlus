@@ -44,12 +44,12 @@ pnpm install -> .env 파일 생성 후 수정 -> pnpm dev 또는 pnpm build
 
 <div align="center">
 
+![슬라이드1](https://github.com/user-attachments/assets/f21f2eb5-3e32-4efe-93e9-48c266ec96e9)
+![슬라이드2](https://github.com/user-attachments/assets/13dae7f0-eff0-4e93-b760-44b3f1afcbdd)
+![슬라이드3](https://github.com/user-attachments/assets/19a0e8e2-800a-4c1f-a031-3d55adeb4766)
+![슬라이드4](https://github.com/user-attachments/assets/130b2f0b-caf1-494c-a515-c91d1a317a40)
 
-![image](https://github.com/user-attachments/assets/3a4421ce-5e98-42c9-8520-9994e73e8271)
-![image](https://github.com/user-attachments/assets/537f94b6-ae4c-4230-839d-50e55549c115)
-![image](https://github.com/user-attachments/assets/5b72c560-3eb1-44db-a391-c2155f3852b4)
-![image](https://github.com/user-attachments/assets/62a3233f-5638-42bd-9ba3-1ac1bf588e7b)
-![image](https://github.com/user-attachments/assets/b636f229-5b87-406f-b59f-412932e0dac9)
+
 
 
 </div>
