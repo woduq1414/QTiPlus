@@ -174,51 +174,70 @@ const ConListPage: React.FC = () => {
 
           <div className="flex flex-col gap-2 overflow-auto scrollbar max-h-[50dvh] px-1">
             {userPackageDataWithWho ? (
-              Object.keys(userPackageDataWithWho).map(who => {
-                if (Object.keys(userPackageDataWithWho[who]).length === 0) {
-                  return null;
+              (() => {
+                let prevIsExist = false;
+
+                let needDividerDict: Record<string, boolean> = {};
+                for (const [who, packages] of Object.entries(userPackageDataWithWho)) {
+                  if (Object.keys(packages as any).length > 0) {
+                    if (!isEditMode && !Object.values(packages as any).find((con: any) => !con.isHide)) {
+                      continue;
+                    }
+
+                    if (prevIsExist) {
+                      needDividerDict[who] = true;
+                    }
+
+                    prevIsExist = true;
+                  }
                 }
 
-                const sortedPackageKeys = Object.keys(userPackageDataWithWho[who]).sort((a, b) => {
-                  const hideA = userPackageDataWithWho[who][a].isHide ? 1 : 0;
-                  const hideB = userPackageDataWithWho[who][b].isHide ? 1 : 0;
-                  if (hideA !== hideB) return hideA - hideB;
-                  return userPackageDataWithWho[who][a].title
-                    .replaceAll(' ', '')
-                    .localeCompare(userPackageDataWithWho[who][b].title.replaceAll(' ', ''), 'ko');
+                return Object.keys(userPackageDataWithWho).map(who => {
+                  if (Object.keys(userPackageDataWithWho[who]).length === 0) {
+                    return null;
+                  }
+
+                  const sortedPackageKeys = Object.keys(userPackageDataWithWho[who]).sort((a, b) => {
+                    const hideA = userPackageDataWithWho[who][a].isHide ? 1 : 0;
+                    const hideB = userPackageDataWithWho[who][b].isHide ? 1 : 0;
+                    if (hideA !== hideB) return hideA - hideB;
+                    return userPackageDataWithWho[who][a].title
+                      .replaceAll(' ', '')
+                      .localeCompare(userPackageDataWithWho[who][b].title.replaceAll(' ', ''), 'ko');
+                  });
+
+                  return (
+                    <div className="flex flex-col gap-2">
+                      {needDividerDict[who] && (
+                        <div className="mt-2 mb-2 border-t-[1px] border-dashed border-gray-300 dark:border-gray-500 w-full" />
+                      )}
+                      {sortedPackageKeys.map(key => {
+                        if (userPackageData[key].isHide && !isEditMode) return null;
+
+                        const packageData = userPackageData[key];
+                        const customConData = conLabelList ? conLabelList[packageData.packageIdx] : null;
+
+                        return (
+                          <ConListItem
+                            key={key}
+                            who={who}
+                            packageData={packageData}
+                            customConData={customConData}
+                            isEditMode={isEditMode}
+                            isHideState={isHideState}
+                            onToggleHide={toggleIsHide}
+                            onClick={() => {
+                              if (!isEditMode) return;
+                              setCurrentPackageIdx(packageData.packageIdx);
+                              setCurrentPage(Page.CON_INFO_EDIT);
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  );
                 });
-
-                return (
-                  <div className="flex flex-col gap-2">
-                    {who !== 'Q' && (
-                      <div className="mt-2 mb-2 border-t-2 border-dashed border-gray-300 dark:border-gray-500 w-full" />
-                    )}
-                    {sortedPackageKeys.map(key => {
-                      if (userPackageData[key].isHide && !isEditMode) return null;
-
-                      const packageData = userPackageData[key];
-                      const customConData = conLabelList ? conLabelList[packageData.packageIdx] : null;
-
-                      return (
-                        <ConListItem
-                          key={key}
-                          who={who}
-                          packageData={packageData}
-                          customConData={customConData}
-                          isEditMode={isEditMode}
-                          isHideState={isHideState}
-                          onToggleHide={toggleIsHide}
-                          onClick={() => {
-                            if (!isEditMode) return;
-                            setCurrentPackageIdx(packageData.packageIdx);
-                            setCurrentPage(Page.CON_INFO_EDIT);
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                );
-              })
+              })()
             ) : (
               <div className="flex flex-col gap-2 items-center justify-center w-full py-8 border-gray-200 border-dashed border-2 rounded-lg">
                 <div className="text-center">디시인사이드에 로그인 후 구매한 콘을 동기화해보세요!</div>
