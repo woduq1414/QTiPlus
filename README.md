@@ -9,6 +9,11 @@ pnpm install -> .env 파일 생성 후 수정 -> pnpm dev 또는 pnpm build
 
 [https://adaptive-bovid-12e.notion.site/1beee4e2dbd98077996fdececf9c0b9a](https://adaptive-bovid-12e.notion.site/1beee4e2dbd98077996fdececf9c0b9a)
 
+
+### 개발 문서
+[Powered by Deepwiki](https://deepwiki.com/woduq1414/QTiPlus) 
+
+
 ### 스토어 링크 
 
 [크롬 웹스토어](https://chromewebstore.google.com/detail/%ED%81%90%ED%8B%B0%ED%94%8C-qwer%ED%81%90%EB%96%B1%EC%9D%B4%EC%95%8C%EC%BD%98-%EA%B2%80%EC%83%89%EA%B8%B0/giddjchbbilkdiicffndjkgdajcmnbgo?hl=ko)
