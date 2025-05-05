@@ -311,6 +311,13 @@ const ConListPage: React.FC = () => {
         onClose={() => {
           setIsImportModalOpen(false);
           setImportedFileData(null);
+
+          if (importedFileData.conLabelList) {
+            setConLabelList(importedFileData.conLabelList);
+          }
+          if (importedFileData.doubleConList) {
+            setDoubleConPreset(importedFileData.doubleConList);
+          }
         }}
         importedFileData={importedFileData}
         setConLabelList={setConLabelList}

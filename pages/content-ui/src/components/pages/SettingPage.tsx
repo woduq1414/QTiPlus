@@ -14,6 +14,7 @@ import Storage from '@extension/shared/lib/storage';
 import { Page } from '@src/enums/Page';
 import { time } from 'console';
 import { refreshLabeling } from '@src/functions/refreshLabeling';
+import { Message } from '@extension/shared/lib/enums/Message';
 
 const SettingPage: React.FC = () => {
   const {
@@ -33,6 +34,7 @@ const SettingPage: React.FC = () => {
   const [isToastOpen, setIsToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
   useEffect(() => {}, [setting]);
 
@@ -52,6 +54,31 @@ const SettingPage: React.FC = () => {
   useEffect(() => {
     Storage.setUserConfig(setting);
   }, [setting]);
+
+  // 라벨링 데이터 초기화 함수
+  const handleResetLabelingData = async () => {
+    setIsLoading(true);
+    try {
+      await Storage.setCustomConList({
+        conLabelList: {},
+        doubleConPreset: {},
+      }); // 라벨링 데이터 초기화
+
+      chrome.runtime.sendMessage(
+        {
+          type: Message.CHANGED_DATA,
+          data: {},
+        },
+        () => {
+          makeToast('라벨링 데이터가 초기화되었습니다.');
+        },
+      );
+    } catch (e) {
+      makeToast('초기화 중 오류가 발생했습니다.');
+    }
+    setIsLoading(false);
+    setIsResetModalOpen(false);
+  };
 
   return (
     <div
@@ -172,6 +199,19 @@ const SettingPage: React.FC = () => {
             }}
           />
 
+          <SettingItem
+            title="라벨링 데이터 초기화"
+            description="모든 라벨링 데이터 삭제"
+            isChecked={false}
+            onChange={() => {}}
+            showEditButton={true}
+            buttonText="삭제"
+            buttonType="red"
+            onEditClick={() => {
+              setIsResetModalOpen(true);
+            }}
+          />
+
           <div
             className="mb-4 text-lg flex flex-row cursor-pointer text-gray-900  dark:text-gray-100 hover:text-blue-500 dark:hover:text-blue-400 items-center mx-auto"
             onClick={() => {
@@ -191,6 +231,27 @@ const SettingPage: React.FC = () => {
               qwer.shrimp@gmail.com
             </div>
           </div>
+
+          {/* 초기화 확인 모달 */}
+          <Modal isOpen={isResetModalOpen} onClose={() => setIsResetModalOpen(false)}>
+            <div className="flex flex-col gap-4 items-center">
+              <div className="font-bold text-lg text-red-600">정말로 라벨링 데이터를 초기화하시겠습니까?</div>
+              <div className="text-sm text-gray-600 dark:text-gray-300 text-center">이 작업은 되돌릴 수 없습니다.</div>
+              <div className="flex flex-row gap-2 mt-2 w-full">
+                <button
+                  className="flex-1 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
+                  onClick={() => setIsResetModalOpen(false)}>
+                  취소
+                </button>
+                <button
+                  className="flex-1 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                  onClick={handleResetLabelingData}
+                  disabled={isLoading}>
+                  초기화
+                </button>
+              </div>
+            </div>
+          </Modal>
         </div>
       </div>
     </div>

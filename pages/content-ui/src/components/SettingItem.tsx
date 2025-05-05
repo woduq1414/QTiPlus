@@ -11,6 +11,8 @@ interface SettingItemProps {
   onEditClick?: () => void;
   showRefreshButton?: boolean;
   onRefreshClick?: () => Promise<void>;
+  buttonText?: string;
+  buttonType?: 'blue' | 'red';
 }
 
 const SettingItem: React.FC<SettingItemProps> = ({
@@ -19,6 +21,8 @@ const SettingItem: React.FC<SettingItemProps> = ({
   isChecked,
   onChange,
   showEditButton = false,
+  buttonText = '편집',
+  buttonType = 'blue',
   onEditClick,
   showRefreshButton = false,
   onRefreshClick,
@@ -51,8 +55,8 @@ const SettingItem: React.FC<SettingItemProps> = ({
       </div>
       {showEditButton ? (
         <div
-          className="
-          bg-blue-500
+          className={`
+          ${buttonType === 'blue' ? 'bg-blue-500' : 'bg-red-500'}
           text-white
           rounded-lg
           px-3
@@ -60,11 +64,11 @@ const SettingItem: React.FC<SettingItemProps> = ({
           text-md
           font-semibold
           cursor-pointer
-          hover:bg-blue-600
-          dark:hover:bg-blue-400
-        "
+          ${buttonType === 'blue' ? 'hover:bg-blue-600' : 'hover:bg-red-600'}
+          ${buttonType === 'blue' ? 'dark:hover:bg-blue-400' : 'dark:hover:bg-red-400'}
+        `}
           onClick={onEditClick}>
-          편집
+          {buttonText}
         </div>
       ) : (
         <div>
