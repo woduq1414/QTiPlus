@@ -200,8 +200,8 @@ const SettingPage: React.FC = () => {
           />
 
           <SettingItem
-            title="라벨링 데이터 초기화"
-            description="모든 라벨링 데이터 삭제"
+            title="라벨링 데이터 삭제"
+            // description="모든 라벨링 데이터 삭제"
             isChecked={false}
             onChange={() => {}}
             showEditButton={true}
@@ -235,8 +235,18 @@ const SettingPage: React.FC = () => {
           {/* 초기화 확인 모달 */}
           <Modal isOpen={isResetModalOpen} onClose={() => setIsResetModalOpen(false)}>
             <div className="flex flex-col gap-4 items-center">
-              <div className="font-bold text-lg text-red-600">정말로 라벨링 데이터를 초기화하시겠습니까?</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300 text-center">이 작업은 되돌릴 수 없습니다.</div>
+              <div className="font-bold text-lg  text-center">
+                정말로 모든 라벨링 데이터를
+                <br />
+                삭제하시나요?
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-300 text-center">이 작업은 되돌릴 수 없어요.</div>
+              <img
+                src="//dcimg5.dcinside.com/dccon.php?no=62b5df2be09d3ca567b1c5bc12d46b394aa3b1058c6e4d0ca41648b658ea2276b35d2653f6c3ff31ff9090d8a40bc9e99621a21e55df7a621b47ce41ed038a2c9dc30017ae5c361d65a131fa0b"
+                className="w-[80px] h-[80px] rounded-lg"
+                alt="부탁드려요"
+              />
+
               <div className="flex flex-row gap-2 mt-2 w-full">
                 <button
                   className="flex-1 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
@@ -247,7 +257,7 @@ const SettingPage: React.FC = () => {
                   className="flex-1 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
                   onClick={handleResetLabelingData}
                   disabled={isLoading}>
-                  초기화
+                  삭제
                 </button>
               </div>
             </div>
