@@ -884,6 +884,16 @@ const SearchPage: React.FC = () => {
     }
 
     const isReply = document.getElementById('comment_memo_reple') ? true : false;
+
+    let mode = 'com_write';
+    if (isReply) {
+      if (document.getElementById('commentMention')) {
+        mode = 'com_mention';
+      } else if (document.getElementById('commentReple')) {
+        mode = 'com_reple';
+      }
+    }
+
     const no = document.getElementById('no')?.getAttribute('value');
     const subject = document.getElementById('subject')?.getAttribute('value');
     const comment_no = document.getElementById('comment_no')?.getAttribute('value');
@@ -939,7 +949,7 @@ const SearchPage: React.FC = () => {
       referrer: `https://m.dcinside.com/board/${galleryId}/${no}`,
       referrerPolicy: 'unsafe-url',
       body: `comment_memo=${encodeURIComponent(commentMemo)}&comment_nick=&comment_pw=&mode=${
-        isReply ? 'com_reple' : 'com_write'
+        mode
       }&comment_no=${comment_no}&detail_idx=${newDetailIdx}&id=${galleryId}&no=${no}&best_chk=&subject=${subject}&board_id=1&reple_id=&con_key=${blockKey}&${hiddenValue}=1&use_gall_nickname=&${
         isBigCon ? 'use_bigdccon=1' : ''
       }`,
@@ -1049,12 +1059,17 @@ const SearchPage: React.FC = () => {
     const name = document.getElementsByClassName('user_info_input')[0].children[0].textContent;
     const replyBox = document.querySelectorAll('.reply_box #cmt_write_box')[0];
     let replyTarget: string | null = '';
+    let replayParent: string | null = '';
 
     if (replyBox) {
-      replyTarget = replyBox.getAttribute('data-no');
+      replyTarget = replyBox.getAttribute('reply_no');
+      replayParent = replyBox.getAttribute('data-no');
     }
     if (replyTarget === null) {
       replyTarget = '';
+    }
+    if (replayParent === null) {
+      replayParent = '';
     }
 
     setIsModalOpen(false);
@@ -1097,7 +1112,11 @@ const SearchPage: React.FC = () => {
       },
       referrer: `https://gall.dcinside.com/mgallery/board/view/?id=${galleryId}&no=${postNumber}&page=1`,
       referrerPolicy: 'unsafe-url',
-      body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=${isDoubleCon ? '1' : ''}&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=${galleryId}&c_gall_no=${postNumber}&g-recaptcha-response=&check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M&${replyTarget ? 'c_no=' + replyTarget : ''}&${isBigCon ? 'bigdccon=1' : ''}`,
+      body: `id=${galleryId}&no=${postNumber}&package_idx=${packageIdx}&detail_idx=${detailIdx}&double_con_chk=${isDoubleCon ? '1' : ''}&name=${name}&ci_t=${ci_t}&input_type=comment&t_vch2=&t_vch2_chk=&c_gall_id=${galleryId}&c_gall_no=${postNumber}&g-recaptcha-response=
+      &check_6=${check6Value}&check_7=${check7Value}&check_8=${check8Value}&_GALLTYPE_=M
+      &${replayParent ? 'c_no=' + replayParent : ''}
+      &${replyTarget ? 'reply_no=' + replyTarget : ''}
+      &${isBigCon ? 'bigdccon=1' : ''}`.replace(/\n/g, ''),
       method: 'POST',
       mode: 'cors',
       credentials: 'include',
