@@ -40,9 +40,12 @@ const ConInfoEditPage: React.FC<ConInfoEditPageProps> = ({ packageIdx }) => {
             Object.keys(userPackageData[packageIdx].conList).map(key => {
               const item = items.find(i => i.id === parseInt(key));
               if (!item) return null;
+              const originalTitle = userPackageData[packageIdx]?.conList[key]?.title;
 
+              // console.log(userPackageData[packageIdx]?.conList[key], "!!");
               return (
                 <ConItem
+                  originalTitle={originalTitle}
                   key={key}
                   item={item}
                   imgPath={userPackageData[packageIdx].conList[key].imgPath}

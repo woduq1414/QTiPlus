@@ -276,7 +276,7 @@ const SearchPage: React.FC = () => {
         setRecentConPage(1);
       }
     }
-  }, [debouncedSearchText, isDoubleCon, firstDoubleCon]);
+  }, [debouncedSearchText, isDoubleCon]);
 
   useEffect(() => {
     debouncedSearchTextRef.current = debouncedSearchText;

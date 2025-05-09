@@ -7,17 +7,20 @@ interface ConItemProps {
   item: ConItemType;
   imgPath: string;
   onItemChange: (id: number, field: keyof ConItemType, value: any, type?: string) => void;
+  originalTitle: string | undefined;
 }
 
-const ConItem: React.FC<ConItemProps> = ({ item, imgPath, onItemChange }) => {
+const ConItem: React.FC<ConItemProps> = ({ item, imgPath, onItemChange, originalTitle }) => {
   const handleWhoChange = (newWho: boolean[], isOneItemOnly?: boolean) => {
     onItemChange(item.id, 'who', newWho, isOneItemOnly ? 'one' : undefined);
   };
 
+  console.log(originalTitle);
+
   return (
     <div className="flex flex-row gap-2 items-center sm:flex-col sm:gap-2">
       <div className="w-[70px] h-[70px]">
-        <ImageWithSkeleton src={imgPath} alt={item.title || ''} doubleConType={-1} />
+        <ImageWithSkeleton src={imgPath} alt={originalTitle} doubleConType={-1} />
       </div>
       <input
         type="text"
