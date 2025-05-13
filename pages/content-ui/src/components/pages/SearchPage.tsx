@@ -228,8 +228,15 @@ const SearchPage: React.FC = () => {
   };
 
   useEffect(() => {
+    const prevSearchText = debouncedSearchTextRef.current;
+
+    let isSearchTextChanged = false;
+    if (prevSearchText !== debouncedSearchText) {
+      isSearchTextChanged = true;
+      debouncedSearchTextRef.current = debouncedSearchText;
+    }
+
     if (debouncedSearchText) {
-      let t = new Date();
       chrome.runtime.sendMessage({ type: Message.SEARCH_CON, query: debouncedSearchText, userId: userId }, response => {
         const res = JSON.parse(response.detailRes);
 
@@ -247,7 +254,14 @@ const SearchPage: React.FC = () => {
         setQueryDoubleConCount(tmpDoubleConCount);
 
         setQueryMaxPage(Math.ceil(length / pageSize));
-        setQueryPage(1);
+
+        if (isSearchTextChanged) {
+          setQueryPage(1);
+        } else {
+          if (isDoubleCon && !firstDoubleCon) {
+            setQueryPage(1);
+          }
+        }
 
         if (isDoubleCon && !firstDoubleCon) {
           setOriginalQueryResult(res);
@@ -276,11 +290,8 @@ const SearchPage: React.FC = () => {
         setRecentConPage(1);
       }
     }
-  }, [debouncedSearchText, isDoubleCon]);
+  }, [debouncedSearchText, isDoubleCon, firstDoubleCon]);
 
-  useEffect(() => {
-    debouncedSearchTextRef.current = debouncedSearchText;
-  }, [debouncedSearchText]);
   useEffect(() => {
     queryResultRef.current = queryResult ?? new Set();
   }, [queryResult]);
