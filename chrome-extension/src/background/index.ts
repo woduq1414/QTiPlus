@@ -491,6 +491,60 @@ async function handleGetIdCookie(message: any, sender: any, sendResponse: any): 
   return true;
 }
 
+
+async function fetchWithRetry(url: string, body: string | FormData, maxRetries = 5
+  , additionalHeaders: any = {}, referer: string = 'https://gall.dcinside.com/mgallery/board/view') {
+  let attempts = 0;
+
+  while (attempts < maxRetries) {
+    const response = await fetch(url, {
+      headers: {
+        accept: '*/*',
+        'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
+        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        'x-requested-with': 'XMLHttpRequest',
+        ...additionalHeaders,
+        host: 'm.dcinside.com',
+
+      },
+      referrer: referer,
+
+      referrerPolicy: 'unsafe-url',
+      body: body,
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'same-origin',
+    });
+
+    const responseText = await response.text();
+
+    function IsJsonString(str: string) {
+      try {
+        var json = JSON.parse(str);
+        return typeof json === 'object';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    if (response.status === 302 || IsJsonString(responseText) === false) {
+      console.warn(`Request redirected (302), retrying... (${attempts + 1}/${maxRetries})`);
+      attempts++;
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      continue;
+    }
+
+    return responseText;
+  }
+
+  throw new Error('Max retries reached for fetching data.');
+}
 async function handleSyncConList(message: any, sender: any, sendResponse: any): Promise<boolean> {
   const ci_t = message.data.ci_t;
   let oldUserPackageData = await Storage.getUserPackageData(false);
@@ -499,54 +553,7 @@ async function handleSyncConList(message: any, sender: any, sendResponse: any): 
     oldUserPackageData = {};
   }
 
-  async function fetchWithRetry(url: string, body: string, maxRetries = 5) {
-    let attempts = 0;
 
-    while (attempts < maxRetries) {
-      const response = await fetch(url, {
-        headers: {
-          accept: '*/*',
-          'accept-language': 'ko,en-US;q=0.9,en;q=0.8,ja;q=0.7,de;q=0.6',
-          'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-          'sec-ch-ua': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
-          'sec-ch-ua-mobile': '?0',
-          'sec-ch-ua-platform': '"Windows"',
-          'sec-fetch-dest': 'empty',
-          'sec-fetch-mode': 'cors',
-          'sec-fetch-site': 'same-origin',
-          'x-requested-with': 'XMLHttpRequest',
-        },
-        referrer: 'https://gall.dcinside.com/mgallery/board/view',
-        referrerPolicy: 'unsafe-url',
-        body: body,
-        method: 'POST',
-        mode: 'cors',
-        credentials: 'same-origin',
-      });
-
-      const responseText = await response.text();
-
-      function IsJsonString(str: string) {
-        try {
-          var json = JSON.parse(str);
-          return typeof json === 'object';
-        } catch (e) {
-          return false;
-        }
-      }
-
-      if (response.status === 302 || IsJsonString(responseText) === false) {
-        console.warn(`Request redirected (302), retrying... (${attempts + 1}/${maxRetries})`);
-        attempts++;
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
-
-      return responseText;
-    }
-
-    throw new Error('Max retries reached for fetching data.');
-  }
   async function fetchList(page: number, maxPage: number, idx: number) {
     const response = await fetchWithRetry('https://gall.dcinside.com/dccon/lists', `&target=icon&page=${page}`);
     const data = JSON.parse(response);
@@ -876,6 +883,89 @@ async function handleUpdateReplaceWordData(message: any, sender: any, sendRespon
   return true;
 }
 
+async function handleQuickWrite(message: any, sender: any, sendResponse: any): Promise<boolean> {
+  const quickWriteData = message.data.quickWriteData;
+
+
+  const blockKey = message.data.blockKey;
+  const csrfToken = message.data.csrfToken;
+  const honey = message.data.honey;
+
+  const raw2 = `subject=${quickWriteData.title}&memo=${quickWriteData.content}
+  &id=freewrite&mode=write&is_mini=0&is_person=0&token_verify=dc_check2&block_key=${blockKey}`;
+
+  const res2 = await fetchWithRetry('https://m.dcinside.com/ajax/w_filter', raw2, 5, {
+    "X-CSRF-TOKEN": "5e2a3231bdf023693bd88e708fa579b8"
+  });
+  console.log(res2, 'res2');
+
+
+  const myHeaders = new Headers();
+  myHeaders.append("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
+  myHeaders.append("Accept-Language", "ko");
+  myHeaders.append("Cache-Control", "max-age=0");
+  myHeaders.append("Connection", "keep-alive");
+  myHeaders.append("Origin", "https://m.dcinside.com");
+  myHeaders.append("Referer", "https://m.dcinside.com/write/freewrite");
+  myHeaders.append("Sec-Fetch-Dest", "document");
+  myHeaders.append("Sec-Fetch-Mode", "navigate");
+  myHeaders.append("Sec-Fetch-Site", "same-site");
+  myHeaders.append("Sec-Fetch-User", "?1");
+  myHeaders.append("Upgrade-Insecure-Requests", "1");
+  myHeaders.append("User-Agent", "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36");
+  myHeaders.append("sec-ch-ua", "\"Google Chrome\";v=\"137\", \"Chromium\";v=\"137\", \"Not/A)Brand\";v=\"24\"");
+  myHeaders.append("sec-ch-ua-mobile", "?1");
+  myHeaders.append("sec-ch-ua-platform", "\"Android\"");
+
+
+  const formdata = new FormData();
+  formdata.append("subject", quickWriteData.title);
+  formdata.append("files", new Blob([]), "file");
+  formdata.append("memo", `<p>${quickWriteData.content}</p>`);
+  formdata.append("honey_21b5db74b3", "1");
+  formdata.append("search_ai_type", "");
+  formdata.append("id", "freewrite");
+  formdata.append("contentOrder", "order_memo");
+  formdata.append("mode", "write");
+  formdata.append("Block_key", blockKey);
+  formdata.append("iData", "");
+  formdata.append("yData", "");
+  formdata.append("movieData", "");
+  formdata.append("tmp", "");
+  formdata.append("mobile_key", "7068779");
+  formdata.append("imgSize", "850");
+  formdata.append("talk_img", "");
+  formdata.append("adult_certified", "0");
+  formdata.append("adult_contents", "0");
+  formdata.append("seriesData", "");
+  formdata.append("aiImgData", "");
+  formdata.append("hide_prompt", "");
+  formdata.append("ctImgData", "");
+  formdata.append("user_id", "normally6255");
+  formdata.append("is_minor", "1");
+  formdata.append("route_id", "freewrite");
+  formdata.append("gall_nickname", "뻘갤러");
+  formdata.append("poll_no", "");
+  formdata.append("use_gall_nickname", "1");
+  formdata.append("realname_gall", "");
+  formdata.append("realname_certified", "");
+  formdata.append("GEY3JWF", "honey_21b5db74b3");
+
+  const requestOptions = {
+    method: "POST",
+    headers: myHeaders,
+    body: formdata,
+    redirect: "follow" as RequestRedirect
+  };
+
+  const res3 = await fetch('https://mupload.dcinside.com/write_new.php', requestOptions);
+  console.log(res3, 'res3');
+
+
+  sendResponse({ success: true });
+  return true;
+}
+
 // 메시지 이벤트 핸들러 매핑
 const messageHandlers: { [key: string]: (message: any, sender: any, sendResponse: any) => Promise<boolean> } = {
   [Message.GET_INIT_DATA]: handleGetInitData,
@@ -889,9 +979,10 @@ const messageHandlers: { [key: string]: (message: any, sender: any, sendResponse
   [Message.UPDATE_STORAGE]: handleUpdateStorage,
   [Message.TRIGGER_EVENT]: handleTriggerEvent,
   [Message.IMPORT_DATA]: handleImportData,
+  [Message.QUICK_WRITE]: handleQuickWrite,
 };
 
-conTreeInit().then(res => {});
+conTreeInit().then(res => { });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const handler = messageHandlers[message.type];

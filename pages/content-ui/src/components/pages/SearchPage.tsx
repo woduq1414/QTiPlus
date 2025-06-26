@@ -422,11 +422,11 @@ const SearchPage: React.FC = () => {
   }, [recentConPage, recentConMaxPage]);
 
   useEffect(() => {
-    const handleKeyDown = (event: { altKey: any; shiftKey: any; key: string; preventDefault: () => void }) => {
-      if (event.altKey && event.key === '2') {
+    const handleKeyDown = (event: { altKey: any; shiftKey: any; key: string; keyCode: number; preventDefault: () => void }) => {
+      if (event.altKey && event.keyCode === 50) {
         event.preventDefault(); // 기본 동작 방지
         toggleDoubleCon();
-      } else if (event.altKey && (event.key === 'b' || event.key === 'B')) {
+      } else if (event.altKey && (event.keyCode === 66 || event.key === 'B')) {
         event.preventDefault(); // 기본 동작 방지
 
         setIsBigCon(prev => !prev);
