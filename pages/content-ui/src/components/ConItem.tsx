@@ -27,7 +27,7 @@ const ConItem: React.FC<ConItemProps> = ({ item, imgPath, onItemChange, original
     }
   };
 
-  console.log(originalTitle);
+  // console.log(originalTitle);
 
   return (
     <div className="flex flex-row gap-2 items-center sm:flex-col sm:gap-2">

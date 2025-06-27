@@ -166,7 +166,7 @@ const SearchPage: React.FC = () => {
 
     // detect if ctrl key is pressed
 
-    if (e.ctrlKey) {
+    if (e.ctrlKey || e.metaKey) {
       if (e.key === 'Enter') {
         if (isDoubleCon && !firstDoubleCon && detailData.firstDoubleCon) {
           onConClick({
@@ -1219,7 +1219,7 @@ const SearchPage: React.FC = () => {
     );
 
     if (shouldReturn) {
-      if (!e.ctrlKey) {
+      if (!(e.ctrlKey || e.metaKey)) {
         // setQueryResult(undefined);
         // setOriginalQueryResult(undefined);
         setSearchInput('');

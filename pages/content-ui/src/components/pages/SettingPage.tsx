@@ -227,7 +227,7 @@ const SettingPage: React.FC = () => {
               className="rounded-lg w-[50px] h-[50px] opacity-80"
             />
             <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-              큐티플 - QWER(큐떱이알)콘 검색기 v{process.env['CEB_EXTENSION_VERSION']} <br />
+              큐티플 - 디시콘 검색기 v{process.env['CEB_EXTENSION_VERSION']} <br />
               qwer.shrimp@gmail.com
             </div>
           </div>

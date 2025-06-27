@@ -17,7 +17,8 @@ const WhoSelector: React.FC<WhoSelectorProps> = ({ who, onChange, itemId }) => {
   const handleClick = (e: React.MouseEvent, idx: number) => {
     const newWho = [...who];
     newWho[idx] = !newWho[idx];
-    onChange(newWho, e.ctrlKey);
+    onChange(newWho, e.ctrlKey || e.metaKey);
+
   };
 
   return (
