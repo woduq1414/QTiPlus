@@ -34,6 +34,4 @@ export enum Message {
   // 데이터 임포트 관련 메시지
   IMPORT_DATA = 'IMPORT_DATA',
 
-  // 퀵 글쓰기 관련 메시지
-  QUICK_WRITE = 'QUICK_WRITE',    
 }

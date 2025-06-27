@@ -883,88 +883,6 @@ async function handleUpdateReplaceWordData(message: any, sender: any, sendRespon
   return true;
 }
 
-async function handleQuickWrite(message: any, sender: any, sendResponse: any): Promise<boolean> {
-  const quickWriteData = message.data.quickWriteData;
-
-
-  const blockKey = message.data.blockKey;
-  const csrfToken = message.data.csrfToken;
-  const honey = message.data.honey;
-
-  const raw2 = `subject=${quickWriteData.title}&memo=${quickWriteData.content}
-  &id=freewrite&mode=write&is_mini=0&is_person=0&token_verify=dc_check2&block_key=${blockKey}`;
-
-  const res2 = await fetchWithRetry('https://m.dcinside.com/ajax/w_filter', raw2, 5, {
-    "X-CSRF-TOKEN": "5e2a3231bdf023693bd88e708fa579b8"
-  });
-  console.log(res2, 'res2');
-
-
-  const myHeaders = new Headers();
-  myHeaders.append("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
-  myHeaders.append("Accept-Language", "ko");
-  myHeaders.append("Cache-Control", "max-age=0");
-  myHeaders.append("Connection", "keep-alive");
-  myHeaders.append("Origin", "https://m.dcinside.com");
-  myHeaders.append("Referer", "https://m.dcinside.com/write/freewrite");
-  myHeaders.append("Sec-Fetch-Dest", "document");
-  myHeaders.append("Sec-Fetch-Mode", "navigate");
-  myHeaders.append("Sec-Fetch-Site", "same-site");
-  myHeaders.append("Sec-Fetch-User", "?1");
-  myHeaders.append("Upgrade-Insecure-Requests", "1");
-  myHeaders.append("User-Agent", "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36");
-  myHeaders.append("sec-ch-ua", "\"Google Chrome\";v=\"137\", \"Chromium\";v=\"137\", \"Not/A)Brand\";v=\"24\"");
-  myHeaders.append("sec-ch-ua-mobile", "?1");
-  myHeaders.append("sec-ch-ua-platform", "\"Android\"");
-
-
-  const formdata = new FormData();
-  formdata.append("subject", quickWriteData.title);
-  formdata.append("files", new Blob([]), "file");
-  formdata.append("memo", `<p>${quickWriteData.content}</p>`);
-  formdata.append("honey_21b5db74b3", "1");
-  formdata.append("search_ai_type", "");
-  formdata.append("id", "freewrite");
-  formdata.append("contentOrder", "order_memo");
-  formdata.append("mode", "write");
-  formdata.append("Block_key", blockKey);
-  formdata.append("iData", "");
-  formdata.append("yData", "");
-  formdata.append("movieData", "");
-  formdata.append("tmp", "");
-  formdata.append("mobile_key", "7068779");
-  formdata.append("imgSize", "850");
-  formdata.append("talk_img", "");
-  formdata.append("adult_certified", "0");
-  formdata.append("adult_contents", "0");
-  formdata.append("seriesData", "");
-  formdata.append("aiImgData", "");
-  formdata.append("hide_prompt", "");
-  formdata.append("ctImgData", "");
-  formdata.append("user_id", "normally6255");
-  formdata.append("is_minor", "1");
-  formdata.append("route_id", "freewrite");
-  formdata.append("gall_nickname", "뻘갤러");
-  formdata.append("poll_no", "");
-  formdata.append("use_gall_nickname", "1");
-  formdata.append("realname_gall", "");
-  formdata.append("realname_certified", "");
-  formdata.append("GEY3JWF", "honey_21b5db74b3");
-
-  const requestOptions = {
-    method: "POST",
-    headers: myHeaders,
-    body: formdata,
-    redirect: "follow" as RequestRedirect
-  };
-
-  const res3 = await fetch('https://mupload.dcinside.com/write_new.php', requestOptions);
-  console.log(res3, 'res3');
-
-
-  sendResponse({ success: true });
-  return true;
-}
 
 // 메시지 이벤트 핸들러 매핑
 const messageHandlers: { [key: string]: (message: any, sender: any, sendResponse: any) => Promise<boolean> } = {
@@ -978,8 +896,7 @@ const messageHandlers: { [key: string]: (message: any, sender: any, sendResponse
   [Message.UPDATE_REPLACE_WORD_DATA]: handleUpdateReplaceWordData,
   [Message.UPDATE_STORAGE]: handleUpdateStorage,
   [Message.TRIGGER_EVENT]: handleTriggerEvent,
-  [Message.IMPORT_DATA]: handleImportData,
-  [Message.QUICK_WRITE]: handleQuickWrite,
+  [Message.IMPORT_DATA]: handleImportData
 };
 
 conTreeInit().then(res => { });

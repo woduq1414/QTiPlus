@@ -15,6 +15,18 @@ const ConItem: React.FC<ConItemProps> = ({ item, imgPath, onItemChange, original
     onItemChange(item.id, 'who', newWho, isOneItemOnly ? 'one' : undefined);
   };
 
+  const handleInputFocus = (event: React.FocusEvent<HTMLInputElement>) => {
+    // input이 focus 될 때 해당 ConItem 전체가 보이도록 스크롤
+    const conItemElement = event.target.closest('div[class*="flex flex-row gap-2 items-center"]');
+    if (conItemElement) {
+      conItemElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'nearest'
+      });
+    }
+  };
+
   console.log(originalTitle);
 
   return (
@@ -27,6 +39,7 @@ const ConItem: React.FC<ConItemProps> = ({ item, imgPath, onItemChange, original
         placeholder="이름"
         value={item.title}
         onChange={e => onItemChange(item.id, 'title', e.target.value)}
+        onFocus={handleInputFocus}
         className="border px-2 py-2 rounded-lg
           bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white
           w-[220px] sm:w-[70vw]
@@ -38,6 +51,7 @@ const ConItem: React.FC<ConItemProps> = ({ item, imgPath, onItemChange, original
         placeholder="태그"
         value={item.tag}
         onChange={e => onItemChange(item.id, 'tag', e.target.value)}
+        onFocus={handleInputFocus}
         className="border px-2 py-2 rounded-lg
           bg-[rgba(255,255,255,0.5)] dark:bg-[rgba(0,0,0,0.5)] dark:text-white
           w-[220px] sm:w-[70vw]
