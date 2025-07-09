@@ -39,7 +39,7 @@ const SettingPage: React.FC = () => {
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isSortMethodModalOpen, setIsSortMethodModalOpen] = useState(false);
 
-  useEffect(() => {}, [setting]);
+  useEffect(() => { }, [setting]);
 
   const handleRefreshLabeling = async () => {
     setIsLoading(true);
@@ -132,126 +132,150 @@ const SettingPage: React.FC = () => {
           <div className="w-[90px] "></div>
         </div>
 
-        <div className="flex flex-col gap-4 py-3 max-h-[85dvh] sm:max-h-[70dvh] overflow-auto scrollbar">
-          <SettingItem
-            title="다크 모드"
-            isChecked={setting.isDarkMode}
-            onChange={() => {
-              setSetting({
-                ...setting,
-                isDarkMode: !setting.isDarkMode,
-              });
-            }}
-          />
+        <div className="flex flex-col gap-1 py-1 max-h-[85dvh] sm:max-h-[70dvh] overflow-auto scrollbar">
+          {/* 표시 설정 */}
+          <div className="mb-1">
+            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">표시 설정</h3>
+            <div className="flex flex-col gap-2.5">
+              <SettingItem
+                title="다크 모드"
+                isChecked={setting.isDarkMode}
+                onChange={() => {
+                  setSetting({
+                    ...setting,
+                    isDarkMode: !setting.isDarkMode,
+                  });
+                }}
+              />
 
-          <SettingItem
-            title="초성 검색"
-            isChecked={setting.isChoseongSearch}
-            onChange={() => {
-              setSetting({
-                ...setting,
-                isChoseongSearch: !setting.isChoseongSearch,
-              });
-            }}
-          />
+              <SettingItem
+                title="우측 하단 버튼 표시"
+                isChecked={setting.isShowRightBottomButton}
+                onChange={() => {
+                  setSetting({
+                    ...setting,
+                    isShowRightBottomButton: !setting.isShowRightBottomButton,
+                  });
+                }}
+              />
+            </div>
+          </div>
 
-          <SettingItem
-            title="우측 하단 버튼 표시"
-            isChecked={setting.isShowRightBottomButton}
-            onChange={() => {
-              setSetting({
-                ...setting,
-                isShowRightBottomButton: !setting.isShowRightBottomButton,
-              });
-            }}
-          />
+          {/* 구분선 */}
+          <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
 
-          <SettingItem
-            title="대왕콘 기본으로 사용"
-            description="대왕콘 사용 가능 상태일 때 대왕콘 옵션 기본으로 체크"
-            isChecked={setting.isDefaultBigCon}
-            onChange={() => {
-              setSetting({
-                ...setting,
-                isDefaultBigCon: !setting.isDefaultBigCon,
-              });
-            }}
-          />
+          {/* 검색 및 등록 설정 */}
+          <div className="mb-1">
+            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">검색 및 등록 설정</h3>
+            <div className="flex flex-col gap-2.5">
+              <SettingItem
+                title="초성 검색"
+                isChecked={setting.isChoseongSearch}
+                onChange={() => {
+                  setSetting({
+                    ...setting,
+                    isChoseongSearch: !setting.isChoseongSearch,
+                  });
+                }}
+              />
 
-          <SettingItem
-            title="자동 라벨링 업데이트"
-            description={`최근 : ${
-              setting.lastUpdateTime
-                ? new Date(setting.lastUpdateTime * 1000).toLocaleString('ko-KR', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })
-                : '-'
-            }`}
-            isChecked={setting.isAutoLabelingUpdate}
-            onChange={() => {
-              setSetting({
-                ...setting,
-                isAutoLabelingUpdate: !setting.isAutoLabelingUpdate,
-              });
-            }}
-            showRefreshButton={true}
-            onRefreshClick={handleRefreshLabeling}
-          />
+              <SettingItem
+                title="대왕콘 기본으로 사용"
+                description="대왕콘 사용 가능 상태일 때 대왕콘 옵션 기본으로 체크"
+                isChecked={setting.isDefaultBigCon}
+                onChange={() => {
+                  setSetting({
+                    ...setting,
+                    isDefaultBigCon: !setting.isDefaultBigCon,
+                  });
+                }}
+              />
 
-          <SettingItem
-            title="검색어 자동 추가"
-            description="검색어가 B 중에 하나를 포함 시, A도 검색쿼리에 추가"
-            isChecked={false}
-            onChange={() => {}}
-            showEditButton={true}
-            onEditClick={() => {
-              setCurrentPage(Page.REPLACE_WORD_EDIT);
-            }}
-          />
+              <SettingItem
+                title="검색어 자동 추가"
+                description="검색어가 B 중에 하나를 포함 시, A도 검색쿼리에 추가"
+                isChecked={false}
+                onChange={() => { }}
+                showEditButton={true}
+                onEditClick={() => {
+                  setCurrentPage(Page.REPLACE_WORD_EDIT);
+                }}
+              />
 
-          <SettingItem
-            title="더블콘 프리셋"
-            description="자주 쓰는 더블콘의 태그 수정"
-            isChecked={false}
-            onChange={() => {}}
-            showEditButton={true}
-            onEditClick={() => {
-              setCurrentPage(Page.DOUBLE_CON_PRESET_EDIT);
-            }}
-          />
+              <SettingItem
+                title="정렬 방식"
+                description={getSortMethodLabel(setting.sortMethod)}
+                isChecked={false}
+                onChange={() => {
+                  setIsSortMethodModalOpen(true);
+                }}
+                showEditButton={true}
+                onEditClick={() => {
+                  setIsSortMethodModalOpen(true);
+                }}
+              />
 
-          <SettingItem
-            title="라벨링 데이터 삭제"
-            // description="모든 라벨링 데이터 삭제"
-            isChecked={false}
-            onChange={() => {}}
-            showEditButton={true}
-            buttonText="삭제"
-            buttonType="red"
-            onEditClick={() => {
-              setIsResetModalOpen(true);
-            }}
-          />
 
-          <SettingItem
-            title="정렬 방식"
-            description={getSortMethodLabel(setting.sortMethod)}
-            isChecked={false}
-            onChange={() => {
-              setIsSortMethodModalOpen(true);
-            }}
-            showEditButton={true}
-            onEditClick={() => {
-              setIsSortMethodModalOpen(true);
-            }}
-          />
+
+              <SettingItem
+                title="더블콘 프리셋"
+                description="자주 쓰는 더블콘의 태그 수정"
+                isChecked={false}
+                onChange={() => { }}
+                showEditButton={true}
+                onEditClick={() => {
+                  setCurrentPage(Page.DOUBLE_CON_PRESET_EDIT);
+                }}
+              />
+            </div>
+          </div>
+
+          {/* 구분선 */}
+          <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+
+          {/* 데이터 관리 */}
+          <div className="mb-1">
+            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">데이터 관리</h3>
+            <div className="flex flex-col gap-2.5">
+              <SettingItem
+                title="자동 라벨링 업데이트"
+                description={`최근 : ${setting.lastUpdateTime
+                    ? new Date(setting.lastUpdateTime * 1000).toLocaleString('ko-KR', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                    : '-'
+                  }`}
+                isChecked={setting.isAutoLabelingUpdate}
+                onChange={() => {
+                  setSetting({
+                    ...setting,
+                    isAutoLabelingUpdate: !setting.isAutoLabelingUpdate,
+                  });
+                }}
+                showRefreshButton={true}
+                onRefreshClick={handleRefreshLabeling}
+              />
+
+              <SettingItem
+                title="라벨링 데이터 삭제"
+                isChecked={false}
+                onChange={() => { }}
+                showEditButton={true}
+                buttonText="삭제"
+                buttonType="red"
+                onEditClick={() => {
+                  setIsResetModalOpen(true);
+                }}
+              />
+            </div>
+          </div>
 
           <div
-            className="mb-4 text-lg flex flex-row cursor-pointer text-gray-900  dark:text-gray-100 hover:text-blue-500 dark:hover:text-blue-400 items-center mx-auto"
+            className="mb-2 text-lg flex flex-row cursor-pointer text-gray-900  dark:text-gray-100 hover:text-blue-500 dark:hover:text-blue-400 items-center mx-auto"
             onClick={() => {
               window.open('https://adaptive-bovid-12e.notion.site/1beee4e2dbd98077996fdececf9c0b9a?pvs=73', '_blank');
             }}>

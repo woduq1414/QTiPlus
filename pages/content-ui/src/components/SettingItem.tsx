@@ -30,15 +30,15 @@ const SettingItem: React.FC<SettingItemProps> = ({
   const [onRefreshing, setOnRefreshing] = useState(false);
 
   return (
-    <div className="flex flex-row gap-4 items-center">
-      <div className="flex-grow font-semibold text-lg">
+    <div className="flex flex-row gap-3 items-center">
+      <div className="flex-grow font-semibold text-base">
         <div>{title}</div>
         {description && (
-          <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
+          <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center mt-0.5">
             {description}
             {showRefreshButton && (
               <ArrowPathIcon
-                className={`ml-2 w-4 h-4 cursor-pointer text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 ${onRefreshing ? 'invisible' : 'visible'}`}
+                className={`ml-2 w-3 h-3 cursor-pointer text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 ${onRefreshing ? 'invisible' : 'visible'}`}
                 onClick={async e => {
                   e.stopPropagation();
 
@@ -60,8 +60,8 @@ const SettingItem: React.FC<SettingItemProps> = ({
           text-white
           rounded-lg
           px-3
-          py-2
-          text-md
+          py-1.5
+          text-sm
           font-semibold
           cursor-pointer
           ${buttonType === 'blue' ? 'hover:bg-blue-600' : 'hover:bg-red-600'}
@@ -77,12 +77,12 @@ const SettingItem: React.FC<SettingItemProps> = ({
             onChange={onChange}
             onColor="#a7b4db"
             onHandleColor="#456bd8"
-            handleDiameter={25}
+            handleDiameter={20}
             uncheckedIcon={false}
             checkedIcon={false}
-            boxShadow="0px 1px 5px rgba(0, 0, 0, 0.6)"
-            height={25}
-            width={45}
+            boxShadow="0px 1px 3px rgba(0, 0, 0, 0.6)"
+            height={20}
+            width={38}
           />
         </div>
       )}
