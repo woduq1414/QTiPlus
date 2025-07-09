@@ -263,28 +263,35 @@ async function handleSearchCon(message: any, sender: any, sendResponse: any): Pr
   } else {
     let who = '';
 
-    if (query.includes('#')) {
-      who = query.split('#')[1].toUpperCase();
+    // '#' 또는 '/' 기호로 멤버 검색 지원
+    if (query.includes('#') || query.includes('/')) {
+      const separator = query.includes('#') ? '#' : '/';
+      who = query.split(separator)[1].toUpperCase();
       who = who.replaceAll('ㅂ', 'Q').replaceAll('ㅈ', 'W').replaceAll('ㄷ', 'E').replaceAll('ㄱ', 'R');
       who = who.replaceAll('ㅃ', 'Q').replaceAll('ㅉ', 'W').replaceAll('ㄸ', 'E').replaceAll('ㄲ', 'R');
 
-      query = query.split('#')[0];
+      query = query.split(separator)[0];
     }
 
     let queryList = [];
 
-    let koQuery;
-
-    try {
-      koQuery = convertQwertyToHangul(query);
-    } catch (error) {
-      koQuery = query;
-    }
-
-    if (query === koQuery) {
-      queryList = [query];
+    // 검색어가 빈 문자열인 경우 (예: "#r"로 검색했을 때)
+    if (query === '') {
+      queryList = [''];
     } else {
-      queryList = [query, koQuery];
+      let koQuery;
+
+      try {
+        koQuery = convertQwertyToHangul(query);
+      } catch (error) {
+        koQuery = query;
+      }
+
+      if (query === koQuery) {
+        queryList = [query];
+      } else {
+        queryList = [query, koQuery];
+      }
     }
 
     function includesAny(query: string, list: string[]): boolean {
@@ -301,28 +308,35 @@ async function handleSearchCon(message: any, sender: any, sendResponse: any): Pr
     for (let i = 0; i < queryList.length; i++) {
       const query = queryList[i] as string;
 
-      for (let key in replaceWordData) {
-        if (includesAny(query, [key, ...replaceWordData[key]])) {
-          additionalCategoryList.push(key);
+      let queryResult = new Set();
+
+      // 검색어가 빈 문자열인 경우 모든 콘을 대상으로 함
+      if (query === '') {
+        queryResult = new Set(Object.keys(detailIdxDict));
+      } else {
+        for (let key in replaceWordData) {
+          if (includesAny(query, [key, ...replaceWordData[key]])) {
+            additionalCategoryList.push(key);
+          }
         }
+
+        const result = conSearchManager.searchTrie(query);
+
+        let result2 = new Set();
+        for (let additionalCategory of additionalCategoryList) {
+          result2 = new Set([...Array.from(result2), ...Array.from(conSearchManager.searchTrie(additionalCategory))]);
+        }
+
+        let result3 = new Set();
+
+        const userConfig = await Storage.getUserConfig(true);
+        if (userConfig?.isChoseongSearch) {
+          result3 = conSearchManager.searchChoseongTrie(convertDoubleConsonantToSingle(query));
+        }
+        // console.log(userConfig, 'result3');
+
+        queryResult = new Set([...Array.from(result), ...Array.from(result2), ...Array.from(result3)]);
       }
-
-      const result = conSearchManager.searchTrie(query);
-
-      let result2 = new Set();
-      for (let additionalCategory of additionalCategoryList) {
-        result2 = new Set([...Array.from(result2), ...Array.from(conSearchManager.searchTrie(additionalCategory))]);
-      }
-
-      let result3 = new Set();
-
-      const userConfig = await Storage.getUserConfig(true);
-      if (userConfig?.isChoseongSearch) {
-        result3 = conSearchManager.searchChoseongTrie(convertDoubleConsonantToSingle(query));
-      }
-      // console.log(userConfig, 'result3');
-
-      let queryResult = new Set([...Array.from(result), ...Array.from(result2), ...Array.from(result3)]);
 
       if (who !== '') {
         for (let key of Array.from(queryResult)) {
