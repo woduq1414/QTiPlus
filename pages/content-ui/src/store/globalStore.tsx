@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Page } from '../enums/Page';
+import { SortMethod } from '@extension/shared/lib/models/UserConfig';
 
 import Storage from '@extension/shared/lib/storage';
 
@@ -35,6 +36,7 @@ interface GlobalStore {
     isChoseongSearch: boolean;
     isAutoLabelingUpdate: boolean;
     lastUpdateTime: number | null;
+    sortMethod: SortMethod;
   };
   setSetting: (newSettings: any) => void;
 }
@@ -76,6 +78,7 @@ const useGlobalStore = create<GlobalStore>(set => {
       isChoseongSearch: true,
       isAutoLabelingUpdate: true,
       lastUpdateTime: -1,
+      sortMethod: SortMethod.RECENT_USED,
     },
     setSetting: newSettings =>
       set(state => ({

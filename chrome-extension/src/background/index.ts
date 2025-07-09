@@ -16,6 +16,7 @@ import { ConLabelList, CustomConList, DoubleConPreset } from '@extension/shared/
 import { DetailData, DetailDataSingle, DetailDataDouble } from '@extension/shared/lib/models/DetailData';
 import { UserPackageConData } from '@extension/shared/lib/models/UserPackageData';
 import { FavoriteConList } from '@extension/shared/lib/models/FavoriteConList';
+import { SortMethod } from '@extension/shared/lib/models/UserConfig';
 
 const userAgent = navigator.userAgent as any;
 
@@ -451,28 +452,187 @@ async function handleSearchCon(message: any, sender: any, sendResponse: any): Pr
     }
   }
 
-  finalResult.clear();
+  // 사용자 설정에 따른 정렬 적용
+  const userConfig = await Storage.getUserConfig(true);
+  const sortMethod = userConfig?.sortMethod || SortMethod.RECENT_USED;
+
+  // 정렬 함수 정의
+  const applySorting = async (list: string[], method: SortMethod): Promise<string[]> => {
+    const array = Array.from(list) as string[];
+    
+    switch (method) {
+      case SortMethod.RECENT_USED:
+        // 최근 사용한 콘 우선
+        const recentUsedConList = await Storage.getRecentUsedConList(true) || [];
+        const recentUsedDoubleConList = await Storage.getRecentUsedDoubleConList(true) || [];
+        
+        return array.sort((a, b) => {
+          const aDetail = detailIdxDict[a];
+          const bDetail = detailIdxDict[b];
+          
+          if (!aDetail || !bDetail) return 0;
+          
+          let aRecentIndex = -1;
+          let bRecentIndex = -1;
+          
+          if (aDetail.isDoubleCon) {
+            // 더블콘의 경우 더블콘 리스트에서 찾기
+            const aDoubleData = aDetail as DetailDataDouble;
+            for (let i = recentUsedDoubleConList.length - 1; i >= 0; i--) {
+              const recent = recentUsedDoubleConList[i];
+              if (recent.firstDoubleCon?.packageIdx === aDoubleData.firstDoubleCon?.packageIdx &&
+                  recent.firstDoubleCon?.sort === aDoubleData.firstDoubleCon?.sort &&
+                  recent.secondDoubleCon?.packageIdx === aDoubleData.secondDoubleCon?.packageIdx &&
+                  recent.secondDoubleCon?.sort === aDoubleData.secondDoubleCon?.sort) {
+                aRecentIndex = i;
+                break;
+              }
+            }
+          } else {
+            // 단일콘의 경우 단일콘 리스트에서 찾기
+            const aData = aDetail as DetailDataSingle;
+            const aDetailIdx = userPackageData[aData.packageIdx]?.conList?.[aData.sort]?.detailIdx;
+            if (aDetailIdx) {
+              for (let i = recentUsedConList.length - 1; i >= 0; i--) {
+                if (recentUsedConList[i].detailIdx === aDetailIdx) {
+                  aRecentIndex = i;
+                  break;
+                }
+              }
+            }
+          }
+          
+          if (bDetail.isDoubleCon) {
+            // 더블콘의 경우 더블콘 리스트에서 찾기
+            const bDoubleData = bDetail as DetailDataDouble;
+            for (let i = recentUsedDoubleConList.length - 1; i >= 0; i--) {
+              const recent = recentUsedDoubleConList[i];
+              if (recent.firstDoubleCon?.packageIdx === bDoubleData.firstDoubleCon?.packageIdx &&
+                  recent.firstDoubleCon?.sort === bDoubleData.firstDoubleCon?.sort &&
+                  recent.secondDoubleCon?.packageIdx === bDoubleData.secondDoubleCon?.packageIdx &&
+                  recent.secondDoubleCon?.sort === bDoubleData.secondDoubleCon?.sort) {
+                bRecentIndex = i;
+                break;
+              }
+            }
+          } else {
+            // 단일콘의 경우 단일콘 리스트에서 찾기
+            const bData = bDetail as DetailDataSingle;
+            const bDetailIdx = userPackageData[bData.packageIdx]?.conList?.[bData.sort]?.detailIdx;
+            if (bDetailIdx) {
+              for (let i = recentUsedConList.length - 1; i >= 0; i--) {
+                if (recentUsedConList[i].detailIdx === bDetailIdx) {
+                  bRecentIndex = i;
+                  break;
+                }
+              }
+            }
+          }
+          
+          // 최근 사용한 순서로 정렬 (높은 인덱스가 더 최근)
+          if (aRecentIndex !== bRecentIndex) {
+            return bRecentIndex - aRecentIndex;
+          }
+          
+          // 최근 사용 기록이 없는 경우 who 길이로 정렬
+          if (!aDetail.who || aDetail.who.length === 0) return 1;
+          if (!bDetail.who || bDetail.who.length === 0) return -1;
+          return 0;
+        });
+        
+      case SortMethod.OLDEST_FIRST:
+      case SortMethod.NEWEST_FIRST:
+      case SortMethod.RANDOM:
+        // 패키지별로 그룹화
+        const packageGroups: { [packageIdx: string]: string[] } = {};
+        
+        array.forEach(key => {
+          const detail = detailIdxDict[key];
+          if (!detail) return;
+          
+          let packageIdx: string;
+          if (detail.isDoubleCon) {
+            const doubleData = detail as DetailDataDouble;
+            // 더블콘의 경우 첫 번째 콘의 패키지를 기준으로 함
+            packageIdx = doubleData.firstDoubleCon?.packageIdx || '0';
+          } else {
+            const singleData = detail as DetailDataSingle;
+            packageIdx = singleData.packageIdx;
+          }
+          
+          if (!packageGroups[packageIdx]) {
+            packageGroups[packageIdx] = [];
+          }
+          packageGroups[packageIdx].push(key);
+        });
+        
+        // 각 패키지 내에서 sort 순으로 정렬
+        Object.keys(packageGroups).forEach(packageIdx => {
+          packageGroups[packageIdx].sort((a, b) => {
+            const aDetail = detailIdxDict[a];
+            const bDetail = detailIdxDict[b];
+            
+            if (!aDetail || !bDetail) return 0;
+            
+            const getSort = (detail: DetailData): number => {
+              if (detail.isDoubleCon) {
+                const doubleData = detail as DetailDataDouble;
+                return parseInt(doubleData.firstDoubleCon?.sort || '0');
+              } else {
+                return parseInt((detail as DetailDataSingle).sort || '0');
+              }
+            };
+            
+            return getSort(aDetail) - getSort(bDetail);
+          });
+        });
+        
+        // 패키지 순서 결정
+        const packageIndices = Object.keys(packageGroups).map(idx => parseInt(idx)).sort((a, b) => {
+          if (method === SortMethod.OLDEST_FIRST) {
+            return a - b; // 과거 콘 우선 (작은 packageIdx부터)
+          } else if (method === SortMethod.NEWEST_FIRST) {
+            return b - a; // 최신 콘 우선 (큰 packageIdx부터)
+          } else {
+            // 랜덤 정렬
+            return Math.random() - 0.5;
+          }
+        });
+        
+        // 최종 결과 배열 생성
+        const result: string[] = [];
+        packageIndices.forEach(packageIdx => {
+          const packageIdxStr = packageIdx.toString();
+          if (packageGroups[packageIdxStr]) {
+            result.push(...packageGroups[packageIdxStr]);
+          }
+        });
+        
+        return result;
+        
+      default:
+        // 기본 정렬 (기존 방식)
+        return array.sort((a, b) => {
+          const aDetail = detailIdxDict[a];
+          const bDetail = detailIdxDict[b];
+          
+          if (!aDetail.who || aDetail.who.length === 0) return 1;
+          if (!bDetail.who || bDetail.who.length === 0) return -1;
+          return 0;
+        });
+    }
+  };
+
+  // 각 카테고리별로 정렬 적용
+  const sortedDoubleConList = await applySorting(Array.from(doubleConList) as string[], sortMethod);
+  const sortedFavoriteList = await applySorting(Array.from(favoriteList) as string[], sortMethod);
+  const sortedOtherList = await applySorting(Array.from(otherList) as string[], sortMethod);
 
   finalResult = new Set([
-    ...Array.from(doubleConList),
-    ...Array.from(favoriteList),
-    ...Array.from(otherList).sort((a, b) => {
-      // who의 length가 0인 경우 뒤로 보내기
-
-      const aDetail = detailIdxDict[a as string];
-      const bDetail = detailIdxDict[b as string];
-
-      if (!aDetail.who || aDetail.who.length === 0) {
-        return 1;
-      }
-
-      if (!bDetail.who || bDetail.who.length === 0) {
-        return -1;
-      }
-
-      return 0;
-    }),
-  ]) as Set<string>;
+    ...sortedDoubleConList,
+    ...sortedFavoriteList,
+    ...sortedOtherList,
+  ]);
 
   sendResponse({
     res: JSON.stringify(Array.from(finalResult)),

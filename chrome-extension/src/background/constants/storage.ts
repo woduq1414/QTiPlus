@@ -1,3 +1,5 @@
+import { SortMethod } from '@extension/shared/lib/models/UserConfig';
+
 /**
  * 스토리지 키 상수
  */
@@ -21,6 +23,7 @@ export const DEFAULT_USER_CONFIG = {
   isChoseongSearch: true,
   isAutoLabelingUpdate: true,
   lastUpdateTime: -1,
+  sortMethod: SortMethod.RECENT_USED,
 } as const;
 
 /**

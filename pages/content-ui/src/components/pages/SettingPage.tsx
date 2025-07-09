@@ -9,12 +9,14 @@ import Modal from '@src/components/Modal';
 import { Cog6ToothIcon, PaperClipIcon, XMarkIcon } from '@heroicons/react/16/solid';
 import { DocumentIcon } from '@heroicons/react/24/outline';
 import SettingItem from '@src/components/SettingItem';
+import SortMethodEditModal from '@src/components/modals/SortMethodEditModal';
 
 import Storage from '@extension/shared/lib/storage';
 import { Page } from '@src/enums/Page';
 import { time } from 'console';
 import { refreshLabeling } from '@src/functions/refreshLabeling';
 import { Message } from '@extension/shared/lib/enums/Message';
+import { SortMethod } from '@extension/shared/lib/models/UserConfig';
 
 const SettingPage: React.FC = () => {
   const {
@@ -35,6 +37,7 @@ const SettingPage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [isSortMethodModalOpen, setIsSortMethodModalOpen] = useState(false);
 
   useEffect(() => {}, [setting]);
 
@@ -78,6 +81,28 @@ const SettingPage: React.FC = () => {
     }
     setIsLoading(false);
     setIsResetModalOpen(false);
+  };
+
+  const getSortMethodLabel = (method: SortMethod) => {
+    switch (method) {
+      case SortMethod.RECENT_USED:
+        return '최근 사용한 콘 우선';
+      case SortMethod.OLDEST_FIRST:
+        return '과거 콘 우선';
+      case SortMethod.NEWEST_FIRST:
+        return '최신 콘 우선';
+      case SortMethod.RANDOM:
+        return '랜덤 정렬';
+      default:
+        return '최근 사용한 콘 우선';
+    }
+  };
+
+  const handleSortMethodSave = (sortMethod: SortMethod) => {
+    setSetting({
+      ...setting,
+      sortMethod: sortMethod,
+    });
   };
 
   return (
@@ -212,6 +237,19 @@ const SettingPage: React.FC = () => {
             }}
           />
 
+          <SettingItem
+            title="정렬 방식"
+            description={getSortMethodLabel(setting.sortMethod)}
+            isChecked={false}
+            onChange={() => {
+              setIsSortMethodModalOpen(true);
+            }}
+            showEditButton={true}
+            onEditClick={() => {
+              setIsSortMethodModalOpen(true);
+            }}
+          />
+
           <div
             className="mb-4 text-lg flex flex-row cursor-pointer text-gray-900  dark:text-gray-100 hover:text-blue-500 dark:hover:text-blue-400 items-center mx-auto"
             onClick={() => {
@@ -262,6 +300,14 @@ const SettingPage: React.FC = () => {
               </div>
             </div>
           </Modal>
+
+          {/* 정렬 방식 설정 모달 */}
+          <SortMethodEditModal
+            isOpen={isSortMethodModalOpen}
+            onClose={() => setIsSortMethodModalOpen(false)}
+            currentSortMethod={setting.sortMethod}
+            onSave={handleSortMethodSave}
+          />
         </div>
       </div>
     </div>

@@ -422,7 +422,7 @@ const SearchPage: React.FC = () => {
   }, [recentConPage, recentConMaxPage]);
 
   useEffect(() => {
-    const handleKeyDown = (event: { altKey: any; shiftKey: any; key: string; keyCode: number; preventDefault: () => void }) => {
+    const handleKeyDown = (event: { altKey: any; ctrlKey: any; metaKey: any; shiftKey: any; key: string; keyCode: number; preventDefault: () => void }) => {
       if (event.altKey && event.keyCode === 50) {
         event.preventDefault(); // 기본 동작 방지
         toggleDoubleCon();
@@ -430,7 +430,7 @@ const SearchPage: React.FC = () => {
         event.preventDefault(); // 기본 동작 방지
 
         setIsBigCon(prev => !prev);
-      } else if (event.shiftKey && event.key === 'ArrowRight') {
+      } else if ((event.ctrlKey || event.metaKey || event.shiftKey) && event.key === 'ArrowRight') {
         event.preventDefault(); // 기본 동작 방지
 
         const queryPage = queryPageRef.current;
@@ -454,7 +454,7 @@ const SearchPage: React.FC = () => {
         }
 
         // console.log('alt + ArrowRight');
-      } else if (event.shiftKey && event.key === 'ArrowLeft') {
+      } else if ((event.ctrlKey || event.metaKey || event.shiftKey) && event.key === 'ArrowLeft') {
         event.preventDefault(); // 기본 동작 방지
 
         const queryPage = queryPageRef.current;
