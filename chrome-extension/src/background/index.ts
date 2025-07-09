@@ -16,7 +16,7 @@ import { ConLabelList, CustomConList, DoubleConPreset } from '@extension/shared/
 import { DetailData, DetailDataSingle, DetailDataDouble } from '@extension/shared/lib/models/DetailData';
 import { UserPackageConData } from '@extension/shared/lib/models/UserPackageData';
 import { FavoriteConList } from '@extension/shared/lib/models/FavoriteConList';
-import { SortMethod } from '@extension/shared/lib/models/UserConfig';
+import { BaseSortMethod } from '@extension/shared/lib/models/UserConfig';
 
 const userAgent = navigator.userAgent as any;
 
@@ -454,184 +454,283 @@ async function handleSearchCon(message: any, sender: any, sendResponse: any): Pr
 
   // 사용자 설정에 따른 정렬 적용
   const userConfig = await Storage.getUserConfig(true);
-  const sortMethod = userConfig?.sortMethod || SortMethod.RECENT_USED;
+  const isRecentUsedFirst = userConfig?.isRecentUsedFirst ?? true;
+  const baseSortMethod = userConfig?.baseSortMethod ?? BaseSortMethod.NEWEST_FIRST;
 
   // 정렬 함수 정의
-  const applySorting = async (list: string[], method: SortMethod): Promise<string[]> => {
+  const applySorting = async (list: string[], useRecentUsed: boolean, baseMethod: BaseSortMethod): Promise<string[]> => {
     const array = Array.from(list) as string[];
     
-    switch (method) {
-      case SortMethod.RECENT_USED:
-        // 최근 사용한 콘 우선
-        const recentUsedConList = await Storage.getRecentUsedConList(true) || [];
-        const recentUsedDoubleConList = await Storage.getRecentUsedDoubleConList(true) || [];
+    if (useRecentUsed) {
+      // 최근 사용 우선 정렬
+      const recentUsedConList = await Storage.getRecentUsedConList(true) || [];
+      const recentUsedDoubleConList = await Storage.getRecentUsedDoubleConList(true) || [];
+
+      // 최근 사용된 콘과 그렇지 않은 콘으로 분리
+      const recentUsedKeys: string[] = [];
+      const notRecentUsedKeys: string[] = [];
+      
+      array.forEach(key => {
+        const detail = detailIdxDict[key];
+        if (!detail) {
+          notRecentUsedKeys.push(key);
+          return;
+        }
         
-        return array.sort((a, b) => {
-          const aDetail = detailIdxDict[a];
-          const bDetail = detailIdxDict[b];
-          
-          if (!aDetail || !bDetail) return 0;
-          
-          let aRecentIndex = -1;
-          let bRecentIndex = -1;
-          
-          if (aDetail.isDoubleCon) {
-            // 더블콘의 경우 더블콘 리스트에서 찾기
-            const aDoubleData = aDetail as DetailDataDouble;
-            for (let i = recentUsedDoubleConList.length - 1; i >= 0; i--) {
-              const recent = recentUsedDoubleConList[i];
-              if (recent.firstDoubleCon?.packageIdx === aDoubleData.firstDoubleCon?.packageIdx &&
-                  recent.firstDoubleCon?.sort === aDoubleData.firstDoubleCon?.sort &&
-                  recent.secondDoubleCon?.packageIdx === aDoubleData.secondDoubleCon?.packageIdx &&
-                  recent.secondDoubleCon?.sort === aDoubleData.secondDoubleCon?.sort) {
+        let isRecentUsed = false;
+        
+        if (detail.isDoubleCon) {
+          // 더블콘의 경우 더블콘 리스트에서 찾기
+          const doubleData = detail as DetailDataDouble;
+          for (let i = recentUsedDoubleConList.length - 1; i >= 0; i--) {
+            const recent = recentUsedDoubleConList[i];
+            if (recent.firstDoubleCon?.packageIdx === doubleData.firstDoubleCon?.packageIdx &&
+                recent.firstDoubleCon?.sort === doubleData.firstDoubleCon?.sort &&
+                recent.secondDoubleCon?.packageIdx === doubleData.secondDoubleCon?.packageIdx &&
+                recent.secondDoubleCon?.sort === doubleData.secondDoubleCon?.sort) {
+              isRecentUsed = true;
+              break;
+            }
+          }
+        } else {
+          // 단일콘의 경우 단일콘 리스트에서 찾기
+          const singleData = detail as DetailDataSingle;
+          const detailIdx = userPackageData[singleData.packageIdx]?.conList?.[singleData.sort]?.detailIdx;
+          if (detailIdx) {
+            for (let i = recentUsedConList.length - 1; i >= 0; i--) {
+              if (recentUsedConList[i].detailIdx === detailIdx) {
+                isRecentUsed = true;
+                break;
+              }
+            }
+          }
+        }
+        
+        if (isRecentUsed) {
+          recentUsedKeys.push(key);
+        } else {
+          notRecentUsedKeys.push(key);
+        }
+      });
+
+      // 최근 사용된 콘들을 사용 순서대로 정렬
+      recentUsedKeys.sort((a, b) => {
+        const aDetail = detailIdxDict[a];
+        const bDetail = detailIdxDict[b];
+        
+        if (!aDetail || !bDetail) return 0;
+        
+        let aRecentIndex = -1;
+        let bRecentIndex = -1;
+        
+        if (aDetail.isDoubleCon) {
+          const aDoubleData = aDetail as DetailDataDouble;
+          for (let i = recentUsedDoubleConList.length - 1; i >= 0; i--) {
+            const recent = recentUsedDoubleConList[i];
+            if (recent.firstDoubleCon?.packageIdx === aDoubleData.firstDoubleCon?.packageIdx &&
+                recent.firstDoubleCon?.sort === aDoubleData.firstDoubleCon?.sort &&
+                recent.secondDoubleCon?.packageIdx === aDoubleData.secondDoubleCon?.packageIdx &&
+                recent.secondDoubleCon?.sort === aDoubleData.secondDoubleCon?.sort) {
+              aRecentIndex = i;
+              break;
+            }
+          }
+        } else {
+          const aData = aDetail as DetailDataSingle;
+          const aDetailIdx = userPackageData[aData.packageIdx]?.conList?.[aData.sort]?.detailIdx;
+          if (aDetailIdx) {
+            for (let i = recentUsedConList.length - 1; i >= 0; i--) {
+              if (recentUsedConList[i].detailIdx === aDetailIdx) {
                 aRecentIndex = i;
                 break;
               }
             }
-          } else {
-            // 단일콘의 경우 단일콘 리스트에서 찾기
-            const aData = aDetail as DetailDataSingle;
-            const aDetailIdx = userPackageData[aData.packageIdx]?.conList?.[aData.sort]?.detailIdx;
-            if (aDetailIdx) {
-              for (let i = recentUsedConList.length - 1; i >= 0; i--) {
-                if (recentUsedConList[i].detailIdx === aDetailIdx) {
-                  aRecentIndex = i;
-                  break;
-                }
-              }
+          }
+        }
+        
+        if (bDetail.isDoubleCon) {
+          const bDoubleData = bDetail as DetailDataDouble;
+          for (let i = recentUsedDoubleConList.length - 1; i >= 0; i--) {
+            const recent = recentUsedDoubleConList[i];
+            if (recent.firstDoubleCon?.packageIdx === bDoubleData.firstDoubleCon?.packageIdx &&
+                recent.firstDoubleCon?.sort === bDoubleData.firstDoubleCon?.sort &&
+                recent.secondDoubleCon?.packageIdx === bDoubleData.secondDoubleCon?.packageIdx &&
+                recent.secondDoubleCon?.sort === bDoubleData.secondDoubleCon?.sort) {
+              bRecentIndex = i;
+              break;
             }
           }
-          
-          if (bDetail.isDoubleCon) {
-            // 더블콘의 경우 더블콘 리스트에서 찾기
-            const bDoubleData = bDetail as DetailDataDouble;
-            for (let i = recentUsedDoubleConList.length - 1; i >= 0; i--) {
-              const recent = recentUsedDoubleConList[i];
-              if (recent.firstDoubleCon?.packageIdx === bDoubleData.firstDoubleCon?.packageIdx &&
-                  recent.firstDoubleCon?.sort === bDoubleData.firstDoubleCon?.sort &&
-                  recent.secondDoubleCon?.packageIdx === bDoubleData.secondDoubleCon?.packageIdx &&
-                  recent.secondDoubleCon?.sort === bDoubleData.secondDoubleCon?.sort) {
+        } else {
+          const bData = bDetail as DetailDataSingle;
+          const bDetailIdx = userPackageData[bData.packageIdx]?.conList?.[bData.sort]?.detailIdx;
+          if (bDetailIdx) {
+            for (let i = recentUsedConList.length - 1; i >= 0; i--) {
+              if (recentUsedConList[i].detailIdx === bDetailIdx) {
                 bRecentIndex = i;
                 break;
               }
             }
-          } else {
-            // 단일콘의 경우 단일콘 리스트에서 찾기
-            const bData = bDetail as DetailDataSingle;
-            const bDetailIdx = userPackageData[bData.packageIdx]?.conList?.[bData.sort]?.detailIdx;
-            if (bDetailIdx) {
-              for (let i = recentUsedConList.length - 1; i >= 0; i--) {
-                if (recentUsedConList[i].detailIdx === bDetailIdx) {
-                  bRecentIndex = i;
-                  break;
-                }
-              }
-            }
           }
-          
-          // 최근 사용한 순서로 정렬 (높은 인덱스가 더 최근)
-          if (aRecentIndex !== bRecentIndex) {
-            return bRecentIndex - aRecentIndex;
-          }
-          
-          // 최근 사용 기록이 없는 경우 who 길이로 정렬
-          if (!aDetail.who || aDetail.who.length === 0) return 1;
-          if (!bDetail.who || bDetail.who.length === 0) return -1;
-          return 0;
-        });
+        }
         
-      case SortMethod.OLDEST_FIRST:
-      case SortMethod.NEWEST_FIRST:
-      case SortMethod.RANDOM:
-        // 패키지별로 그룹화
-        const packageGroups: { [packageIdx: string]: string[] } = {};
-        
-        array.forEach(key => {
-          const detail = detailIdxDict[key];
-          if (!detail) return;
-          
-          let packageIdx: string;
-          if (detail.isDoubleCon) {
-            const doubleData = detail as DetailDataDouble;
-            // 더블콘의 경우 첫 번째 콘의 패키지를 기준으로 함
-            packageIdx = doubleData.firstDoubleCon?.packageIdx || '0';
-          } else {
-            const singleData = detail as DetailDataSingle;
-            packageIdx = singleData.packageIdx;
-          }
-          
-          if (!packageGroups[packageIdx]) {
-            packageGroups[packageIdx] = [];
-          }
-          packageGroups[packageIdx].push(key);
-        });
-        
-        // 각 패키지 내에서 sort 순으로 정렬
-        Object.keys(packageGroups).forEach(packageIdx => {
-          packageGroups[packageIdx].sort((a, b) => {
-            const aDetail = detailIdxDict[a];
-            const bDetail = detailIdxDict[b];
-            
-            if (!aDetail || !bDetail) return 0;
-            
-            const getSort = (detail: DetailData): number => {
-              if (detail.isDoubleCon) {
-                const doubleData = detail as DetailDataDouble;
-                return parseInt(doubleData.firstDoubleCon?.sort || '0');
-              } else {
-                return parseInt((detail as DetailDataSingle).sort || '0');
-              }
-            };
-            
-            return getSort(aDetail) - getSort(bDetail);
-          });
-        });
-        
-        // 패키지 순서 결정
-        const packageIndices = Object.keys(packageGroups).map(idx => parseInt(idx)).sort((a, b) => {
-          if (method === SortMethod.OLDEST_FIRST) {
-            return a - b; // 과거 콘 우선 (작은 packageIdx부터)
-          } else if (method === SortMethod.NEWEST_FIRST) {
-            return b - a; // 최신 콘 우선 (큰 packageIdx부터)
-          } else {
-            // 랜덤 정렬
-            return Math.random() - 0.5;
-          }
-        });
-        
-        // 최종 결과 배열 생성
-        const result: string[] = [];
-        packageIndices.forEach(packageIdx => {
-          const packageIdxStr = packageIdx.toString();
-          if (packageGroups[packageIdxStr]) {
-            result.push(...packageGroups[packageIdxStr]);
-          }
-        });
-        
-        return result;
-        
-      default:
-        // 기본 정렬 (기존 방식)
-        return array.sort((a, b) => {
-          const aDetail = detailIdxDict[a];
-          const bDetail = detailIdxDict[b];
-          
-          if (!aDetail.who || aDetail.who.length === 0) return 1;
-          if (!bDetail.who || bDetail.who.length === 0) return -1;
-          return 0;
-        });
+        // 높은 인덱스가 더 최근 (최근이 먼저 오도록)
+        return bRecentIndex - aRecentIndex;
+      });
+      
+      // 최근 사용되지 않은 콘들은 기본 정렬 방식으로 정렬
+      const sortedNotRecentUsed = await applySortingByMethod(notRecentUsedKeys, baseMethod);
+      
+      return [...recentUsedKeys, ...sortedNotRecentUsed];
+    } else {
+      // 최근 사용 무시, 기본 정렬 방식만 적용
+      return await applySortingByMethod(array, baseMethod);
     }
   };
 
+  // 기본 정렬 방식 적용 함수
+  const applySortingByMethod = async (list: string[], method: BaseSortMethod): Promise<string[]> => {
+    // 패키지별로 그룹화
+    const packageGroups: { [packageIdx: string]: string[] } = {};
+    
+    list.forEach(key => {
+      const detail = detailIdxDict[key];
+      if (!detail) return;
+      
+      let packageIdx: string;
+      if (detail.isDoubleCon) {
+        const doubleData = detail as DetailDataDouble;
+        // 더블콘의 경우 첫 번째 콘의 패키지를 기준으로 함
+        packageIdx = doubleData.firstDoubleCon?.packageIdx || '0';
+      } else {
+        const singleData = detail as DetailDataSingle;
+        packageIdx = singleData.packageIdx;
+      }
+      
+      if (!packageGroups[packageIdx]) {
+        packageGroups[packageIdx] = [];
+      }
+      packageGroups[packageIdx].push(key);
+    });
+    
+    // 각 패키지 내에서 sort 순으로 정렬
+    Object.keys(packageGroups).forEach(packageIdx => {
+      packageGroups[packageIdx].sort((a, b) => {
+        const aDetail = detailIdxDict[a];
+        const bDetail = detailIdxDict[b];
+        
+        if (!aDetail || !bDetail) return 0;
+        
+        const getSort = (detail: DetailData): number => {
+          if (detail.isDoubleCon) {
+            const doubleData = detail as DetailDataDouble;
+            return parseInt(doubleData.firstDoubleCon?.sort || '0');
+          } else {
+            return parseInt((detail as DetailDataSingle).sort || '0');
+          }
+        };
+        
+        return getSort(aDetail) - getSort(bDetail);
+      });
+    });
+    
+    // 패키지 순서 결정
+    const packageIndices = Object.keys(packageGroups).map(idx => parseInt(idx)).sort((a, b) => {
+      if (method === BaseSortMethod.OLDEST_FIRST) {
+        return a - b; // 과거 콘 우선 (작은 packageIdx부터)
+      } else if (method === BaseSortMethod.NEWEST_FIRST) {
+        return b - a; // 최신 콘 우선 (큰 packageIdx부터)
+      } else {
+        // 랜덤 정렬
+        return Math.random() - 0.5;
+      }
+    });
+    
+    // 최종 결과 배열 생성
+    const result: string[] = [];
+    packageIndices.forEach(packageIdx => {
+      const packageIdxStr = packageIdx.toString();
+      if (packageGroups[packageIdxStr]) {
+        result.push(...packageGroups[packageIdxStr]);
+      }
+    });
+    
+    return result;
+  };
+
   // 각 카테고리별로 정렬 적용
-  const sortedDoubleConList = await applySorting(Array.from(doubleConList) as string[], sortMethod);
-  const sortedFavoriteList = await applySorting(Array.from(favoriteList) as string[], sortMethod);
-  const sortedOtherList = await applySorting(Array.from(otherList) as string[], sortMethod);
+  const sortedDoubleConList = await applySorting(Array.from(doubleConList) as string[], isRecentUsedFirst, baseSortMethod);
+  const sortedFavoriteList = await applySorting(Array.from(favoriteList) as string[], isRecentUsedFirst, baseSortMethod);
+  const sortedOtherList = await applySorting(Array.from(otherList) as string[], isRecentUsedFirst, baseSortMethod);
+
+  // 정렬된 결과에서 원본 쿼리와 replace_word 쿼리로 분리하여 재배치
+  const separateAndReorder = (sortedList: string[], originalQuery: string, replaceWordDict: any, userConf: any) => {
+    const originalResults: string[] = [];
+    const replaceWordResults: string[] = [];
+    
+    let originalQuerySet = new Set<string>();
+    let replaceWordQuerySet = new Set<string>();
+    
+    if (originalQuery === '') {
+      // 빈 검색어의 경우 모든 결과를 원본으로 처리
+      originalQuerySet = new Set(Object.keys(detailIdxDict));
+    } else {
+      // 원본 쿼리 결과
+      originalQuerySet = conSearchManager.searchTrie(originalQuery);
+      
+      // 초성 검색 결과도 원본에 포함
+      if (userConf?.isChoseongSearch) {
+        const choseongResult = conSearchManager.searchChoseongTrie(convertDoubleConsonantToSingle(originalQuery));
+        choseongResult.forEach(key => originalQuerySet.add(key));
+      }
+      
+      // replace_word 쿼리 결과
+      if (replaceWordDict) {
+        for (let key in replaceWordDict) {
+          if (originalQuery.includes(key) || replaceWordDict[key].some((word: string) => originalQuery.includes(word))) {
+            const replaceResult = conSearchManager.searchTrie(key);
+            replaceResult.forEach(resultKey => {
+              if (!originalQuerySet.has(resultKey)) {
+                replaceWordQuerySet.add(resultKey);
+              }
+            });
+          }
+        }
+      }
+    }
+
+    // 정렬된 리스트를 원본/replace_word로 분리
+    sortedList.forEach(key => {
+      if (originalQuerySet.has(key)) {
+        originalResults.push(key);
+      } else if (replaceWordQuerySet.has(key)) {
+        replaceWordResults.push(key);
+      } else {
+        // 예외적인 경우 원본에 추가
+        originalResults.push(key);
+      }
+    });
+    
+    return [...originalResults, ...replaceWordResults];
+  };
+
+  // 원본 쿼리 가져오기 (query는 함수 시작 부분에서 정의됨)
+  let originalQueryForReorder = query;
+  
+  // replace_word 데이터 가져오기
+  let replaceWordDataForReorder = await Storage.getReplaceWordData(true);
+  if (replaceWordDataForReorder === null) {
+    replaceWordDataForReorder = {};
+  }
+  
+  // 각 카테고리별로 원본 쿼리 먼저, replace_word 쿼리 나중에 재배치
+  const reorderedDoubleConList = separateAndReorder(sortedDoubleConList, originalQueryForReorder, replaceWordDataForReorder, userConfig);
+  const reorderedFavoriteList = separateAndReorder(sortedFavoriteList, originalQueryForReorder, replaceWordDataForReorder, userConfig);
+  const reorderedOtherList = separateAndReorder(sortedOtherList, originalQueryForReorder, replaceWordDataForReorder, userConfig);
 
   finalResult = new Set([
-    ...sortedDoubleConList,
-    ...sortedFavoriteList,
-    ...sortedOtherList,
+    ...reorderedDoubleConList,
+    ...reorderedFavoriteList,
+    ...reorderedOtherList,
   ]);
 
   sendResponse({

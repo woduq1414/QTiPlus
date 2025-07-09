@@ -126,6 +126,8 @@ function Router() {
           isShowRightBottomButton: true,
           isDefaultBigCon: true,
           isChoseongSearch: true,
+          isRecentUsedFirst: true,
+          baseSortMethod: 'newest_first',
         };
         setSetting(defaultSetting);
         Storage.setUserConfig(defaultSetting);

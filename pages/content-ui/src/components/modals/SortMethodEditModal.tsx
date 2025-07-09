@@ -1,54 +1,52 @@
 import React, { useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/16/solid';
 import Modal from '@src/components/Modal';
-import { SortMethod } from '@extension/shared/lib/models/UserConfig';
+import { BaseSortMethod } from '@extension/shared/lib/models/UserConfig';
 
 interface SortMethodEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  currentSortMethod: SortMethod;
-  onSave: (sortMethod: SortMethod) => void;
+  currentIsRecentUsedFirst: boolean;
+  currentBaseSortMethod: BaseSortMethod;
+  onSave: (isRecentUsedFirst: boolean, baseSortMethod: BaseSortMethod) => void;
 }
 
 const SortMethodEditModal: React.FC<SortMethodEditModalProps> = ({
   isOpen,
   onClose,
-  currentSortMethod,
+  currentIsRecentUsedFirst,
+  currentBaseSortMethod,
   onSave,
 }) => {
-  const [selectedMethod, setSelectedMethod] = useState<SortMethod>(currentSortMethod);
+  const [selectedIsRecentUsedFirst, setSelectedIsRecentUsedFirst] = useState<boolean>(currentIsRecentUsedFirst);
+  const [selectedBaseSortMethod, setSelectedBaseSortMethod] = useState<BaseSortMethod>(currentBaseSortMethod);
 
-  const sortMethodOptions = [
+  const baseSortMethodOptions = [
     {
-      value: SortMethod.RECENT_USED,
-      label: '최근 사용한 콘 우선 정렬',
-      description: '같은 우선순위에 있는 콘들 중 최근 사용한 콘을 우선으로 정렬',
-    },
-
-    {
-      value: SortMethod.NEWEST_FIRST,
-      label: '최신 콘 우선 정렬',
-      description: '같은 우선순위에 있는 콘들 중 최신 콘을 우선으로 정렬',
+      value: BaseSortMethod.NEWEST_FIRST,
+      label: '최신 콘 우선',
+      description: '패키지 번호가 큰 순서부터 정렬',
     },
     {
-      value: SortMethod.OLDEST_FIRST,
-      label: '과거 콘 우선 정렬',
-      description: '같은 우선순위에 있는 콘들 중 과거 콘을 우선으로 정렬',
+      value: BaseSortMethod.OLDEST_FIRST,
+      label: '과거 콘 우선',
+      description: '패키지 번호가 작은 순서부터 정렬',
     },
     {
-      value: SortMethod.RANDOM,
+      value: BaseSortMethod.RANDOM,
       label: '랜덤 정렬',
-      description: '같은 우선순위에 있는 콘들 중 랜덤으로 정렬',
+      description: '패키지 순서를 랜덤으로 배치',
     },
   ];
 
   const handleSave = () => {
-    onSave(selectedMethod);
+    onSave(selectedIsRecentUsedFirst, selectedBaseSortMethod);
     onClose();
   };
 
   const handleClose = () => {
-    setSelectedMethod(currentSortMethod); // 변경사항 취소
+    setSelectedIsRecentUsedFirst(currentIsRecentUsedFirst);
+    setSelectedBaseSortMethod(currentBaseSortMethod);
     onClose();
   };
 
@@ -66,37 +64,106 @@ const SortMethodEditModal: React.FC<SortMethodEditModalProps> = ({
           </div>
         </div>
         
-        <div className="flex flex-col gap-3 max-h-96 overflow-y-auto w-full">
-          {sortMethodOptions.map((option) => (
+        {/* 첫 번째 옵션: 최근 사용 우선 여부 */}
+        <div className="w-full mb-4">
+          <div className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            최근 사용한 콘 우선 노출
+          </div>
+          <div className="flex flex-col gap-2">
             <div
-              key={option.value}
               className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${
-                selectedMethod === option.value
+                selectedIsRecentUsedFirst
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                   : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
               }`}
-              onClick={() => setSelectedMethod(option.value)}
+              onClick={() => setSelectedIsRecentUsedFirst(true)}
             >
               <div className="flex items-center gap-3">
                 <div
                   className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                    selectedMethod === option.value
+                    selectedIsRecentUsedFirst
                       ? 'border-blue-500 bg-blue-500'
                       : 'border-gray-300 dark:border-gray-600'
                   }`}
                 >
-                  {selectedMethod === option.value && (
+                  {selectedIsRecentUsedFirst && (
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   )}
                 </div>
                 <div className="flex-1">
                   <div className="font-medium text-gray-900 dark:text-gray-100">
-                    {option.label}
+                    사용
                   </div>
                 </div>
               </div>
             </div>
-          ))}
+            <div
+              className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${
+                !selectedIsRecentUsedFirst
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+              onClick={() => setSelectedIsRecentUsedFirst(false)}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                    !selectedIsRecentUsedFirst
+                      ? 'border-blue-500 bg-blue-500'
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                >
+                  {!selectedIsRecentUsedFirst && (
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium text-gray-900 dark:text-gray-100">
+                    미사용
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 두 번째 옵션: 기본 정렬 방식 */}
+        <div className="w-full">
+          <div className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            기본 정렬 방식
+          </div>
+          <div className="flex flex-col gap-2">
+            {baseSortMethodOptions.map((option) => (
+              <div
+                key={option.value}
+                className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${
+                  selectedBaseSortMethod === option.value
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                }`}
+                onClick={() => setSelectedBaseSortMethod(option.value)}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                      selectedBaseSortMethod === option.value
+                        ? 'border-blue-500 bg-blue-500'
+                        : 'border-gray-300 dark:border-gray-600'
+                    }`}
+                  >
+                    {selectedBaseSortMethod === option.value && (
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900 dark:text-gray-100">
+                      {option.label}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div

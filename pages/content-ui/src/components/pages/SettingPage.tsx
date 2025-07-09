@@ -16,7 +16,7 @@ import { Page } from '@src/enums/Page';
 import { time } from 'console';
 import { refreshLabeling } from '@src/functions/refreshLabeling';
 import { Message } from '@extension/shared/lib/enums/Message';
-import { SortMethod } from '@extension/shared/lib/models/UserConfig';
+import { BaseSortMethod } from '@extension/shared/lib/models/UserConfig';
 
 const SettingPage: React.FC = () => {
   const {
@@ -83,25 +83,32 @@ const SettingPage: React.FC = () => {
     setIsResetModalOpen(false);
   };
 
-  const getSortMethodLabel = (method: SortMethod) => {
-    switch (method) {
-      case SortMethod.RECENT_USED:
-        return '최근 사용한 콘 우선';
-      case SortMethod.OLDEST_FIRST:
-        return '과거 콘 우선';
-      case SortMethod.NEWEST_FIRST:
-        return '최신 콘 우선';
-      case SortMethod.RANDOM:
-        return '랜덤 정렬';
+  const getSortMethodLabel = (isRecentUsedFirst: boolean, baseSortMethod: BaseSortMethod) => {
+    const recentUsedLabel = isRecentUsedFirst ? '최근 사용 + ' : '';
+    
+    let baseLabel = '';
+    switch (baseSortMethod) {
+      case BaseSortMethod.OLDEST_FIRST:
+        baseLabel = '과거 콘 우선';
+        break;
+      case BaseSortMethod.NEWEST_FIRST:
+        baseLabel = '최신 콘 우선';
+        break;
+      case BaseSortMethod.RANDOM:
+        baseLabel = '랜덤 정렬';
+        break;
       default:
-        return '최근 사용한 콘 우선';
+        baseLabel = '최신 콘 우선';
     }
+    
+    return recentUsedLabel + baseLabel;
   };
 
-  const handleSortMethodSave = (sortMethod: SortMethod) => {
+  const handleSortMethodSave = (isRecentUsedFirst: boolean, baseSortMethod: BaseSortMethod) => {
     setSetting({
       ...setting,
-      sortMethod: sortMethod,
+      isRecentUsedFirst: isRecentUsedFirst,
+      baseSortMethod: baseSortMethod,
     });
   };
 
@@ -204,7 +211,7 @@ const SettingPage: React.FC = () => {
 
               <SettingItem
                 title="정렬 방식"
-                description={getSortMethodLabel(setting.sortMethod)}
+                description={getSortMethodLabel(setting.isRecentUsedFirst, setting.baseSortMethod)}
                 isChecked={false}
                 onChange={() => {
                   setIsSortMethodModalOpen(true);
@@ -329,7 +336,8 @@ const SettingPage: React.FC = () => {
           <SortMethodEditModal
             isOpen={isSortMethodModalOpen}
             onClose={() => setIsSortMethodModalOpen(false)}
-            currentSortMethod={setting.sortMethod}
+            currentIsRecentUsedFirst={setting.isRecentUsedFirst}
+            currentBaseSortMethod={setting.baseSortMethod}
             onSave={handleSortMethodSave}
           />
         </div>
