@@ -615,7 +615,7 @@ const SearchPage: React.FC = () => {
           },
         });
 
-        recentUsedDoubleConList = recentUsedDoubleConList.slice(-128);
+        recentUsedDoubleConList = recentUsedDoubleConList.slice(-64);
         await Storage.setRecentUsedDoubleConList(recentUsedDoubleConList);
       }
     }
@@ -662,7 +662,7 @@ const SearchPage: React.FC = () => {
       });
     }
 
-    recentUsedConList = recentUsedConList.slice(-256);
+    recentUsedConList = recentUsedConList.slice(-128);
     await Storage.setRecentUsedConList(recentUsedConList);
 
     return {
